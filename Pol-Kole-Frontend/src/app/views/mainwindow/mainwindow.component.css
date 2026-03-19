@@ -1,2 +1,23 @@
+:host {
+  display: block;
+}
+
+#sidebar {
+  overflow-x: hidden;
+}
+
+.subnav {
+  overflow: hidden;
+  transition: max-height 0.25s ease;
+}
+
+.chevron {
+  transition: transform 0.2s ease;
+}
+
+.chevron.open {
+  transform: rotate(90deg);
+}
+
 
 

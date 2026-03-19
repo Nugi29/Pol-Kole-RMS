@@ -1,6 +1,142 @@
-<section class="mainwindow-container">
-  <h2>Main Window</h2>
-  <p>You are logged in {{role}}</p>
+<aside
+  id="sidebar"
+  class="fixed left-0 top-0 z-50 flex h-screen flex-col border-r border-slate-100 bg-white select-none transition-[width] duration-200"
+  [ngClass]="isSidebarCollapsed ? 'w-[88px]' : 'w-[260px]'">
 
-</section>
+  <!-- Logo -->
+  <div class="border-b border-slate-50" [ngClass]="isSidebarCollapsed ? 'px-3 pt-4 pb-3' : 'px-5 pt-5 pb-4'">
+    <div class="flex items-center" [ngClass]="isSidebarCollapsed ? 'justify-center gap-0' : 'gap-3'">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-sm flex-shrink-0">
+        <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2.2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+        </svg>
+      </div>
+      <div *ngIf="!isSidebarCollapsed">
+        <p class="text-[15px] font-bold text-slate-900 tracking-tight leading-tight">POL KOLE</p>
+        <span class="text-[10px] font-semibold bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded-full tracking-wide">RMS</span>
+      </div>
+      <button
+        type="button"
+        (click)="toggleSidebar()"
+        class="rounded-lg border border-slate-200 p-1 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700"
+        [ngClass]="isSidebarCollapsed ? 'absolute top-5 right-0' : 'ml-auto'"
+        [attr.aria-label]="isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path *ngIf="!isSidebarCollapsed" stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+          <path *ngIf="isSidebarCollapsed" stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Scrollable nav -->
+  <div class="flex-1 overflow-y-auto py-3 space-y-5" [ngClass]="isSidebarCollapsed ? 'px-2' : 'px-3'">
+
+    <!-- MAIN section -->
+    <div>
+      <p *ngIf="!isSidebarCollapsed" class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.8px] px-2 mb-1.5">Main</p>
+      <nav class="space-y-0.5" aria-label="Main navigation">
+        <ng-container *ngFor="let item of navMenu">
+          <ng-container *ngIf="item.children?.length; else singleLink">
+            <button
+              type="button"
+              (click)="toggleGroup(item.name)"
+              class="w-full flex items-center gap-2.5 py-[7px] rounded-lg text-[13.5px] font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-800 transition-all cursor-pointer"
+              [ngClass]="isSidebarCollapsed ? 'justify-center px-0' : 'px-2.5'"
+              [class.justify-center]="isSidebarCollapsed">
+              <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                <path stroke-linecap="round" stroke-linejoin="round" [attr.d]="getIconPath(item.icon)"></path>
+              </svg>
+              <span *ngIf="!isSidebarCollapsed" class="flex-1 text-left">{{item.name}}</span>
+              <svg *ngIf="!isSidebarCollapsed" class="chevron w-3.5 h-3.5" [class.open]="isGroupExpanded(item.name)" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+              </svg>
+            </button>
+            <div *ngIf="!isSidebarCollapsed" class="subnav" [style.max-height.px]="isGroupExpanded(item.name) ? getSubnavHeight(item) : 0">
+              <div class="pl-8 space-y-0.5 pt-0.5">
+                <a
+                  *ngFor="let child of item.children"
+                  [routerLink]="child.route"
+                  routerLinkActive="text-indigo-600 bg-indigo-50"
+                  class="nav-link sub-link flex items-center gap-2 px-2 py-1.5 rounded-lg text-[13px] font-medium transition-all cursor-pointer text-slate-400 hover:text-slate-700 hover:bg-slate-50">
+                  <span class="w-1.5 h-1.5 rounded-full bg-current opacity-60 flex-shrink-0"></span>
+                  {{child.name}}
+                </a>
+              </div>
+            </div>
+          </ng-container>
+
+          <ng-template #singleLink>
+            <a
+              [routerLink]="item.route"
+              routerLinkActive="bg-indigo-50 text-indigo-600"
+              [routerLinkActiveOptions]="{ exact: true }"
+              class="nav-link flex items-center gap-2.5 py-[7px] rounded-lg text-[13.5px] font-medium cursor-pointer transition-all text-slate-500 hover:bg-slate-50 hover:text-slate-800"
+              [ngClass]="isSidebarCollapsed ? 'justify-center px-0' : 'px-2.5'"
+              [class.justify-center]="isSidebarCollapsed">
+              <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                <path stroke-linecap="round" stroke-linejoin="round" [attr.d]="getIconPath(item.icon)"></path>
+              </svg>
+              <span *ngIf="!isSidebarCollapsed">{{item.name}}</span>
+            </a>
+          </ng-template>
+        </ng-container>
+      </nav>
+    </div>
+
+  </div>
+
+  <!-- User card footer -->
+  <div
+    class="border-t border-slate-100/80 transition-all duration-300"
+    [ngClass]="isSidebarCollapsed ? 'p-2' : 'px-3 py-2.5'"
+  >
+    <button
+      class="w-full flex items-center rounded-2xl transition-all duration-200 ease-out
+           hover:bg-slate-50 active:scale-[0.98] active:bg-slate-100
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-1
+           cursor-pointer group"
+      [ngClass]="isSidebarCollapsed ? 'justify-center p-2 gap-0' : 'px-2.5 py-2 gap-3'"
+    >
+      <!-- Avatar -->
+<!--      <div class="relative flex-shrink-0">-->
+<!--        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-400 via-indigo-500 to-violet-600-->
+<!--                  flex items-center justify-center text-white text-[11px] font-bold tracking-wide-->
+<!--                  shadow-sm shadow-indigo-200 ring-2 ring-white">-->
+<!--          TC-->
+<!--        </div>-->
+<!--      </div>-->
+
+      <!-- User info -->
+      <div *ngIf="!isSidebarCollapsed" class="text-left flex-1 min-w-0">
+        <p class="text-[11px] font-semibold text-slate-800 leading-tight truncate">Tom Cook</p>
+        <p class="text-[11px] text-slate-400 leading-tight truncate mt-0.5">{{ role }}</p>
+      </div>
+      <div *ngIf="isSidebarCollapsed" class="text-left flex-1 min-w-0">
+        <p class="text-[12px] text-slate-800 leading-tight truncate mt-0.5">{{ role }}</p>
+      </div>
+
+      <!-- More options icon -->
+      <div
+        *ngIf="!isSidebarCollapsed"
+        class="w-6 h-6 rounded-lg flex items-center justify-center
+             text-slate-300 group-hover:text-slate-500 group-hover:bg-slate-100
+             transition-all duration-150 flex-shrink-0"
+      >
+        <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 16 16">
+          <circle cx="8" cy="2.5" r="1.25"/>
+          <circle cx="8" cy="8" r="1.25"/>
+          <circle cx="8" cy="13.5" r="1.25"/>
+        </svg>
+      </div>
+    </button>
+  </div>
+</aside>
+
+<!-- Main content (ml-[260px] offset) -->
+<main
+  class="min-h-screen bg-slate-50 p-7 transition-[margin] duration-200"
+  [ngClass]="isSidebarCollapsed ? 'ml-0 md:ml-[88px]' : 'ml-0 md:ml-[260px]'">
+  <router-outlet></router-outlet>
+</main>
 
