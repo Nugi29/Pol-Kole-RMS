@@ -3,12 +3,13 @@ package com.rms.polkole.service.impl;
 import com.rms.polkole.dto.LoginDTO;
 import com.rms.polkole.dto.LoginResponseDTO;
 import com.rms.polkole.dto.UserDTO;
-import com.rms.polkole.entity.Role;
 import com.rms.polkole.entity.User;
-import com.rms.polkole.repository.RoleRepository;
+import com.rms.polkole.entity.Userrole;
 import com.rms.polkole.repository.UserRepository;
+import com.rms.polkole.repository.UserroleRepository;
 import com.rms.polkole.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -17,14 +18,17 @@ import org.springframework.stereotype.Service;
 import com.rms.polkole.service.UserService;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService{
 
     private final UserRepository userRepository;
-    private final RoleRepository roleRepository;
+    private final UserroleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final ModelMapper modelMapper;
 
     @Override
     public String register(UserDTO dto) {
@@ -33,7 +37,7 @@ public class UserServiceImpl implements UserService{
         }
 
         String requestedRole = dto.getRole() == null ? "USER" : dto.getRole().trim();
-        Role role = roleRepository.findByNameIgnoreCase(requestedRole)
+        Userrole role = roleRepository.findByNameIgnoreCase(requestedRole)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid role: " + requestedRole));
 
         User user = User.builder()
@@ -84,5 +88,35 @@ public class UserServiceImpl implements UserService{
                 .password(null)
                 .role(user.getRole() != null ? user.getRole().getName() : null)
                 .build();
+    }
+
+    @Override
+    public UserDTO getUserById(Integer id) {
+        return null;
+    }
+
+    @Override
+    public List<UserDTO> getAllUserDtos() {
+        List<User> users = userRepository.findAll();
+
+        return users.stream()
+                .map(user -> {
+                    UserDTO dto = modelMapper.map(user, UserDTO.class);
+                    // Handle manual overrides if names don't match exactly
+                    dto.setPassword(null);
+                    if (user.getRole() != null) {
+                        dto.setRole(user.getRole().getName());
+                    }
+                    return dto;
+                })
+                .toList();}
+    @Override
+    public UserDTO updateUser(Integer id, UserDTO updateUser) {
+        return null;
+    }
+
+    @Override
+    public void deleteUser(Integer id) {
+
     }
 }

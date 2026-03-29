@@ -36,11 +36,12 @@ public class User {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "role_id")
-    private Role role;
+    private Userrole role;
 
-    @ColumnDefault("'ACTIVE'")
-    @Column(name = "status", length = 20)
-    private String status;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "userstatus_id")
+    private Userstatus status;
+
 
     @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "created_at")
@@ -57,5 +58,7 @@ public class User {
     @JsonIgnore
     @OneToMany(mappedBy = "waiter")
     private Set<Order> orders = new LinkedHashSet<>();
+
+
 
 }

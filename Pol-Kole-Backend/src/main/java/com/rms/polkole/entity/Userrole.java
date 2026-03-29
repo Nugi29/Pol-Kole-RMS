@@ -11,18 +11,20 @@ import java.util.Set;
 @Getter
 @Setter
 @Entity
-@Table(name = "roles")
-public class Role {
+@Table(name = "userroles")
+public class Userrole {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Integer id;
 
-    @Column(name = "role_name", nullable = false, length = 50)
+    @Column(name = "name", nullable = false, length = 50)
     private String name;
 
     @JsonIgnore
-    @OneToMany(mappedBy = "role")
+    @OneToMany
+    @JoinColumn(name = "role_id")
     private Set<User> users = new LinkedHashSet<>();
+
 
 }
