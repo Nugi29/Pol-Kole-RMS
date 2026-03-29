@@ -13,7 +13,7 @@ export class LoginComponent {
   email = '';
   password = '';
   isSubmitting = false;
-  errorMessage = '';
+  public errorMessage = '';
 
   constructor(
     private readonly auth: AuthService,
@@ -23,6 +23,7 @@ export class LoginComponent {
   onSubmit() {
     if (!this.email.trim() || !this.password.trim()) {
       this.errorMessage = 'Email and password are required.';
+      console.log(this.errorMessage);
       return;
     }
 
@@ -41,6 +42,7 @@ export class LoginComponent {
 
         if (!token) {
           this.errorMessage = 'Invalid login response.';
+          console.log(this.errorMessage);
           console.log(res);
           this.isSubmitting = false;
           return;
@@ -55,6 +57,7 @@ export class LoginComponent {
       },
       error: () => {
         this.errorMessage = 'Login failed. Please check your credentials.';
+        console.log(this.errorMessage);
         this.isSubmitting = false;
       },
       complete: () => {
@@ -84,7 +87,7 @@ export class LoginComponent {
   }
 
   private redirectToMainWindow() {
-    this.router.navigate(['/mainwindow']).catch(() => {
+    this.router.navigate(['/main', 'dashboard']).catch(() => {
       this.router.navigate(['/']);
     });
   }

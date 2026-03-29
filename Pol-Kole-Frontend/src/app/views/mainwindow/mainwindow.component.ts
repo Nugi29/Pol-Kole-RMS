@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { NAV_MENU, NavMenuItem } from '../../config/nav-menu.config';
 
 @Component({
@@ -28,6 +29,8 @@ export class MainwindowComponent implements OnInit {
     sync_alt: 'M5 7h11M13 3l4 4-4 4M19 17H8M11 13l-4 4 4 4',
   };
 
+  constructor(private readonly router: Router) {}
+
   ngOnInit(): void {
     this.role = localStorage.getItem('role') || '';
     this.currentRoles = this.extractRoles(this.role);
@@ -46,6 +49,18 @@ export class MainwindowComponent implements OnInit {
 
   toggleGroup(group: string): void {
     this.expandedGroups[group] = !this.expandedGroups[group];
+  }
+
+  onGroupClick(item: NavMenuItem): void {
+    if (this.isSidebarCollapsed) {
+      const targetRoute = item.route ?? item.children?.[0]?.route;
+      if (targetRoute) {
+        this.router.navigateByUrl(targetRoute);
+        return;
+      }
+    }
+
+    this.toggleGroup(item.name);
   }
 
   isGroupExpanded(group: string): boolean {

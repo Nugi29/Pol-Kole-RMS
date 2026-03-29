@@ -9,4 +9,5 @@ import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 })
 export class AppComponent {
   protected readonly title = signal('Pol-Kole-Frontend');
+
 }

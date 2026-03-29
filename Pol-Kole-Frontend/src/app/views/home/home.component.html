@@ -1,0 +1,400 @@
+<!-- ── app-topbar component ── -->
+<div class="flex items-center justify-between mb-7">
+  <div>
+    <h1 class="text-[22px] font-bold text-slate-900 tracking-tight leading-none">Good morning, Tom 👋</h1>
+    <p class="text-[13px] text-slate-400 mt-1.5">Here's what's happening with your projects today.</p>
+  </div>
+  <div class="flex items-center gap-2.5">
+    <!-- Search -->
+    <div class="flex items-center gap-2 bg-white border border-slate-200 rounded-[10px] px-3 py-2 hover:border-indigo-300 focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-50 transition-all">
+      <svg class="w-3.5 h-3.5 text-slate-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg>
+      <input type="text" placeholder="Search anything…" class="border-none outline-none text-[13px] text-slate-700 placeholder-slate-400 bg-transparent w-44"/>
+      <span class="text-[10px] text-slate-400 font-mono bg-slate-50 px-1.5 py-0.5 rounded-[4px] flex-shrink-0">⌘K</span>
+    </div>
+    <!-- Bell -->
+    <button class="relative w-9 h-9 rounded-[9px] bg-white border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-colors cursor-pointer">
+      <svg class="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+      <span class="absolute top-1.5 right-1.5 w-[7px] h-[7px] rounded-full bg-red-500 border-2 border-white"></span>
+    </button>
+    <!-- New project -->
+    <button class="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-[13px] font-semibold px-3.5 py-2 rounded-[9px] transition-colors cursor-pointer shadow-sm shadow-indigo-200">
+      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+      New Project
+    </button>
+  </div>
+</div>
+
+<!-- ── app-stat-card ×4 ── -->
+<div class="grid grid-cols-4 gap-3.5 mb-5">
+
+  <!-- Card: Total Projects -->
+  <div class="bg-white rounded-2xl p-5 border border-slate-100 hover:border-slate-200 hover:shadow-sm transition-all fade-up">
+    <div class="flex items-start justify-between">
+      <div>
+        <p class="text-[11px] font-bold text-slate-400 uppercase tracking-[0.6px]">Total Projects</p>
+        <p class="text-[28px] font-bold text-slate-900 tracking-tight mt-1.5 mb-1 leading-none">24</p>
+        <div class="flex items-center gap-1 text-[12px] font-semibold text-emerald-500">
+          <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
+          +12% this month
+        </div>
+      </div>
+      <div class="w-10 h-10 rounded-[10px] flex items-center justify-center flex-shrink-0" style="background:#EEF2FF;">
+        <svg class="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="#6366f1" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg>
+      </div>
+    </div>
+    <div class="mt-3 h-11"><svg viewBox="0 0 200 44" width="100%" height="44" preserveAspectRatio="none" class="sparkline-svg">
+      <defs><linearGradient id="g1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#6366f1" stop-opacity="0.18"/><stop offset="100%" stop-color="#6366f1" stop-opacity="0"/></linearGradient></defs>
+      <polygon points="0,44 0,36.1 18.2,29.8 36.4,33.8 54.5,19.7 72.7,24.5 90.9,12.6 109.1,17.5 127.3,5.6 145.5,8.4 163.6,1.4 181.8,2.8 200,44" fill="url(#g1)"/>
+      <polyline points="0,36.1 18.2,29.8 36.4,33.8 54.5,19.7 72.7,24.5 90.9,12.6 109.1,17.5 127.3,5.6 145.5,8.4 163.6,1.4 181.8,2.8 200,5.6" fill="none" stroke="#6366f1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg></div>
+  </div>
+
+  <!-- Card: Tasks Done -->
+  <div class="bg-white rounded-2xl p-5 border border-slate-100 hover:border-slate-200 hover:shadow-sm transition-all fade-up">
+    <div class="flex items-start justify-between">
+      <div>
+        <p class="text-[11px] font-bold text-slate-400 uppercase tracking-[0.6px]">Tasks Done</p>
+        <p class="text-[28px] font-bold text-slate-900 tracking-tight mt-1.5 mb-1 leading-none">182</p>
+        <div class="flex items-center gap-1 text-[12px] font-semibold text-emerald-500">
+          <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
+          +8% vs last week
+        </div>
+      </div>
+      <div class="w-10 h-10 rounded-[10px] flex items-center justify-center flex-shrink-0" style="background:#F0FDF4;">
+        <svg class="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="#10B981" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </div>
+    </div>
+    <div class="mt-3 h-11"><svg viewBox="0 0 200 44" width="100%" height="44" preserveAspectRatio="none" class="sparkline-svg">
+      <defs><linearGradient id="g2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#10B981" stop-opacity="0.18"/><stop offset="100%" stop-color="#10B981" stop-opacity="0"/></linearGradient></defs>
+      <polygon points="0,44 0,38.1 18.2,31.6 36.4,33.0 54.5,27.1 72.7,21.7 90.9,24.5 109.1,18.6 127.3,14.5 145.5,15.9 163.6,10.1 181.8,4.3 200,44" fill="url(#g2)"/>
+      <polyline points="0,38.1 18.2,31.6 36.4,33.0 54.5,27.1 72.7,21.7 90.9,24.5 109.1,18.6 127.3,14.5 145.5,15.9 163.6,10.1 181.8,4.3 200,5.7" fill="none" stroke="#10B981" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg></div>
+  </div>
+
+  <!-- Card: Team Members -->
+  <div class="bg-white rounded-2xl p-5 border border-slate-100 hover:border-slate-200 hover:shadow-sm transition-all fade-up">
+    <div class="flex items-start justify-between">
+      <div>
+        <p class="text-[11px] font-bold text-slate-400 uppercase tracking-[0.6px]">Team Members</p>
+        <p class="text-[28px] font-bold text-slate-900 tracking-tight mt-1.5 mb-1 leading-none">16</p>
+        <div class="flex items-center gap-1 text-[12px] font-semibold text-emerald-500">
+          <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
+          2 new this week
+        </div>
+      </div>
+      <div class="w-10 h-10 rounded-[10px] flex items-center justify-center flex-shrink-0" style="background:#FFF7ED;">
+        <svg class="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="#F59E0B" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-5-5M9 20H4v-2a4 4 0 015-5m3-8a4 4 0 110 8 4 4 0 010-8z"/></svg>
+      </div>
+    </div>
+    <div class="mt-3 h-11"><svg viewBox="0 0 200 44" width="100%" height="44" preserveAspectRatio="none" class="sparkline-svg">
+      <defs><linearGradient id="g3" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#F59E0B" stop-opacity="0.18"/><stop offset="100%" stop-color="#F59E0B" stop-opacity="0"/></linearGradient></defs>
+      <polygon points="0,44 0,36 18.2,36 36.4,31.8 54.5,31.8 72.7,27.6 90.9,27.6 109.1,23.4 127.3,19.2 145.5,19.2 163.6,15 181.8,15 200,44" fill="url(#g3)"/>
+      <polyline points="0,36 18.2,36 36.4,31.8 54.5,31.8 72.7,27.6 90.9,27.6 109.1,23.4 127.3,19.2 145.5,19.2 163.6,15 181.8,15 200,10.8" fill="none" stroke="#F59E0B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg></div>
+  </div>
+
+  <!-- Card: Overdue Tasks -->
+  <div class="bg-white rounded-2xl p-5 border border-slate-100 hover:border-slate-200 hover:shadow-sm transition-all fade-up">
+    <div class="flex items-start justify-between">
+      <div>
+        <p class="text-[11px] font-bold text-slate-400 uppercase tracking-[0.6px]">Overdue Tasks</p>
+        <p class="text-[28px] font-bold text-slate-900 tracking-tight mt-1.5 mb-1 leading-none">7</p>
+        <div class="flex items-center gap-1 text-[12px] font-semibold text-red-500">
+          <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
+          -3 from yesterday
+        </div>
+      </div>
+      <div class="w-10 h-10 rounded-[10px] flex items-center justify-center flex-shrink-0" style="background:#FEF2F2;">
+        <svg class="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="#EF4444" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </div>
+    </div>
+    <div class="mt-3 h-11"><svg viewBox="0 0 200 44" width="100%" height="44" preserveAspectRatio="none" class="sparkline-svg">
+      <defs><linearGradient id="g4" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#EF4444" stop-opacity="0.18"/><stop offset="100%" stop-color="#EF4444" stop-opacity="0"/></linearGradient></defs>
+      <polygon points="0,44 0,8.4 18.2,14.7 36.4,18.9 54.5,14.7 72.7,21.0 90.9,23.1 109.1,18.9 127.3,25.2 145.5,27.3 163.6,25.2 181.8,27.3 200,44" fill="url(#g4)"/>
+      <polyline points="0,8.4 18.2,14.7 36.4,18.9 54.5,14.7 72.7,21.0 90.9,23.1 109.1,18.9 127.3,25.2 145.5,27.3 163.6,25.2 181.8,27.3 200,29.4" fill="none" stroke="#EF4444" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg></div>
+  </div>
+
+</div><!-- /stat cards -->
+
+<!-- ── 2-column grid: left content + right panel ── -->
+<div class="grid grid-cols-[1fr_340px] gap-5 items-start">
+
+  <!-- LEFT COLUMN -->
+  <div class="space-y-5">
+
+    <!-- app-project-card grid wrapper -->
+    <div class="bg-white rounded-2xl p-5 border border-slate-100">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-[14px] font-bold text-slate-900">Active Projects</h2>
+        <div class="flex items-center gap-2">
+          <div class="flex gap-1.5">
+            <button class="text-[11px] font-bold bg-indigo-50 text-indigo-600 px-3 py-1 rounded-lg cursor-pointer">All</button>
+            <button class="text-[11px] font-semibold text-slate-400 hover:text-slate-700 px-3 py-1 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors">In Progress</button>
+            <button class="text-[11px] font-semibold text-slate-400 hover:text-slate-700 px-3 py-1 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors">Review</button>
+          </div>
+          <button class="text-[12px] font-semibold text-indigo-500 hover:text-indigo-700 transition-colors cursor-pointer">+ Add</button>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+
+        <!-- app-project-card: GraphQL API -->
+        <div class="bg-white rounded-2xl p-[18px] border border-slate-100 cursor-pointer hover:border-indigo-200 hover:-translate-y-0.5 hover:shadow-md hover:shadow-indigo-50 transition-all duration-200">
+          <div class="inline-flex items-center gap-1.5 text-[11px] font-bold px-2 py-1 rounded-full mb-2.5 bg-indigo-50 text-indigo-600">
+            <svg class="w-2 h-2" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4" fill="#6366f1"/></svg> In Progress
+          </div>
+          <h3 class="text-[14px] font-bold text-slate-900 mb-1">GraphQL API</h3>
+          <p class="text-[12px] text-slate-400 leading-relaxed mb-3.5">Redesign and migrate legacy REST endpoints to GraphQL schema.</p>
+          <div class="h-1 bg-slate-100 rounded-full overflow-hidden mb-3"><div class="h-full rounded-full" style="width:68%;background:#6366f1;transition:width 0.7s;"></div></div>
+          <div class="flex items-center justify-between">
+            <div class="flex -space-x-1.5">
+              <div class="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-white text-[9px] font-bold bg-gradient-to-br from-indigo-400 to-violet-500">A</div>
+              <div class="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-white text-[9px] font-bold bg-gradient-to-br from-emerald-400 to-teal-500">B</div>
+              <div class="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-white text-[9px] font-bold bg-gradient-to-br from-amber-400 to-orange-500">C</div>
+            </div>
+            <span class="text-[11px] font-semibold text-slate-400">68% · 14 left</span>
+          </div>
+        </div>
+
+        <!-- app-project-card: iOS App -->
+        <div class="bg-white rounded-2xl p-[18px] border border-slate-100 cursor-pointer hover:border-indigo-200 hover:-translate-y-0.5 hover:shadow-md hover:shadow-indigo-50 transition-all duration-200">
+          <div class="inline-flex items-center gap-1.5 text-[11px] font-bold px-2 py-1 rounded-full mb-2.5 bg-amber-50 text-amber-600">
+            <svg class="w-2 h-2" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4" fill="#F59E0B"/></svg> Review
+          </div>
+          <h3 class="text-[14px] font-bold text-slate-900 mb-1">iOS App</h3>
+          <p class="text-[12px] text-slate-400 leading-relaxed mb-3.5">Revamp onboarding flow and push notification system.</p>
+          <div class="h-1 bg-slate-100 rounded-full overflow-hidden mb-3"><div class="h-full rounded-full" style="width:85%;background:#F59E0B;transition:width 0.7s;"></div></div>
+          <div class="flex items-center justify-between">
+            <div class="flex -space-x-1.5">
+              <div class="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-white text-[9px] font-bold bg-gradient-to-br from-pink-400 to-rose-500">D</div>
+              <div class="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-white text-[9px] font-bold bg-gradient-to-br from-sky-400 to-blue-500">E</div>
+            </div>
+            <span class="text-[11px] font-semibold text-slate-400">85% · 4 left</span>
+          </div>
+        </div>
+
+        <!-- app-project-card: Android App -->
+        <div class="bg-white rounded-2xl p-[18px] border border-slate-100 cursor-pointer hover:border-indigo-200 hover:-translate-y-0.5 hover:shadow-md hover:shadow-indigo-50 transition-all duration-200">
+          <div class="inline-flex items-center gap-1.5 text-[11px] font-bold px-2 py-1 rounded-full mb-2.5 bg-emerald-50 text-emerald-600">
+            <svg class="w-2 h-2" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4" fill="#10B981"/></svg> On Track
+          </div>
+          <h3 class="text-[14px] font-bold text-slate-900 mb-1">Android App</h3>
+          <p class="text-[12px] text-slate-400 leading-relaxed mb-3.5">Performance optimization and dark mode implementation.</p>
+          <div class="h-1 bg-slate-100 rounded-full overflow-hidden mb-3"><div class="h-full rounded-full" style="width:42%;background:#10B981;transition:width 0.7s;"></div></div>
+          <div class="flex items-center justify-between">
+            <div class="flex -space-x-1.5">
+              <div class="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-white text-[9px] font-bold bg-gradient-to-br from-violet-400 to-purple-500">F</div>
+              <div class="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-white text-[9px] font-bold bg-gradient-to-br from-indigo-400 to-violet-500">G</div>
+              <div class="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-white text-[9px] font-bold bg-gradient-to-br from-emerald-400 to-teal-500">H</div>
+            </div>
+            <span class="text-[11px] font-semibold text-slate-400">42% · 22 left</span>
+          </div>
+        </div>
+
+        <!-- app-project-card: Customer Portal -->
+        <div class="bg-white rounded-2xl p-[18px] border border-slate-100 cursor-pointer hover:border-indigo-200 hover:-translate-y-0.5 hover:shadow-md hover:shadow-indigo-50 transition-all duration-200">
+          <div class="inline-flex items-center gap-1.5 text-[11px] font-bold px-2 py-1 rounded-full mb-2.5 bg-red-50 text-red-500">
+            <svg class="w-2 h-2" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4" fill="#EF4444"/></svg> At Risk
+          </div>
+          <h3 class="text-[14px] font-bold text-slate-900 mb-1">Customer Portal</h3>
+          <p class="text-[12px] text-slate-400 leading-relaxed mb-3.5">Build self-service account management and billing portal.</p>
+          <div class="h-1 bg-slate-100 rounded-full overflow-hidden mb-3"><div class="h-full rounded-full" style="width:31%;background:#EF4444;transition:width 0.7s;"></div></div>
+          <div class="flex items-center justify-between">
+            <div class="flex -space-x-1.5">
+              <div class="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-white text-[9px] font-bold bg-gradient-to-br from-amber-400 to-orange-500">I</div>
+              <div class="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-white text-[9px] font-bold bg-gradient-to-br from-pink-400 to-rose-500">J</div>
+            </div>
+            <span class="text-[11px] font-semibold text-slate-400">31% · 38 left</span>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /projects wrapper -->
+
+    <!-- Activity + Tasks row -->
+    <div class="grid grid-cols-2 gap-5">
+
+      <!-- app-activity-feed -->
+      <div class="bg-white rounded-2xl p-5 border border-slate-100">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-[14px] font-bold text-slate-900">Recent Activity</h2>
+          <button class="text-[12px] font-semibold text-indigo-500 hover:text-indigo-700 transition-colors cursor-pointer">View all</button>
+        </div>
+        <div>
+          <div class="flex gap-3 py-3 border-b border-slate-50">
+            <span class="w-2 h-2 rounded-full flex-shrink-0 mt-1.5" style="background:#6366f1;"></span>
+            <div><p class="text-[13px] text-slate-600 leading-snug"><strong class="text-slate-800 font-semibold">Alex Chen</strong> completed 3 tasks in GraphQL API</p><p class="text-[11px] text-slate-400 mt-0.5">2 minutes ago</p></div>
+          </div>
+          <div class="flex gap-3 py-3 border-b border-slate-50">
+            <span class="w-2 h-2 rounded-full flex-shrink-0 mt-1.5" style="background:#10B981;"></span>
+            <div><p class="text-[13px] text-slate-600 leading-snug"><strong class="text-slate-800 font-semibold">iOS App</strong> moved to Review stage</p><p class="text-[11px] text-slate-400 mt-0.5">18 minutes ago</p></div>
+          </div>
+          <div class="flex gap-3 py-3 border-b border-slate-50">
+            <span class="w-2 h-2 rounded-full flex-shrink-0 mt-1.5" style="background:#F59E0B;"></span>
+            <div><p class="text-[13px] text-slate-600 leading-snug"><strong class="text-slate-800 font-semibold">Sarah M.</strong> left a comment on Android App</p><p class="text-[11px] text-slate-400 mt-0.5">1 hour ago</p></div>
+          </div>
+          <div class="flex gap-3 py-3 border-b border-slate-50">
+            <span class="w-2 h-2 rounded-full flex-shrink-0 mt-1.5" style="background:#EF4444;"></span>
+            <div><p class="text-[13px] text-slate-600 leading-snug"><strong class="text-slate-800 font-semibold">Customer Portal</strong> deadline updated to Mar 28</p><p class="text-[11px] text-slate-400 mt-0.5">3 hours ago</p></div>
+          </div>
+          <div class="flex gap-3 py-3">
+            <span class="w-2 h-2 rounded-full flex-shrink-0 mt-1.5" style="background:#8b5cf6;"></span>
+            <div><p class="text-[13px] text-slate-600 leading-snug"><strong class="text-slate-800 font-semibold">You</strong> created a new sprint for Q2</p><p class="text-[11px] text-slate-400 mt-0.5">Yesterday</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- app-task-list -->
+      <div class="bg-white rounded-2xl p-5 border border-slate-100">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-[14px] font-bold text-slate-900">My Tasks</h2>
+          <button class="flex items-center gap-1 text-[12px] font-semibold text-slate-400 hover:text-indigo-600 border border-slate-200 hover:border-indigo-300 px-2.5 py-1 rounded-lg cursor-pointer transition-all">
+            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg> Add
+          </button>
+        </div>
+        <div>
+          <button *ngFor="let task of tasks; let isLast = last; trackBy: trackByTaskId"
+                  type="button"
+                  (click)="toggleTask(task.id)"
+                  class="group flex w-full items-center gap-3 py-2.5 cursor-pointer text-left"
+                  [ngClass]="!isLast ? 'border-b border-slate-50' : ''">
+            <div class="w-4 h-4 rounded-[4px] flex-shrink-0 border-[1.5px] flex items-center justify-center transition-all duration-200"
+                 [ngClass]="task.done ? 'bg-indigo-500 border-indigo-500' : 'border-slate-300 group-hover:border-indigo-300'">
+              <svg *ngIf="task.done" class="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="3">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <span class="flex-1 text-[13px] transition-all duration-200"
+                  [ngClass]="task.done ? 'text-slate-400 line-through' : 'text-slate-700'">{{ task.text }}</span>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0"
+                  [ngClass]="taskPriorityClasses(task.priority)">{{ task.priority }}</span>
+          </button>
+        </div>
+      </div>
+
+    </div><!-- /activity+tasks -->
+  </div><!-- /LEFT COLUMN -->
+
+  <!-- RIGHT COLUMN -->
+  <div class="space-y-5">
+
+    <!-- app-mini-calendar -->
+    <div class="bg-white rounded-2xl p-5 border border-slate-100">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-[14px] font-bold text-slate-900">March 2026</h2>
+        <div class="flex gap-1">
+          <button class="w-7 h-7 rounded-[7px] bg-slate-50 border border-slate-200 flex items-center justify-center hover:bg-slate-100 transition-colors cursor-pointer">
+            <svg class="w-3 h-3 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+          </button>
+          <button class="w-7 h-7 rounded-[7px] bg-slate-50 border border-slate-200 flex items-center justify-center hover:bg-slate-100 transition-colors cursor-pointer">
+            <svg class="w-3 h-3 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+      <!-- Weekday headers -->
+      <div class="grid grid-cols-7 mb-1">
+        <div class="text-center text-[10px] font-bold text-slate-400 py-1">Su</div>
+        <div class="text-center text-[10px] font-bold text-slate-400 py-1">Mo</div>
+        <div class="text-center text-[10px] font-bold text-slate-400 py-1">Tu</div>
+        <div class="text-center text-[10px] font-bold text-slate-400 py-1">We</div>
+        <div class="text-center text-[10px] font-bold text-slate-400 py-1">Th</div>
+        <div class="text-center text-[10px] font-bold text-slate-400 py-1">Fr</div>
+        <div class="text-center text-[10px] font-bold text-slate-400 py-1">Sa</div>
+      </div>
+      <div class="grid grid-cols-7 gap-0.5">
+        <button *ngFor="let day of calendarDays; trackBy: trackByCalendarDay"
+                class="w-full aspect-square flex items-center justify-center rounded-lg text-[12px] font-medium transition-all duration-150 cursor-pointer"
+                [ngClass]="calendarDayClasses(day)">
+          {{ day.day }}
+        </button>
+      </div>
+      <!-- Divider -->
+      <div class="h-px bg-slate-100 my-4"></div>
+      <p class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.6px] mb-3">Upcoming</p>
+      <div class="space-y-2.5">
+        <div class="flex items-center gap-3">
+          <div class="w-0.5 h-8 rounded-full flex-shrink-0 bg-indigo-500"></div>
+          <div><p class="text-[12px] font-semibold text-slate-800 leading-none">Sprint Planning</p><p class="text-[11px] text-slate-400 mt-0.5">Today, 2:00 PM</p></div>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="w-0.5 h-8 rounded-full flex-shrink-0 bg-amber-400"></div>
+          <div><p class="text-[12px] font-semibold text-slate-800 leading-none">Design Review</p><p class="text-[11px] text-slate-400 mt-0.5">Tomorrow, 10:00 AM</p></div>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="w-0.5 h-8 rounded-full flex-shrink-0 bg-emerald-500"></div>
+          <div><p class="text-[12px] font-semibold text-slate-800 leading-none">Q2 Kickoff</p><p class="text-[11px] text-slate-400 mt-0.5">Mar 20, 9:00 AM</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- app-team-widget -->
+    <div class="bg-white rounded-2xl p-5 border border-slate-100">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-[14px] font-bold text-slate-900">Team</h2>
+        <button class="text-[12px] font-semibold text-indigo-500 hover:text-indigo-700 transition-colors cursor-pointer">Manage</button>
+      </div>
+      <div>
+        <div class="flex items-center gap-3 py-2.5 border-b border-slate-50">
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center text-white text-[12px] font-bold bg-gradient-to-br from-indigo-400 to-violet-500 flex-shrink-0">AC</div>
+          <div class="flex-1"><p class="text-[13px] font-semibold text-slate-800 leading-none">Alex Chen</p><p class="text-[11px] text-slate-400 mt-0.5">Frontend Dev</p></div>
+          <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">online</span>
+        </div>
+        <div class="flex items-center gap-3 py-2.5 border-b border-slate-50">
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center text-white text-[12px] font-bold bg-gradient-to-br from-emerald-400 to-teal-500 flex-shrink-0">SM</div>
+          <div class="flex-1"><p class="text-[13px] font-semibold text-slate-800 leading-none">Sarah Miller</p><p class="text-[11px] text-slate-400 mt-0.5">UI Designer</p></div>
+          <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">online</span>
+        </div>
+        <div class="flex items-center gap-3 py-2.5 border-b border-slate-50">
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center text-white text-[12px] font-bold bg-gradient-to-br from-amber-400 to-orange-500 flex-shrink-0">JK</div>
+          <div class="flex-1"><p class="text-[13px] font-semibold text-slate-800 leading-none">Jamie Kim</p><p class="text-[11px] text-slate-400 mt-0.5">Backend Dev</p></div>
+          <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-600">away</span>
+        </div>
+        <div class="flex items-center gap-3 py-2.5 border-b border-slate-50">
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center text-white text-[12px] font-bold bg-gradient-to-br from-red-400 to-rose-500 flex-shrink-0">RP</div>
+          <div class="flex-1"><p class="text-[13px] font-semibold text-slate-800 leading-none">Ryan Park</p><p class="text-[11px] text-slate-400 mt-0.5">DevOps Eng.</p></div>
+          <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">offline</span>
+        </div>
+        <div class="flex items-center gap-3 py-2.5">
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center text-white text-[12px] font-bold bg-gradient-to-br from-violet-400 to-purple-500 flex-shrink-0">LN</div>
+          <div class="flex-1"><p class="text-[13px] font-semibold text-slate-800 leading-none">Lily Nguyen</p><p class="text-[11px] text-slate-400 mt-0.5">QA Engineer</p></div>
+          <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">online</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- app-sprint-donut -->
+    <div class="bg-white rounded-2xl p-5 border border-slate-100">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-[14px] font-bold text-slate-900">Sprint Progress</h2>
+        <span class="text-[11px] font-bold bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full">Week 11</span>
+      </div>
+      <div class="flex items-center gap-5">
+        <div class="flex-shrink-0">
+          <svg width="90" height="90" viewBox="0 0 90 90">
+            <circle cx="45" cy="45" r="36" fill="none" stroke="#F1F5F9" stroke-width="10"/>
+            <circle cx="45" cy="45" r="36" fill="none" stroke="#6366f1" stroke-width="10"
+                    stroke-dasharray="226" stroke-dashoffset="68" stroke-linecap="round"
+                    transform="rotate(-90 45 45)"/>
+            <text x="45" y="49" text-anchor="middle" font-size="16" font-weight="700" fill="#0f172a" font-family="DM Sans, sans-serif">70%</text>
+          </svg>
+        </div>
+        <div class="flex-1 space-y-3">
+          <div>
+            <div class="flex justify-between text-[12px] mb-1"><span class="text-slate-500">Completed</span><span class="font-semibold text-slate-800">42 tasks</span></div>
+            <div class="h-1 bg-slate-100 rounded-full overflow-hidden"><div class="h-full rounded-full" style="width:70%;background:#6366f1;"></div></div>
+          </div>
+          <div>
+            <div class="flex justify-between text-[12px] mb-1"><span class="text-slate-500">In Progress</span><span class="font-semibold text-slate-800">11 tasks</span></div>
+            <div class="h-1 bg-slate-100 rounded-full overflow-hidden"><div class="h-full rounded-full" style="width:18%;background:#F59E0B;"></div></div>
+          </div>
+          <div>
+            <div class="flex justify-between text-[12px] mb-1"><span class="text-slate-500">Remaining</span><span class="font-semibold text-slate-800">7 tasks</span></div>
+            <div class="h-1 bg-slate-100 rounded-full overflow-hidden"><div class="h-full rounded-full" style="width:12%;background:#EF4444;"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /RIGHT COLUMN -->
+
+</div><!-- /main grid -->

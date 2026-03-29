@@ -2,16 +2,20 @@ package com.rms.polkole.controller;
 
 import com.rms.polkole.dto.LoginDTO;
 import com.rms.polkole.dto.LoginResponseDTO;
+import com.rms.polkole.dto.FullUserDTO;
 import com.rms.polkole.dto.UserDTO;
 import com.rms.polkole.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/user")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:4200")
+//@CrossOrigin(origins = "http://localhost:4200")
+@CrossOrigin()
 public class UserController {
 
     private final UserService userService;
@@ -34,6 +38,11 @@ public class UserController {
     @GetMapping("/profile")
     public ResponseEntity<UserDTO> getProfile() {
         return ResponseEntity.ok(userService.getCurrentAuthenticatedUser());
+    }
+
+    @GetMapping("/get-all")
+    public ResponseEntity<List<FullUserDTO>> getAllUsers() {
+        return ResponseEntity.ok( userService.getAllUserDtos());
     }
 
 }

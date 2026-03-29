@@ -1,5 +1,6 @@
 package com.rms.polkole.service.impl;
 
+import com.rms.polkole.dto.FullUserDTO;
 import com.rms.polkole.dto.LoginDTO;
 import com.rms.polkole.dto.LoginResponseDTO;
 import com.rms.polkole.dto.UserDTO;
@@ -96,20 +97,18 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
-    public List<UserDTO> getAllUserDtos() {
+    public List<FullUserDTO> getAllUserDtos() {
         List<User> users = userRepository.findAll();
 
         return users.stream()
                 .map(user -> {
-                    UserDTO dto = modelMapper.map(user, UserDTO.class);
-                    // Handle manual overrides if names don't match exactly
-                    dto.setPassword(null);
-                    if (user.getRole() != null) {
-                        dto.setRole(user.getRole().getName());
-                    }
+                    FullUserDTO dto = modelMapper.map(user, FullUserDTO.class);
+//                    dto.setRole(user.getRole() != null ? user.getRole().getName() : null);
+//                    dto.setStatus(user.getStatus() != null ? user.getStatus().getName() : null);
                     return dto;
                 })
-                .toList();}
+                .toList();
+    }
     @Override
     public UserDTO updateUser(Integer id, UserDTO updateUser) {
         return null;
