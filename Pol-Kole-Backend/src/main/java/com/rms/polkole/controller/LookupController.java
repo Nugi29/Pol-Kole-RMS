@@ -1,6 +1,6 @@
 package com.rms.polkole.controller;
 
-import com.rms.polkole.dto.LookupDTO;
+import com.rms.polkole.dto.Lookup;
 import com.rms.polkole.service.LookupService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -19,17 +19,18 @@ public class LookupController {
     private final LookupService service;
 
     @GetMapping("/menu-categories")
-    public List<LookupDTO> getAllMenuCategories(){
+    public List<Lookup> getAllMenuCategories(){
         return service.getAllMenuCategories();
     }
     @GetMapping("/user-roles")
-    public List<LookupDTO> getAllUserRoles(){
+    public List<Lookup> getAllUserRoles(){
         return service.getAllUserRoles();
     }
     @GetMapping("/user-statuses")
-    public List<LookupDTO> getAllUserstatuses(){
+    public List<Lookup> getAllUserstatuses(){
         return service.getAllUserStatuses();
     }
 
 
 }
+

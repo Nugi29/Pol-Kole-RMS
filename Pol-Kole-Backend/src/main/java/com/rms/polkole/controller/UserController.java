@@ -1,9 +1,9 @@
 package com.rms.polkole.controller;
 
-import com.rms.polkole.dto.LoginDTO;
-import com.rms.polkole.dto.LoginResponseDTO;
-import com.rms.polkole.dto.FullUserDTO;
-import com.rms.polkole.dto.UserDTO;
+import com.rms.polkole.dto.Login;
+import com.rms.polkole.dto.LoginResponse;
+import com.rms.polkole.dto.FullUser;
+import com.rms.polkole.dto.User;
 import com.rms.polkole.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -26,23 +26,25 @@ public class UserController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<String> register(@RequestBody UserDTO request) {
+    public ResponseEntity<String> register(@RequestBody User request) {
         return ResponseEntity.ok(userService.register(request));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponseDTO> login(@RequestBody LoginDTO request) {
+    public ResponseEntity<LoginResponse> login(@RequestBody Login request) {
         return ResponseEntity.ok(userService.login(request));
     }
 
     @GetMapping("/profile")
-    public ResponseEntity<UserDTO> getProfile() {
+    public ResponseEntity<User> getProfile() {
         return ResponseEntity.ok(userService.getCurrentAuthenticatedUser());
     }
 
     @GetMapping("/get-all")
-    public ResponseEntity<List<FullUserDTO>> getAllUsers() {
+    public ResponseEntity<List<FullUser>> getAllUsers() {
         return ResponseEntity.ok( userService.getAllUserDtos());
     }
 
 }
+
+

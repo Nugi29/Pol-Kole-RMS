@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface LookupService {
 
-    List<LookupDTO> getAllUserRoles();
-    List<LookupDTO> getAllUserStatuses();
-    List<LookupDTO> getAllMenuCategories();
+    List<Lookup> getAllUserRoles();
+    List<Lookup> getAllUserStatuses();
+    List<Lookup> getAllMenuCategories();
 }

@@ -1,11 +1,11 @@
 package com.rms.polkole.service.impl;
 
-import com.rms.polkole.dto.FullUserDTO;
-import com.rms.polkole.dto.LoginDTO;
-import com.rms.polkole.dto.LoginResponseDTO;
-import com.rms.polkole.dto.UserDTO;
-import com.rms.polkole.entity.User;
-import com.rms.polkole.entity.Userrole;
+import com.rms.polkole.dto.FullUser;
+import com.rms.polkole.dto.Login;
+import com.rms.polkole.dto.LoginResponse;
+import com.rms.polkole.dto.User;
+import com.rms.polkole.entity.UserEntity;
+import com.rms.polkole.entity.UserroleEntity;
 import com.rms.polkole.repository.UserRepository;
 import com.rms.polkole.repository.UserroleRepository;
 import com.rms.polkole.util.JwtUtil;
@@ -32,16 +32,16 @@ public class UserServiceImpl implements UserService{
     private final ModelMapper modelMapper;
 
     @Override
-    public String register(UserDTO dto) {
+    public String register(User dto) {
         if (userRepository.findByEmail(dto.getEmail()).isPresent()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "User already exists with email: " + dto.getEmail());
         }
 
         String requestedRole = dto.getRole() == null ? "USER" : dto.getRole().trim();
-        Userrole role = roleRepository.findByNameIgnoreCase(requestedRole)
+        UserroleEntity role = roleRepository.findByNameIgnoreCase(requestedRole)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid role: " + requestedRole));
 
-        User user = User.builder()
+        UserEntity user = UserEntity.builder()
                 .name(dto.getName())
                 .email(dto.getEmail())
                 .password(passwordEncoder.encode(dto.getPassword()))
@@ -53,8 +53,8 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
-    public LoginResponseDTO login(LoginDTO dto) {
-        User user = userRepository.findByEmail(dto.getEmail())
+    public LoginResponse login(Login dto) {
+        UserEntity user = userRepository.findByEmail(dto.getEmail())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password"));
 
         if (!passwordEncoder.matches(dto.getPassword(), user.getPassword())) {
@@ -63,7 +63,7 @@ public class UserServiceImpl implements UserService{
 
         String token = jwtUtil.generateToken(user.getEmail());
 
-        return LoginResponseDTO.builder()
+        return LoginResponse.builder()
                 .token(token)
                 .userId(user.getId())
                 .name(user.getName())
@@ -73,17 +73,17 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
-    public UserDTO getCurrentAuthenticatedUser() {
+    public User getCurrentAuthenticatedUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No authenticated user found");
         }
 
         String email = authentication.getName();
-        User user = userRepository.findByEmail(email)
+        UserEntity user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found with email: " + email));
 
-        return UserDTO.builder()
+        return User.builder()
                 .name(user.getName())
                 .email(user.getEmail())
                 .password(null)
@@ -92,17 +92,17 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
-    public UserDTO getUserById(Integer id) {
+    public User getUserById(Integer id) {
         return null;
     }
 
     @Override
-    public List<FullUserDTO> getAllUserDtos() {
-        List<User> users = userRepository.findAll();
+    public List<FullUser> getAllUserDtos() {
+        List<UserEntity> users = userRepository.findAll();
 
         return users.stream()
                 .map(user -> {
-                    FullUserDTO dto = modelMapper.map(user, FullUserDTO.class);
+                    FullUser dto = modelMapper.map(user, FullUser.class);
 //                    dto.setRole(user.getRole() != null ? user.getRole().getName() : null);
 //                    dto.setStatus(user.getStatus() != null ? user.getStatus().getName() : null);
                     return dto;
@@ -110,7 +110,7 @@ public class UserServiceImpl implements UserService{
                 .toList();
     }
     @Override
-    public UserDTO updateUser(Integer id, UserDTO updateUser) {
+    public User updateUser(Integer id, User updateUser) {
         return null;
     }
 
@@ -119,3 +119,4 @@ public class UserServiceImpl implements UserService{
 
     }
 }
+
