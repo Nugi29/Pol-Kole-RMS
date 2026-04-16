@@ -1,0 +1,15 @@
+<mat-card class="dialog-card" role="dialog" aria-modal="true" aria-label="Confirmation dialog">
+  <mat-card-header class="dialog-header">
+    <mat-card-title>{{ data.heading }}</mat-card-title>
+    <mat-card-subtitle>Please confirm your action</mat-card-subtitle>
+  </mat-card-header>
+
+  <mat-card-content class="dialog-content">
+    <p *ngFor="let line of lines" class="dialog-line">{{ line }}</p>
+  </mat-card-content>
+
+  <mat-dialog-actions class="dialog-actions" align="end">
+    <button mat-stroked-button [mat-dialog-close]="false">No</button>
+    <button mat-raised-button color="primary" [mat-dialog-close]="true">Yes</button>
+  </mat-dialog-actions>
+</mat-card>

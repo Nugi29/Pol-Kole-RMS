@@ -1,39 +1,21 @@
-import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
-import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { AfterViewInit, Component, HostListener, OnInit, ViewChild } from '@angular/core';
+import { FormBuilder, FormGroup } from '@angular/forms';
+import { MatDialog } from '@angular/material/dialog';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatTableDataSource } from '@angular/material/table';
-import { LookupService } from '../../../services/lookup.service';
+
+import { LookupRes, LookupService } from '../../../services/lookup.service';
 import { FullUserRes, UserService } from '../../../services/user.service';
-
-interface Employee {
-  id: number;
-  callingname: string;
-}
-
-interface Role {
-  id: number;
-  name: string;
-}
-interface Status {
-  id: number;
-  name: string;
-}
-
-interface OptionItem {
-  id: number;
-  name: string;
-}
-
-// interface UserRecord {
-//   id: number;
-//   employee: Employee | null;
-//   username: string;
-//   description: string;
-//   roles: Role[];
-//   status: OptionItem | null;
-//   type: OptionItem | null;
-//   createdOn: Date | null;
-// }
+import { ConfirmComponent } from '../../../shared/dialog/confirm/confirm.component';
+import { MessageComponent } from '../../../shared/dialog/message/message.component';
+import { compareById } from '../../../shared/utils/ui-utils';
+import {
+  createUserSearchFilter,
+  matchesUserSearch,
+  toCreateUserPayload,
+  toUpdateUserPayload,
+  UserFormValue,
+} from './user.helpers';
 
 @Component({
   selector: 'app-user',
@@ -44,26 +26,37 @@ interface OptionItem {
 export class UserComponent implements OnInit, AfterViewInit {
   @ViewChild(MatPaginator) paginator!: MatPaginator;
 
-  roles: Array<Role> = [];
-  statuses: Array<Status> = [];
-  users: Array<FullUserRes> = [];
+  gridCols = 12;
+  formColSpan = 5;
+  formRowSpan = 6;
+  searchColSpan = 7;
+  searchRowSpan = 2;
+  tableColSpan = 7;
+  tableRowSpan = 4;
 
-  User: FullUserRes[] = [];
+  roles: LookupRes[] = [];
+  statuses: LookupRes[] = [];
+  users: FullUserRes[] = [];
 
-  readonly displayedColumns = [ 'name','email', 'status', 'type', 'createdOn'];
+  readonly displayedColumns = ['name', 'email', 'status', 'type', 'createdOn'];
   readonly data = new MatTableDataSource<FullUserRes>([]);
+  readonly compareLookupById = compareById;
 
-  enaadd = true;
-  enaupd = false;
-  enadel = false;
+  canAdd = true;
+  canUpdate = false;
+  canDelete = false;
+  selectedRow: FullUserRes | null = null;
 
-  form!: FormGroup;
-  ssearch!: FormGroup;
+  form: FormGroup;
+  searchForm: FormGroup;
+
+  private readonly dialogWidth = '420px';
 
   constructor(
     private readonly fb: FormBuilder,
     private readonly ls: LookupService,
     private readonly us: UserService,
+    private readonly dialog: MatDialog,
   ) {
     this.form = this.fb.group(
       {
@@ -72,31 +65,49 @@ export class UserComponent implements OnInit, AfterViewInit {
         password: [''],
         confirmpassword: [''],
         phone: [''],
-        userroles: [null as Role | null],
-        userstatuses: [null as Status | null],
+        userroles: [null as LookupRes | null],
+        userstatuses: [null as LookupRes | null],
         updated: [{ value: new Date().toLocaleString(), disabled: true }],
       },
       { updateOn: 'change' },
     );
 
-    this.ssearch = this.fb.group({
+    this.searchForm = this.fb.group({
       ssusername: [''],
       ssrole: [null as number | null],
     });
+
+    this.form.get('email')?.valueChanges.subscribe(() => {
+      this.clearDuplicateEmailError();
+    });
+
+    this.data.filterPredicate = (row: FullUserRes, filter: string): boolean => matchesUserSearch(row, filter);
   }
 
   ngOnInit(): void {
-    this.ls.getAllUserRoles().subscribe((roles: Role[]) => {
-      this.roles = roles;
-    });
-    this.ls.getAllUserStatuses().subscribe((status: Status[]) => {
-      this.statuses = status;
-    });
+    this.syncLayout(window.innerWidth);
+    this.loadLookups();
     this.loadTable();
   }
 
   ngAfterViewInit(): void {
     this.data.paginator = this.paginator;
+  }
+
+  @HostListener('window:resize', ['$event'])
+  onWindowResize(event: Event): void {
+    const target = event.target as Window;
+    this.syncLayout(target.innerWidth);
+  }
+
+  private loadLookups(): void {
+    this.ls.getAllUserRoles().subscribe((roles: LookupRes[]) => {
+      this.roles = roles;
+    });
+
+    this.ls.getAllUserStatuses().subscribe((status: LookupRes[]) => {
+      this.statuses = status;
+    });
   }
 
   loadTable(): void {
@@ -107,119 +118,217 @@ export class UserComponent implements OnInit, AfterViewInit {
   }
 
   add(): void {
-    // if (this.form.invalid) {
-    //   this.form.markAllAsTouched();
-    //   return;
-    // }
-    //
-    // const value = this.form.getRawValue();
-    // const newUser: UserRecord = {
-    //   id: Date.now(),
-    //   employee: value.employee,
-    //   username: value.username,
-    //   description: value.description,
-    //   roles: value.userroles,
-    //   status: value.usestatus,
-    //   type: value.usetype,
-    //   createdOn: value.docreated,
-    // };
-    //
-    // this.data.data = [newUser, ...this.data.data];
-    // this.clear();
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+
+    const payload = toCreateUserPayload(this.form.getRawValue() as UserFormValue);
+    this.us.create(payload).subscribe({
+      next: () => {
+        this.loadTable();
+        this.clear();
+        this.showMessage('Success', 'User created successfully.');
+      },
+      error: (error) => {
+        if (error?.status === 409) {
+          this.setDuplicateEmailError();
+          this.showMessage('Duplicate Email', 'A user with this email already exists.');
+          return;
+        }
+
+        console.error('Failed to create user', error);
+        this.showMessage('Create Failed', 'Unable to create the user right now. Please try again.');
+      },
+    });
+  }
+
+  enableButtons(add: boolean, upd: boolean, del: boolean): void {
+    this.canAdd = add;
+    this.canUpdate = upd;
+    this.canDelete = del;
   }
 
   update(): void {
-    // if (!this.selectedrow) {
-    //   return;
-    // }
-    //
-    // const value = this.form.getRawValue();
-    // this.data.data = this.data.data.map((item) =>
-    //   item.id === this.selectedrow!.id
-    //     ? {
-    //         ...item,
-    //         employee: value.employee,
-    //         username: value.username,
-    //         description: value.description,
-    //         roles: value.userroles,
-    //         status: value.usestatus,
-    //         type: value.usetype,
-    //         createdOn: value.docreated,
-    //       }
-    //     : item,
-    // );
+    if (!this.selectedRow) {
+      return;
+    }
+
+    const selectedId = this.selectedRow.id;
+    const selectedName = this.selectedRow.name;
+    const payload = toUpdateUserPayload(this.form.getRawValue() as UserFormValue, selectedId);
+
+    this.us.update(selectedId, payload).subscribe({
+      next: () => {
+        this.loadTable();
+        this.clear();
+        this.showMessage('Success', `User "${selectedName}" updated successfully.`);
+      },
+      error: (error) => {
+        if (error?.status === 409) {
+          this.setDuplicateEmailError();
+          this.showMessage('Duplicate Email', 'A user with this email already exists.');
+          return;
+        }
+
+        console.error('Failed to update user', error);
+        this.showMessage('Update Failed', 'Unable to update the user right now. Please try again.');
+      },
+    });
   }
 
   delete(): void {
-    // if (!this.selectedrow) {
-    //   return;
-    // }
-    //
-    // this.data.data = this.data.data.filter((item) => item.id !== this.selectedrow!.id);
-    // this.clear();
+    if (!this.selectedRow) {
+      return;
+    }
+
+    const selectedId = this.selectedRow.id;
+    const selectedName = this.selectedRow.name;
+
+    this.confirmAction('Confirm Delete', `Are you sure you want to delete "${selectedName}"?<br>This action cannot be undone.`)
+      .subscribe((confirmed: boolean) => {
+        if (confirmed) {
+          this.deleteConfirmed(selectedId, selectedName);
+        }
+      });
+  }
+
+  private deleteConfirmed(selectedId: number, selectedName: string): void {
+    this.us.delete(selectedId).subscribe({
+      next: () => {
+        this.loadTable();
+        this.clear();
+        this.showMessage('Deleted', `User "${selectedName}" deleted successfully.`);
+      },
+      error: (error) => {
+        console.error('Failed to delete user', error);
+        this.showMessage('Delete Failed', 'Unable to delete the user right now. Please try again.');
+      },
+    });
+  }
+
+  requestClear(): void {
+    this.confirmAction('Confirm Clear', 'Do you want to clear all form fields?<br>Unsaved changes will be lost.').subscribe((confirmed: boolean) => {
+      if (confirmed) {
+        this.clear();
+        this.showMessage('Cleared', 'Form fields cleared successfully.');
+      }
+    });
   }
 
   clear(): void {
-    // this.form.reset({
-    //   employee: null,
-    //   username: '',
-    //   password: '',
-    //   confirmpassword: '',
-    //   description: '',
-    //   userroles: [],
-    //   tocreated: new Date().toLocaleTimeString(),
-    //   docreated: new Date(),
-    //   usestatus: null,
-    //   usetype: null,
-    // });
-    // this.selectedrow = null;
-    // this.enaadd = true;
-    // this.enaupd = false;
-    // this.enadel = false;
+    this.form.reset({
+      username: '',
+      email: '',
+      password: '',
+      confirmpassword: '',
+      phone: '',
+      userroles: null,
+      userstatuses: null,
+      updated: this.now(),
+    });
+    this.clearDuplicateEmailError();
+    this.selectedRow = null;
+    this.enableButtons(true, false, false);
+  }
+
+  fillForm(row: FullUserRes): void {
+    this.selectedRow = row;
+    const selectedRole = this.roles.find((item) => item.id === row.role?.id) ?? row.role;
+    const selectedStatus = this.statuses.find((item) => item.id === row.status?.id) ?? row.status;
+
+    this.form.patchValue({
+      username: row.name,
+      email: row.email,
+      password: '',
+      confirmpassword: '',
+      phone: row.phone,
+      userroles: selectedRole,
+      userstatuses: selectedStatus,
+      updated: this.now(),
+    });
+    this.enableButtons(false, true, true);
+   }
+
+  private setDuplicateEmailError(): void {
+    const emailControl = this.form.get('email');
+    if (!emailControl) {
+      return;
+    }
+
+    emailControl.setErrors(
+      emailControl.errors ? { ...emailControl.errors, duplicateEmail: true } : { duplicateEmail: true },
+    );
+    emailControl.markAsTouched();
+  }
+
+  private clearDuplicateEmailError(): void {
+    const emailControl = this.form.get('email');
+    if (!emailControl?.errors?.['duplicateEmail']) {
+      return;
+    }
+
+    const { duplicateEmail, ...otherErrors } = emailControl.errors;
+    emailControl.setErrors(Object.keys(otherErrors).length ? otherErrors : null);
+  }
+
+  private showMessage(heading: string, message: string): void {
+    this.dialog.open(MessageComponent, {
+      width: this.dialogWidth,
+      data: { heading, message },
+    });
   }
 
   btnSearchMc(): void {
-    // const { ssemployee, ssusername, ssrole } = this.ssearch.getRawValue();
-    //
-    // this.data.filterPredicate = (row: UserRecord) => {
-    //   const employeeOk =
-    //     !ssemployee ||
-    //     row.employee?.callingname.toLowerCase().includes(String(ssemployee).toLowerCase());
-    //   const usernameOk =
-    //     !ssusername || row.username.toLowerCase().includes(String(ssusername).toLowerCase());
-    //   const roleOk = !ssrole || row.roles.some((role) => role.id === ssrole);
-    //   return Boolean(employeeOk && usernameOk && roleOk);
-    // };
-    //
-    // this.data.filter = `${Date.now()}`;
+    this.data.filter = createUserSearchFilter(this.searchForm.getRawValue());
+    this.paginator?.firstPage();
   }
 
   btnSearchClearMc(): void {
-    this.ssearch.reset({ ssusername: '', ssrole: null });
+    this.searchForm.reset({ ssusername: '', ssrole: null });
     this.data.filter = '';
+    this.data.data = this.users;
+    this.paginator?.firstPage();
   }
 
-  // fillForm(row: UserRecord): void {
-    // this.selectedrow = row;
-    // this.form.patchValue({
-    //   employee: row.employee,
-    //   username: row.username,
-    //   password: '',
-    //   confirmpassword: '',
-    //   description: row.description,
-    //   userroles: row.roles,
-    //   tocreated: new Date().toLocaleTimeString(),
-    //   docreated: row.createdOn,
-    //   usestatus: row.status,
-    //   usetype: row.type,
-    // });
-    //
-    // this.enaadd = false;
-    // this.enaupd = true;
-    // this.enadel = true;
-  // }
+  private confirmAction(heading: string, message: string) {
+    return this.dialog.open(ConfirmComponent, {
+      width: this.dialogWidth,
+      data: { heading, message },
+    }).afterClosed();
+  }
 
-  // getRoleNames(row: UserRecord): string {
-  //   return row.roles.map((item) => item.name).join(', ');
-  // }
+  private now(): string {
+    return new Date().toLocaleString();
+  }
+
+  private syncLayout(width: number): void {
+    if (width < 900) {
+      this.applyCompactLayout();
+      return;
+    }
+
+    this.applyDesktopLayout();
+  }
+
+  private applyCompactLayout(): void {
+    this.gridCols = 1;
+    this.formColSpan = 1;
+    this.formRowSpan = 4;
+    this.searchColSpan = 1;
+    this.searchRowSpan = 1;
+    this.tableColSpan = 1;
+    this.tableRowSpan = 3;
+  }
+
+  private applyDesktopLayout(): void {
+    this.gridCols = 12;
+    this.formColSpan = 5;
+    this.formRowSpan = 6;
+    this.searchColSpan = 7;
+    this.searchRowSpan = 2;
+    this.tableColSpan = 7;
+    this.tableRowSpan = 4;
+  }
+
 }

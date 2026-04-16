@@ -14,6 +14,7 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
+import { MatDialogModule } from '@angular/material/dialog';
 
 import { AppRoutingModule } from './app-routing-module';
 import { AppComponent } from './app.component';
@@ -27,9 +28,17 @@ import { InputText } from 'primeng/inputtext';
 import { providePrimeNG } from 'primeng/config';
 import { HomeComponent } from './views/home/home.component';
 import { UserComponent } from './views/modules/user/user.component';
+import { ConfirmComponent } from './shared/dialog/confirm/confirm.component';
+import { MessageComponent } from './shared/dialog/message/message.component';
 
 @NgModule({
-  declarations: [AppComponent, LoginComponent, MainwindowComponent, HomeComponent, UserComponent],
+  declarations: [
+    AppComponent,
+    LoginComponent,
+    MainwindowComponent,
+    HomeComponent,
+    UserComponent,
+  ],
   imports: [
     BrowserModule,
     AppRoutingModule,
@@ -48,6 +57,9 @@ import { UserComponent } from './views/modules/user/user.component';
     MatNativeDateModule,
     MatTableModule,
     MatPaginatorModule,
+    MatDialogModule,
+    ConfirmComponent,
+    MessageComponent,
     ButtonLabel,
     ButtonDirective,
     InputText,

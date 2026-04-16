@@ -29,10 +29,12 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                                .requestMatchers("/api/auth/**").permitAll()
-                                .requestMatchers("/api/user/login", "/api/user/register", "/api/user/**").permitAll()
-                                .requestMatchers("/api/list/**").permitAll()
-                                .anyRequest().authenticated()
+//                                .requestMatchers("/api/auth/**").permitAll()
+//                                .requestMatchers("/api/user/login", "/api/user/register", "/api/user/**").permitAll()
+//                                .requestMatchers("/api/list/**").permitAll()
+//                                .requestMatchers("/api/user/**").permitAll()
+//                                .anyRequest().authenticated()
+                                  .anyRequest().permitAll()
                 )
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)

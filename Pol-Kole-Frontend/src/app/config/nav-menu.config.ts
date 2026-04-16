@@ -146,12 +146,8 @@ export const NAV_MENU = [
   {
     name: 'Users',
     icon: 'admin_panel_settings',
+    route: '/main/users',
     roles: ['ADMIN'],
-    children: [
-      { name: 'User List', route: '/main/users', roles: ['ADMIN'] },
-      // { name: 'Add User', route: '/users/create', roles: ['ADMIN'] },
-      { name: 'Roles & Permissions', route: '/main/users/roles', roles: ['ADMIN'] },
-    ],
   },
 
   {

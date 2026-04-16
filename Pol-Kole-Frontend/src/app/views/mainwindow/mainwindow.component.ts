@@ -1,15 +1,15 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { NAV_MENU, NavMenuItem } from '../../config/nav-menu.config';
-
 @Component({
   selector: 'app-mainwindow',
   standalone: false,
   templateUrl: './mainwindow.component.html',
-  styleUrl: './mainwindow.component.css',
+  styleUrls: ['./mainwindow.component.css'],
 })
 export class MainwindowComponent implements OnInit {
-  role = '';
+  role: string = '';
+  name: string = '';
   isSidebarCollapsed = false;
   navMenu: NavMenuItem[] = [];
   expandedGroups: Record<string, boolean> = {};
@@ -28,29 +28,24 @@ export class MainwindowComponent implements OnInit {
     settings: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M12 12m-3 0a3 3 0 106 0 3 3 0 10-6 0',
     sync_alt: 'M5 7h11M13 3l4 4-4 4M19 17H8M11 13l-4 4 4 4',
   };
-
   constructor(private readonly router: Router) {}
-
   ngOnInit(): void {
     this.role = localStorage.getItem('role') || '';
+    this.name = this.getDisplayName();
     this.currentRoles = this.extractRoles(this.role);
     this.navMenu = this.filterNavMenuByRole(NAV_MENU);
-
     for (const item of this.navMenu) {
       if (item.children?.length) {
         this.expandedGroups[item.name] = true;
       }
     }
   }
-
   toggleSidebar(): void {
     this.isSidebarCollapsed = !this.isSidebarCollapsed;
   }
-
   toggleGroup(group: string): void {
     this.expandedGroups[group] = !this.expandedGroups[group];
   }
-
   onGroupClick(item: NavMenuItem): void {
     if (this.isSidebarCollapsed) {
       const targetRoute = item.route ?? item.children?.[0]?.route;
@@ -59,27 +54,32 @@ export class MainwindowComponent implements OnInit {
         return;
       }
     }
-
     this.toggleGroup(item.name);
   }
-
   isGroupExpanded(group: string): boolean {
     return !!this.expandedGroups[group];
   }
-
   getSubnavHeight(item: NavMenuItem): number {
     return (item.children?.length ?? 0) * 42;
   }
-
   getIconPath(icon: string): string {
     return this.iconPaths[icon] || 'M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z';
   }
-
+  private getDisplayName(): string {
+    const savedName = localStorage.getItem('name')?.trim();
+    if (savedName) {
+      return savedName;
+    }
+    const savedEmail = localStorage.getItem('email')?.trim();
+    if (!savedEmail) {
+      return '';
+    }
+    return savedEmail.split('@')[0]?.trim() || '';
+  }
   private extractRoles(rawRoles: string): Set<string> {
     if (!rawRoles?.trim()) {
       return new Set<string>();
     }
-
     if (rawRoles.trim().startsWith('[')) {
       try {
         const parsedRoles = JSON.parse(rawRoles);
@@ -90,48 +90,37 @@ export class MainwindowComponent implements OnInit {
         // Fall back to comma-separated parsing below.
       }
     }
-
     return new Set(rawRoles.split(',').map((role) => this.normalizeRole(role)).filter(Boolean));
   }
-
   private normalizeRole(role: string): string {
     return role.trim().toUpperCase();
   }
-
   private hasAccess(allowedRoles: string[]): boolean {
     if (this.currentRoles.size === 0) {
       return false;
     }
-
     return allowedRoles.some((role) => this.currentRoles.has(this.normalizeRole(role)));
   }
-
   private filterNavMenuByRole(menuItems: NavMenuItem[]): NavMenuItem[] {
     const visibleMenu: NavMenuItem[] = [];
-
     for (const item of menuItems) {
       const visibleChildren = item.children?.filter((child) => this.hasAccess(child.roles));
       const canAccessItem = this.hasAccess(item.roles);
-
       if (!canAccessItem) {
         continue;
       }
-
       if (item.children?.length) {
         if (!visibleChildren?.length) {
           continue;
         }
-
         visibleMenu.push({
           ...item,
           children: visibleChildren,
         });
         continue;
       }
-
       visibleMenu.push(item);
     }
-
     return visibleMenu;
   }
 }

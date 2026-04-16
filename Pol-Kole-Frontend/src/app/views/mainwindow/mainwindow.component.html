@@ -109,11 +109,11 @@
 
       <!-- User info -->
       <div *ngIf="!isSidebarCollapsed" class="text-left flex-1 min-w-0">
-        <p class="text-[11px] font-semibold text-slate-800 leading-tight truncate">Tom Cook</p>
+        <p class="text-[11px] font-semibold text-slate-800 leading-tight truncate">{{name}}</p>
         <p class="text-[11px] text-slate-400 leading-tight truncate mt-0.5">{{ role }}</p>
       </div>
       <div *ngIf="isSidebarCollapsed" class="text-left flex-1 min-w-0">
-        <p class="text-[12px] text-slate-800 leading-tight truncate mt-0.5">{{ role }}</p>
+        <p class="text-[12px] font-semibold text-slate-800 leading-tight truncate mt-0.5">{{ name }}</p>
       </div>
 
       <!-- More options icon -->

@@ -10,13 +10,16 @@ export interface LoginResponse {
   success?: boolean;
   token?: string;
   role?: string;
+  name?: string;
   data?: {
     token?: string;
     role?: string;
+    name?: string;
   };
   result?: {
     token?: string;
     role?: string;
+    name?: string;
   };
 }
 
@@ -32,3 +35,4 @@ export class AuthService {
     return this.http.post<LoginResponse>(`${this.backendUrl}/user/login`, data);
   }
 }
+

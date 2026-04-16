@@ -42,9 +42,17 @@ public class UserController {
 
     @GetMapping("/get-all")
     public ResponseEntity<List<FullUser>> getAllUsers() {
-        return ResponseEntity.ok( userService.getAllUserDtos());
+        return ResponseEntity.ok(userService.getAllUserDtos());
     }
 
+    @PutMapping("/update/{id}")
+    public ResponseEntity<User> updateUser(@PathVariable Integer id, @RequestBody User request) {
+        return ResponseEntity.ok(userService.updateUser(id, request));
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<Void> deleteUser(@PathVariable Integer id) {
+        userService.deleteUser(id);
+        return ResponseEntity.noContent().build();
+    }
 }
-
-

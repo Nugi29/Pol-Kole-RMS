@@ -1,0 +1,14 @@
+<mat-card class="dialog-card" role="dialog" aria-modal="true" aria-label="Message dialog">
+  <mat-card-header class="dialog-header">
+    <mat-card-title>{{ data.heading }}</mat-card-title>
+    <mat-card-subtitle>System message</mat-card-subtitle>
+  </mat-card-header>
+
+  <mat-card-content class="dialog-content">
+    <p *ngFor="let line of lines" class="dialog-line">{{ line }}</p>
+  </mat-card-content>
+
+  <mat-dialog-actions class="dialog-actions" align="end">
+    <button mat-raised-button color="primary" [mat-dialog-close]="true">OK</button>
+  </mat-dialog-actions>
+</mat-card>

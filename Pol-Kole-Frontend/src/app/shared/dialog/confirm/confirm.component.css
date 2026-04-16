@@ -1,0 +1,42 @@
+.dialog-card {
+  padding: 0;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 8px 20px rgba(23, 37, 84, 0.12);
+}
+
+.dialog-header {
+  background: linear-gradient(120deg, #3f51b5 0%, #1976d2 100%);
+  color: #fff;
+  padding: 12px 16px;
+}
+
+.dialog-header .mat-mdc-card-title,
+.dialog-header .mat-mdc-card-subtitle {
+  color: #fff;
+}
+
+.dialog-header .mat-mdc-card-subtitle {
+  opacity: 0.88;
+}
+
+.dialog-content {
+  padding: 14px 16px 4px;
+  color: #24324a;
+}
+
+.dialog-line {
+  margin: 0 0 8px;
+  line-height: 1.45;
+}
+
+.dialog-actions {
+  padding: 8px 16px 14px;
+  gap: 8px;
+}
+
+.dialog-actions button {
+  min-width: 90px;
+  min-height: 36px;
+  font-weight: 600;
+}
