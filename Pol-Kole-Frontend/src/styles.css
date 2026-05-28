@@ -72,9 +72,166 @@ mat-form-field input {
   color: #004664 !important;
 }
 
-.dark-mode {
-  filter: invert(100%) hue-rotate(180deg);
+/* Real Premium Dark Theme Variables */
+:root {
+  --bg-app: #f8fafc;
+  --bg-sidebar: #ffffff;
+  --bg-card: #ffffff;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --border-light: #f1f5f9;
+  --border-hover: #e2e8f0;
 }
+
+.dark {
+  --bg-app: #080c14;
+  --bg-sidebar: #0f172a;
+  --bg-card: #1e293b;
+  --text-main: #f9fafb;
+  --text-muted: #94a3b8;
+  --border-light: #334155;
+  --border-hover: #475569;
+}
+
+/* Global Elements styling to support smooth dark theme natively */
+html, body {
+  background-color: var(--bg-app);
+  color: var(--text-main);
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Apply CSS variables to cards, tables, inputs, sidebars */
+#sidebar {
+  background-color: var(--bg-sidebar) !important;
+  border-color: var(--border-light) !important;
+}
+
+#sidebar .nav-link:hover {
+  background-color: var(--border-light) !important;
+}
+
+#sidebar .bg-indigo-50 {
+  background-color: rgba(99, 102, 241, 0.15) !important;
+  color: #818cf8 !important;
+}
+
+#sidebar .text-slate-900 {
+  color: var(--text-main) !important;
+}
+
+#sidebar .text-slate-800 {
+  color: var(--text-main) !important;
+}
+
+#sidebar .border-slate-100 {
+  border-color: var(--border-light) !important;
+}
+
+#sidebar .border-slate-50 {
+  border-color: var(--border-light) !important;
+}
+
+main {
+  background-color: var(--bg-app) !important;
+}
+
+.bg-white {
+  background-color: var(--bg-card) !important;
+  transition: background-color 0.2s ease;
+}
+
+.border-slate-100 {
+  border-color: var(--border-light) !important;
+}
+
+.border-slate-50 {
+  border-color: var(--border-light) !important;
+}
+
+.text-slate-900 {
+  color: var(--text-main) !important;
+}
+
+.text-slate-805 {
+  color: var(--text-main) !important;
+}
+
+.text-slate-950 {
+  color: var(--text-main) !important;
+}
+
+.text-slate-800 {
+  color: var(--text-main) !important;
+}
+
+.text-slate-700 {
+  color: var(--text-muted) !important;
+}
+
+.text-slate-655 {
+  color: var(--text-muted) !important;
+}
+
+.text-slate-500 {
+  color: var(--text-muted) !important;
+}
+
+.text-slate-450 {
+  color: var(--text-muted) !important;
+}
+
+.text-slate-400 {
+  color: var(--text-muted) !important;
+}
+
+.bg-slate-50 {
+  background-color: var(--border-light) !important;
+}
+
+.bg-slate-100 {
+  background-color: var(--border-light) !important;
+}
+
+input, select, textarea {
+  background-color: var(--bg-app) !important;
+  color: var(--text-main) !important;
+  border-color: var(--border-light) !important;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: #6366f1 !important;
+}
+
+table th {
+  color: var(--text-main) !important;
+  border-bottom-color: var(--border-light) !important;
+}
+
+table td {
+  border-bottom-color: var(--border-light) !important;
+}
+
+.mat-mdc-table {
+  background-color: var(--bg-card) !important;
+}
+
+.mat-mdc-paginator {
+  background-color: var(--bg-card) !important;
+  color: var(--text-muted) !important;
+}
+
+.mat-mdc-header-cell {
+  color: var(--text-main) !important;
+}
+
+.mat-mdc-cell {
+  color: var(--text-muted) !important;
+}
+
+.bg-slate-50\/50 {
+  background-color: rgba(30, 41, 59, 0.25) !important;
+}
+
 
 .custom-dialog .mat-mdc-dialog-surface {
   padding: 0 !important;

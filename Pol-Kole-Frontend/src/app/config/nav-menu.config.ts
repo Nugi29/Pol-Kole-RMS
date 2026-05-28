@@ -17,179 +17,91 @@ export const NAV_MENU = [
     name: 'Dashboard',
     icon: 'dashboard',
     route: '/main/dashboard',
-    roles: ['ADMIN', 'MANAGER', 'WAITER', 'CHEF', 'CASHIER'],
+    roles: ['ADMIN', 'MANAGER', 'WAITER', 'CASHIER', 'CHEF'],
   },
   {
-    name: 'Orders',
-    icon: 'shopping_cart',
-    roles: ['ADMIN', 'MANAGER', 'WAITER'],
+    name: 'Rooms Hub',
+    icon: 'meeting_room',
+    roles: ['ADMIN', 'MANAGER'],
     children: [
-      { name: 'Create Order', route: '/orders/create', roles: ['ADMIN', 'MANAGER', 'WAITER'] },
-      {
-        name: 'Active Orders',
-        route: '/orders/active',
-        roles: ['ADMIN', 'MANAGER', 'WAITER', 'CASHIER'],
-      },
-      { name: 'Order History', route: '/orders/history', roles: ['ADMIN', 'MANAGER'] },
-      { name: 'Cancelled Orders', route: '/orders/cancelled', roles: ['ADMIN', 'MANAGER'] },
+      { name: 'Rooms List', route: '/main/rooms?tab=directory', roles: ['ADMIN', 'MANAGER'] },
+      { name: 'Categories', route: '/main/rooms?tab=types', roles: ['ADMIN', 'MANAGER'] },
     ],
   },
-
   {
-    name: 'Tables',
+    name: 'Tables Floor',
     icon: 'table_bar',
     roles: ['ADMIN', 'MANAGER', 'WAITER'],
     children: [
-      { name: 'Table Layout', route: '/tables/layout', roles: ['ADMIN', 'MANAGER', 'WAITER'] },
-      { name: 'Table List', route: '/tables/list', roles: ['ADMIN', 'MANAGER'] },
-      { name: 'Table Status', route: '/tables/status', roles: ['ADMIN', 'MANAGER'] },
-      { name: 'Add Table', route: '/tables/create', roles: ['ADMIN'] },
+      { name: 'Floor Grid', route: '/main/tables?tab=grid', roles: ['ADMIN', 'MANAGER', 'WAITER'] },
+      { name: 'Live Occupancy', route: '/main/tables?tab=occupancy', roles: ['ADMIN', 'MANAGER'] },
     ],
   },
-
   {
     name: 'Reservations',
     icon: 'event',
     roles: ['ADMIN', 'MANAGER', 'WAITER'],
     children: [
-      {
-        name: 'Create Reservation',
-        route: '/reservations/create',
-        roles: ['ADMIN', 'MANAGER', 'WAITER'],
-      },
-      {
-        name: 'Reservation List',
-        route: '/reservations/list',
-        roles: ['ADMIN', 'MANAGER', 'WAITER'],
-      },
-      {
-        name: "Today's Reservations",
-        route: '/reservations/today',
-        roles: ['ADMIN', 'MANAGER', 'WAITER'],
-      },
-      {
-        name: 'Reservation Calendar',
-        route: '/reservations/calendar',
-        roles: ['ADMIN', 'MANAGER'],
-      },
-      {
-        name: 'Cancelled Reservations',
-        route: '/reservations/cancelled',
-        roles: ['ADMIN', 'MANAGER'],
-      },
+      { name: 'Book Table', route: '/main/reservations?tab=new', roles: ['ADMIN', 'MANAGER', 'WAITER'] },
+      { name: 'Bookings List', route: '/main/reservations?tab=list', roles: ['ADMIN', 'MANAGER', 'WAITER'] },
     ],
   },
-
   {
-    name: 'Menu',
+    name: 'Menu Catalog',
     icon: 'restaurant_menu',
-    roles: ['ADMIN', 'MANAGER'],
+    roles: ['ADMIN', 'MANAGER', 'WAITER', 'CHEF'],
     children: [
-      { name: 'Menu Categories', route: '/menu/categories', roles: ['ADMIN', 'MANAGER'] },
-      { name: 'Menu Items', route: '/menu/items', roles: ['ADMIN', 'MANAGER'] },
-      { name: 'Add Menu Item', route: '/menu/items/create', roles: ['ADMIN', 'MANAGER'] },
-      { name: 'Menu Availability', route: '/menu/availability', roles: ['ADMIN', 'MANAGER'] },
+      { name: 'Menu Items', route: '/main/menu?tab=items', roles: ['ADMIN', 'MANAGER', 'WAITER', 'CHEF'] },
+      { name: 'Categories', route: '/main/menu?tab=categories', roles: ['ADMIN', 'MANAGER', 'CHEF'] },
     ],
   },
-
   {
-    name: 'Kitchen',
+    name: 'Orders Console',
+    icon: 'shopping_cart',
+    roles: ['ADMIN', 'MANAGER', 'WAITER', 'CASHIER'],
+    children: [
+      { name: 'POS Order Builder', route: '/main/orders?tab=pos', roles: ['ADMIN', 'MANAGER', 'WAITER'] },
+      { name: 'Active Orders Deck', route: '/main/orders?tab=list', roles: ['ADMIN', 'MANAGER', 'WAITER', 'CASHIER'] },
+    ],
+  },
+  {
+    name: 'Chef Kitchen Hub',
     icon: 'kitchen',
+    route: '/main/kitchen',
     roles: ['ADMIN', 'MANAGER', 'CHEF'],
-    children: [
-      {
-        name: 'Kitchen Dashboard',
-        route: '/kitchen/dashboard',
-        roles: ['ADMIN', 'MANAGER', 'CHEF'],
-      },
-      {
-        name: 'Active Kitchen Tickets',
-        route: '/kitchen/tickets/active',
-        roles: ['ADMIN', 'MANAGER', 'CHEF'],
-      },
-      {
-        name: 'Ready Orders',
-        route: '/kitchen/tickets/ready',
-        roles: ['ADMIN', 'MANAGER', 'CHEF'],
-      },
-      {
-        name: 'Completed Tickets',
-        route: '/kitchen/tickets/completed',
-        roles: ['ADMIN', 'MANAGER', 'CHEF'],
-      },
-    ],
   },
-
   {
-    name: 'Billing',
+    name: 'Billing POS',
     icon: 'receipt',
     roles: ['ADMIN', 'MANAGER', 'CASHIER'],
     children: [
-      { name: 'Generate Bill', route: '/billing/generate', roles: ['ADMIN', 'MANAGER', 'CASHIER'] },
-      { name: 'Active Bills', route: '/billing/active', roles: ['ADMIN', 'MANAGER', 'CASHIER'] },
-      { name: 'Payment History', route: '/billing/history', roles: ['ADMIN', 'MANAGER'] },
-      { name: 'Refunds', route: '/billing/refunds', roles: ['ADMIN'] },
+      { name: 'Cashier Settle', route: '/main/billing?tab=settle', roles: ['ADMIN', 'MANAGER', 'CASHIER'] },
+      { name: 'Invoices Ledger', route: '/main/billing?tab=invoices', roles: ['ADMIN', 'MANAGER', 'CASHIER'] },
+      { name: 'Payments Ledger', route: '/main/billing?tab=payments', roles: ['ADMIN', 'MANAGER', 'CASHIER'] },
     ],
   },
-
   {
-    name: 'Customers',
+    name: 'Inventory Stock',
+    icon: 'inventory',
+    roles: ['ADMIN', 'MANAGER', 'CHEF'],
+    children: [
+      { name: 'Stock Levels', route: '/main/inventory?tab=stock', roles: ['ADMIN', 'MANAGER', 'CHEF'] },
+      { name: 'Transactions Log', route: '/main/inventory?tab=transactions', roles: ['ADMIN', 'MANAGER'] },
+    ],
+  },
+  {
+    name: 'Customers & Loyalty',
     icon: 'people',
     roles: ['ADMIN', 'MANAGER', 'WAITER', 'CASHIER'],
     children: [
-      { name: 'Customer List', route: '/customers/list', roles: ['ADMIN', 'MANAGER'] },
-      { name: 'Add Customer', route: '/customers/create', roles: ['ADMIN', 'MANAGER', 'WAITER'] },
-      { name: 'Customer Orders', route: '/customers/orders', roles: ['ADMIN', 'MANAGER'] },
+      { name: 'Guests Directory', route: '/main/customers', roles: ['ADMIN', 'MANAGER', 'WAITER', 'CASHIER'] },
     ],
   },
-
   {
-    name: 'Users',
+    name: 'Audit Logging',
     icon: 'admin_panel_settings',
-    route: '/main/users',
+    route: '/main/audit-logs',
     roles: ['ADMIN'],
-  },
-
-  {
-    name: 'Reports',
-    icon: 'bar_chart',
-    roles: ['ADMIN', 'MANAGER'],
-    children: [
-      { name: 'Daily Sales', route: '/reports/daily-sales', roles: ['ADMIN', 'MANAGER'] },
-      { name: 'Monthly Sales', route: '/reports/monthly-sales', roles: ['ADMIN', 'MANAGER'] },
-      { name: 'Popular Menu Items', route: '/reports/popular-items', roles: ['ADMIN', 'MANAGER'] },
-      { name: 'Order Reports', route: '/reports/orders', roles: ['ADMIN', 'MANAGER'] },
-      { name: 'Payment Reports', route: '/reports/payments', roles: ['ADMIN', 'MANAGER'] },
-    ],
-  },
-
-  // {
-  //   name: 'Statuses',
-  //   icon: 'sync_alt',
-  //   roles: ['ADMIN'],
-  //   children: [
-  //     { name: 'Order Status', route: '/statuses/order-status', roles: ['ADMIN'] },
-  //     { name: 'Order Item Status', route: '/statuses/order-item-status', roles: ['ADMIN'] },
-  //     { name: 'Kitchen Ticket Status', route: '/statuses/kitchen-ticket-status', roles: ['ADMIN'] },
-  //     { name: 'Reservation Status', route: '/statuses/reservation-status', roles: ['ADMIN'] },
-  //     { name: 'Table Status', route: '/statuses/table-status', roles: ['ADMIN'] },
-  //   ],
-  // },
-
-  {
-    name: 'Settings',
-    icon: 'settings',
-    roles: ['ADMIN', 'MANAGER'],
-    children: [
-      {
-        name: 'Restaurant Information',
-        route: '/settings/restaurant',
-        roles: ['ADMIN', 'MANAGER'],
-      },
-      { name: 'Tax Settings', route: '/settings/tax', roles: ['ADMIN'] },
-      { name: 'Payment Methods', route: '/settings/payments', roles: ['ADMIN'] },
-      { name: 'System Preferences', route: '/settings/system', roles: ['ADMIN'] },
-    ],
   },
 ];
 

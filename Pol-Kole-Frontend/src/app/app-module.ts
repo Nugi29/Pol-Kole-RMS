@@ -31,6 +31,20 @@ import { UserComponent } from './views/modules/user/user.component';
 import { ConfirmComponent } from './shared/dialog/confirm/confirm.component';
 import { MessageComponent } from './shared/dialog/message/message.component';
 
+import { HTTP_INTERCEPTORS } from '@angular/common/http';
+import { AuthInterceptor } from './services/auth.interceptor';
+import { RoomComponent } from './views/modules/room/room.component';
+import { ReservationComponent } from './views/modules/reservation/reservation.component';
+import { CheckInOutComponent } from './views/modules/check-in-out/check-in-out.component';
+import { BillingComponent } from './views/modules/billing/billing.component';
+import { CustomerComponent } from './views/modules/customer/customer.component';
+import { AuditLogsComponent } from './views/modules/audit-logs/audit-logs.component';
+import { TablesComponent } from './views/modules/tables/tables.component';
+import { MenuComponent } from './views/modules/menu/menu.component';
+import { OrdersComponent } from './views/modules/orders/orders.component';
+import { KitchenComponent } from './views/modules/kitchen/kitchen.component';
+import { InventoryComponent } from './views/modules/inventory/inventory.component';
+
 @NgModule({
   declarations: [
     AppComponent,
@@ -38,6 +52,17 @@ import { MessageComponent } from './shared/dialog/message/message.component';
     MainwindowComponent,
     HomeComponent,
     UserComponent,
+    RoomComponent,
+    ReservationComponent,
+    CheckInOutComponent,
+    BillingComponent,
+    CustomerComponent,
+    AuditLogsComponent,
+    TablesComponent,
+    MenuComponent,
+    OrdersComponent,
+    KitchenComponent,
+    InventoryComponent,
   ],
   imports: [
     BrowserModule,
@@ -73,6 +98,11 @@ import { MessageComponent } from './shared/dialog/message/message.component';
         preset: Aura,
       },
     }),
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: AuthInterceptor,
+      multi: true,
+    },
   ],
   bootstrap: [AppComponent],
 })

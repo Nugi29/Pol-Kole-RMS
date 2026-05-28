@@ -17,11 +17,6 @@ import java.util.List;
 public class LookupController {
 
     private final LookupService service;
-
-    @GetMapping("/menu-categories")
-    public List<Lookup> getAllMenuCategories(){
-        return service.getAllMenuCategories();
-    }
     @GetMapping("/user-roles")
     public List<Lookup> getAllUserRoles(){
         return service.getAllUserRoles();
