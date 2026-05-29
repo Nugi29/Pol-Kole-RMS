@@ -1,0 +1,210 @@
+<div class="space-y-6 animate-fade-in">
+  <!-- Dynamic Stats Header Bar -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-900 leading-none tracking-tight flex items-center gap-2">
+        <span class="w-2.5 h-6 bg-indigo-600 rounded-full"></span>
+        POS Menu Catalog Management
+      </h1>
+      <p class="text-[13px] text-slate-500 mt-1.5">
+        Configure catalog items, adjust chef preparation durations, manage categories and edit daily price structures.
+      </p>
+    </div>
+    
+    <!-- Quick Nav Toggle -->
+    <div class="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200">
+      <a routerLink="/main/menu" [queryParams]="{ tab: 'items' }"
+         class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none"
+         [ngClass]="activeTab === 'items' ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:text-slate-800'">
+        Menu Items
+      </a>
+      <a routerLink="/main/menu" [queryParams]="{ tab: 'categories' }"
+         class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none"
+         [ngClass]="activeTab === 'categories' ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:text-slate-800'">
+        Categories
+      </a>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div *ngIf="successMessage" class="bg-emerald-50 border border-emerald-150 text-emerald-650 text-[13px] p-4 rounded-xl font-bold">
+    {{ successMessage }}
+  </div>
+  <div *ngIf="errorMessage" class="bg-rose-50 border border-rose-150 text-rose-650 text-[13px] p-4 rounded-xl font-bold">
+    {{ errorMessage }}
+  </div>
+
+  <!-- TAB 1: MENU ITEMS -->
+  <div *ngIf="activeTab === 'items'" class="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-6 items-start">
+    
+    <!-- Item Registry Card Form -->
+    <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-50 pb-3">
+        <h2 class="text-[14px] font-bold text-slate-900 flex items-center gap-2">
+          <span class="w-1.5 h-3.5 bg-indigo-600 rounded-full"></span>
+          {{ editingItemId ? 'Update Menu Item' : 'Add New Menu Item' }}
+        </h2>
+      </div>
+
+      <form [formGroup]="itemForm" (ngSubmit)="saveMenuItem()" class="space-y-4">
+        <div>
+          <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Item Name</label>
+          <input type="text" formControlName="name" placeholder="e.g. Classic Beef Burger" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all"/>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Description</label>
+          <textarea formControlName="description" rows="2" placeholder="Write description..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all"></textarea>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3.5">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Price ($)</label>
+            <input type="number" formControlName="price" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all"/>
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Prep Time (min)</label>
+            <input type="number" formControlName="preparationTime" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all"/>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Category</label>
+          <select formControlName="categoryId" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all">
+            <option *ngFor="let cat of categories" [value]="cat.id">{{ cat.name }}</option>
+          </select>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <label class="flex items-center gap-2 text-[13px] font-bold text-slate-700 cursor-pointer">
+            <input type="checkbox" formControlName="availability" class="rounded border-slate-300 text-indigo-650 focus:ring-indigo-600"/>
+            Available / Ready to Order
+          </label>
+        </div>
+
+        <div class="flex items-center gap-3 pt-2">
+          <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white text-[13px] font-bold py-2.5 rounded-xl cursor-pointer shadow-sm transition-all">
+            {{ editingItemId ? 'Apply Update' : 'Add Item' }}
+          </button>
+          <button type="button" (click)="clearItemForm()" class="bg-slate-50 hover:bg-slate-100 text-slate-650 text-[13px] font-bold px-4 py-2.5 rounded-xl cursor-pointer border border-slate-200 transition-all">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Active Menu Items Directory -->
+    <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-50 pb-3">
+        <h2 class="text-[14px] font-bold text-slate-900 flex items-center gap-2">
+          <span class="w-1.5 h-3.5 bg-indigo-600 rounded-full"></span>
+          Menu Directory
+        </h2>
+        <button (click)="loadMenuItems()" class="text-[12px] font-bold text-indigo-600 hover:text-indigo-850 flex items-center gap-1 transition-all cursor-pointer">
+          Sync Menu
+        </button>
+      </div>
+
+      <div *ngIf="menuItems.length > 0; else emptyItems" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div *ngFor="let mi of menuItems" class="bg-slate-50 hover:bg-white rounded-2xl p-4 border border-slate-150/60 hover:border-slate-300 hover:shadow-lg transition-all duration-200 flex flex-col justify-between gap-3 group relative">
+          <div>
+            <div class="flex items-start justify-between">
+              <div>
+                <h3 class="text-base font-extrabold text-slate-900">{{ mi.name }}</h3>
+                <p class="text-[11px] font-semibold text-slate-450 mt-0.5">${{ mi.price }} - {{ mi.preparationTime }} min prep</p>
+              </div>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm"
+                    [ngClass]="mi.availability ? 'bg-emerald-50 border border-emerald-200 text-emerald-600' : 'bg-rose-50 border border-rose-200 text-rose-600'">
+                {{ mi.availability ? 'Available' : 'Sold Out' }}
+              </span>
+            </div>
+            <p class="text-xs text-slate-500 mt-2.5 italic line-clamp-2 leading-relaxed">{{ mi.description }}</p>
+          </div>
+
+          <div class="flex items-center justify-end gap-1.5 border-t border-slate-100 pt-3 mt-1">
+            <button (click)="editMenuItem(mi)" class="text-[11px] font-bold text-indigo-600 bg-indigo-50/50 hover:bg-indigo-600 hover:text-white px-2.5 py-1 rounded-lg transition-all cursor-pointer">
+              Edit
+            </button>
+            <button (click)="deleteMenuItem(mi.id!)" class="text-[11px] font-bold text-rose-600 bg-rose-50/50 hover:bg-rose-600 hover:text-white px-2 py-1.5 rounded-lg transition-all cursor-pointer">
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <ng-template #emptyItems>
+        <div class="text-center py-12 text-slate-400">
+          <p class="font-bold text-[14px]">No Menu Items Found</p>
+        </div>
+      </ng-template>
+    </div>
+  </div>
+
+  <!-- TAB 2: CATEGORIES -->
+  <div *ngIf="activeTab === 'categories'" class="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-6 items-start">
+    <!-- Category Form -->
+    <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-50 pb-3">
+        <h2 class="text-[14px] font-bold text-slate-900 flex items-center gap-2">
+          <span class="w-1.5 h-3.5 bg-indigo-600 rounded-full"></span>
+          {{ editingCatId ? 'Update Category' : 'Register Category' }}
+        </h2>
+      </div>
+
+      <form [formGroup]="catForm" (ngSubmit)="saveCategory()" class="space-y-4">
+        <div>
+          <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Category Name</label>
+          <input type="text" formControlName="name" placeholder="e.g. Appetizers, Main Meals" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all"/>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Description</label>
+          <textarea formControlName="description" rows="2" placeholder="Write description..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all"></textarea>
+        </div>
+
+        <div class="flex items-center gap-3 pt-2">
+          <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white text-[13px] font-bold py-2.5 rounded-xl cursor-pointer shadow-sm transition-all">
+            {{ editingCatId ? 'Apply Update' : 'Register Category' }}
+          </button>
+          <button type="button" (click)="clearCatForm()" class="bg-slate-50 hover:bg-slate-100 text-slate-650 text-[13px] font-bold px-4 py-2.5 rounded-xl cursor-pointer border border-slate-200 transition-all">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Categories Directory -->
+    <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-50 pb-3">
+        <h2 class="text-[14px] font-bold text-slate-900 flex items-center gap-2">
+          <span class="w-1.5 h-3.5 bg-indigo-600 rounded-full"></span>
+          Category Directory
+        </h2>
+      </div>
+
+      <div *ngIf="categories.length > 0; else emptyCats" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div *ngFor="let cat of categories" class="bg-slate-50 hover:bg-white rounded-2xl p-4 border border-slate-150/60 hover:border-slate-300 hover:shadow-lg transition-all duration-200 flex flex-col justify-between gap-3 group relative">
+          <div>
+            <h3 class="text-base font-extrabold text-slate-900">{{ cat.name }}</h3>
+            <p class="text-xs text-slate-500 mt-2 italic leading-relaxed">{{ cat.description }}</p>
+          </div>
+
+          <div class="flex items-center justify-end gap-1.5 border-t border-slate-100 pt-3 mt-1">
+            <button (click)="editCategory(cat)" class="text-[11px] font-bold text-indigo-600 bg-indigo-50/50 hover:bg-indigo-600 hover:text-white px-2.5 py-1 rounded-lg transition-all cursor-pointer">
+              Edit
+            </button>
+            <button (click)="deleteCategory(cat.id!)" class="text-[11px] font-bold text-rose-600 bg-rose-50/50 hover:bg-rose-600 hover:text-white px-2 py-1.5 rounded-lg transition-all cursor-pointer">
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <ng-template #emptyCats>
+        <div class="text-center py-12 text-slate-400">
+          <p class="font-bold text-[14px]">No Categories Configured</p>
+        </div>
+      </ng-template>
+    </div>
+  </div>
+</div>
