@@ -26,5 +26,13 @@ public class UserroleEntity {
     @JoinColumn(name = "role_id")
     private Set<UserEntity> users = new LinkedHashSet<>();
 
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+        name = "role_permissions",
+        joinColumns = @JoinColumn(name = "role_id"),
+        inverseJoinColumns = @JoinColumn(name = "permission_id")
+    )
+    private Set<PermissionEntity> permissions = new LinkedHashSet<>();
+
 
 }

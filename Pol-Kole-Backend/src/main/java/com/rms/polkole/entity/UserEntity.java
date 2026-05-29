@@ -65,14 +65,4 @@ public class UserEntity {
         updatedAt = Instant.now();
     }
 
-    @JsonIgnore
-    @OneToMany(mappedBy = "chef")
-    private Set<KitchenTicketEntity> kitchenTickets = new LinkedHashSet<>();
-
-    @JsonIgnore
-    @OneToMany(mappedBy = "waiter")
-    private Set<OrderEntity> orders = new LinkedHashSet<>();
-
-
-
 }

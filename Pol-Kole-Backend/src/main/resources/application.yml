@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/pol-kole
+    url: jdbc:mysql://localhost:3306/pol-kole-db?createDatabaseIfNotExist=true
     username: root
     password: 1234
   jpa:
