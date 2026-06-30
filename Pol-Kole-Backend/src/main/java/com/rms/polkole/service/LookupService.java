@@ -9,5 +9,4 @@ public interface LookupService {
 
     List<Lookup> getAllUserRoles();
     List<Lookup> getAllUserStatuses();
-    List<Lookup> getAllMenuCategories();
 }

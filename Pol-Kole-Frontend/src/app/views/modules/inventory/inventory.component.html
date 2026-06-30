@@ -1,0 +1,174 @@
+<div class="space-y-6 animate-fade-in">
+  <!-- Dynamic Stats Header Bar -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-900 leading-none tracking-tight flex items-center gap-2">
+        <span class="w-2.5 h-6 bg-indigo-600 rounded-full"></span>
+        Restaurant Inventory & Stock Controller
+      </h1>
+      <p class="text-[13px] text-slate-500 mt-1.5">
+        Monitor raw ingredient levels, track supplier logs, verify low stock warnings and record transactions.
+      </p>
+    </div>
+    
+    <!-- Quick Nav Toggle -->
+    <div class="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200">
+      <button (click)="activeTab = 'stock'"
+         class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none border-0 bg-transparent"
+         [ngClass]="activeTab === 'stock' ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/50 font-extrabold' : 'text-slate-500 hover:text-slate-800'">
+        Stock Levels
+      </button>
+      <button (click)="activeTab = 'transactions'"
+         class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none border-0 bg-transparent"
+         [ngClass]="activeTab === 'transactions' ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/50 font-extrabold' : 'text-slate-500 hover:text-slate-800'">
+        Transaction Logs
+      </button>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div *ngIf="successMessage" class="bg-emerald-50 border border-emerald-150 text-emerald-650 text-[13px] p-4 rounded-xl font-bold">
+    {{ successMessage }}
+  </div>
+  <div *ngIf="errorMessage" class="bg-rose-50 border border-rose-150 text-rose-650 text-[13px] p-4 rounded-xl font-bold">
+    {{ errorMessage }}
+  </div>
+
+  <!-- TAB 1: STOCK LEVELS -->
+  <div *ngIf="activeTab === 'stock'" class="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-6 items-start">
+    
+    <!-- Item Registry Card Form -->
+    <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-50 pb-3">
+        <h2 class="text-[14px] font-bold text-slate-900 flex items-center gap-2">
+          <span class="w-1.5 h-3.5 bg-indigo-600 rounded-full"></span>
+          {{ editingId ? 'Update Ingredient Profile' : 'Register Raw Supply' }}
+        </h2>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="saveItem()" class="space-y-4">
+        <div>
+          <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Ingredient / Item Name</label>
+          <input type="text" formControlName="itemName" placeholder="e.g. Cheese, Chicken Breast" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all"/>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3.5">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Quantity (kg/units)</label>
+            <input type="number" formControlName="quantity" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all"/>
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Warning Threshold</label>
+            <input type="number" formControlName="warningThreshold" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all"/>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Supplier / Brand</label>
+          <input type="text" formControlName="supplier" placeholder="e.g. FoodCity Wholesalers" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all"/>
+        </div>
+
+        <div class="flex items-center gap-3 pt-2">
+          <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white text-[13px] font-bold py-2.5 rounded-xl cursor-pointer shadow-sm transition-all">
+            {{ editingId ? 'Apply Update' : 'Register Ingredient' }}
+          </button>
+          <button type="button" (click)="clearForm()" class="bg-slate-50 hover:bg-slate-100 text-slate-650 text-[13px] font-bold px-4 py-2.5 rounded-xl cursor-pointer border border-slate-200 transition-all">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Active Inventory Table -->
+    <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-50 pb-3">
+        <h2 class="text-[14px] font-bold text-slate-900 flex items-center gap-2">
+          <span class="w-1.5 h-3.5 bg-indigo-600 rounded-full"></span>
+          Supplies Inventory Directory
+        </h2>
+        <button (click)="loadInventory()" class="text-[12px] font-bold text-indigo-600 hover:text-indigo-850 flex items-center gap-1 transition-all cursor-pointer">
+          Sync Inventory
+        </button>
+      </div>
+
+      <div *ngIf="inventory.length > 0; else emptyStock" class="overflow-x-auto">
+        <table class="w-full text-left text-[13px] text-slate-650">
+          <thead class="bg-slate-50 text-[11px] font-bold text-slate-450 uppercase tracking-wider border-b border-slate-100">
+            <tr>
+              <th class="px-4 py-3">Ingredient</th>
+              <th class="px-4 py-3">Available Stock</th>
+              <th class="px-4 py-3">Supplier Name</th>
+              <th class="px-4 py-3">Low-Stock Alert</th>
+              <th class="px-4 py-3">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-50">
+            <tr *ngFor="let item of inventory" class="hover:bg-slate-50/50 transition-all">
+              <td class="px-4 py-3.5 font-bold text-slate-900">{{ item.itemName }}</td>
+              <td class="px-4 py-3.5 font-extrabold text-slate-800">{{ item.quantity }} units</td>
+              <td class="px-4 py-3.5">{{ item.supplier }}</td>
+              <td class="px-4 py-3.5">
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                      [ngClass]="item.quantity <= item.warningThreshold ? 'bg-rose-50 text-rose-600 border border-rose-200' : 'bg-emerald-50 text-emerald-600 border border-emerald-200'">
+                  {{ item.quantity <= item.warningThreshold ? 'CRITICAL LEVEL' : 'STOCK STABLE' }}
+                </span>
+              </td>
+              <td class="px-4 py-3.5 flex gap-2">
+                <button (click)="selectItemForAdjustment(item)" class="text-indigo-600 hover:text-indigo-850 font-bold transition-all cursor-pointer">Adjust</button>
+                <button (click)="editItem(item)" class="text-slate-600 hover:text-slate-800 font-bold transition-all cursor-pointer">Edit</button>
+                <button (click)="deleteItem(item.id!)" class="text-rose-600 hover:text-rose-800 font-bold transition-all cursor-pointer">Delete</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ng-template #emptyStock>
+        <div class="text-center py-12 text-slate-400">
+          <p class="font-bold text-[14px]">No Supplies Registered</p>
+        </div>
+      </ng-template>
+    </div>
+  </div>
+
+  <!-- TAB 2: ADJUSTMENT MODAL IN-PLACE AND LOGS -->
+  <div *ngIf="activeTab === 'transactions'" class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm space-y-4">
+    <div class="flex items-center justify-between border-b border-slate-50 pb-3">
+      <h2 class="text-[14px] font-bold text-slate-900 flex items-center gap-2">
+        <span class="w-1.5 h-3.5 bg-indigo-600 rounded-full"></span>
+        Administrative Stock Transactions
+      </h2>
+    </div>
+
+    <div *ngIf="selectedItem" class="bg-slate-50 border border-slate-200 p-5 rounded-2xl space-y-4 max-w-lg">
+      <h3 class="text-sm font-extrabold text-slate-900">Modify Quantity for: {{ selectedItem.itemName }}</h3>
+      
+      <div class="grid grid-cols-2 gap-3.5">
+        <div>
+          <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Adjustment Quantity</label>
+          <input type="number" [(ngModel)]="updateQtyVal" class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px]"/>
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Reason / Log Note</label>
+          <input type="text" [(ngModel)]="updateReason" class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px]"/>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3 pt-2">
+        <button (click)="adjustStock('restock')" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[13px] font-bold py-2 rounded-xl cursor-pointer">
+          Restock (+)
+        </button>
+        <button (click)="adjustStock('deduct')" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white text-[13px] font-bold py-2 rounded-xl cursor-pointer">
+          Deduct (-)
+        </button>
+        <button (click)="selectedItem = null" class="bg-slate-200 text-slate-700 text-[13px] font-bold px-4 py-2 rounded-xl cursor-pointer">
+          Cancel
+        </button>
+      </div>
+    </div>
+
+    <div class="text-slate-400 py-6 text-center">
+      <p class="text-xs">Select any ingredient in the 'Stock Levels' tab and click 'Adjust' to record manual restock logs or ingredient deductions.</p>
+    </div>
+  </div>
+</div>

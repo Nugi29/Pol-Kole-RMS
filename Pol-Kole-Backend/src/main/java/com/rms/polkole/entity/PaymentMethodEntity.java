@@ -1,14 +1,13 @@
 package com.rms.polkole.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-
-import java.util.LinkedHashSet;
-import java.util.Set;
+import lombok.*;
 
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "payment_methods")
 public class PaymentMethodEntity {
@@ -17,10 +16,6 @@ public class PaymentMethodEntity {
     @Column(name = "id", nullable = false)
     private Integer id;
 
-    @Column(name = "method_name", length = 50)
-    private String methodName;
-
-    @OneToMany(mappedBy = "paymentMethod")
-    private Set<PaymentEntity> payments = new LinkedHashSet<>();
-
+    @Column(name = "name", nullable = false, unique = true, length = 30)
+    private String name; // CASH, CARD, ONLINE
 }

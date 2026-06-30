@@ -47,7 +47,7 @@ export class UserService {
   constructor(private readonly http: HttpClient) {}
 
   public async login(data: LoginPayload) {
-    return this.http.post<LoginResponse>(`${this.backendUrl}/user/`, data);
+    return this.http.post<LoginResponse>(`${this.backendUrl}/user/login`, data);
   }
 
   getAllUsers(): Observable<FullUserRes[]> {

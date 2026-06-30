@@ -1,15 +1,13 @@
 package com.rms.polkole.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-
-import java.util.LinkedHashSet;
-import java.util.Set;
+import lombok.*;
 
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "order_status")
 public class OrderStatusEntity {
@@ -18,14 +16,6 @@ public class OrderStatusEntity {
     @Column(name = "id", nullable = false)
     private Integer id;
 
-    @Column(name = "status_name", nullable = false, length = 50)
-    private String statusName;
-
-    @Column(name = "description")
-    private String description;
-
-    @JsonIgnore
-    @OneToMany(mappedBy = "orderStatus")
-    private Set<OrderEntity> orders = new LinkedHashSet<>();
-
+    @Column(name = "name", nullable = false, unique = true, length = 50)
+    private String name; // PENDING, PREPARING, READY, SERVED, COMPLETED, CANCELLED
 }

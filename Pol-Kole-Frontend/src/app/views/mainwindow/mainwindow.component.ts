@@ -11,6 +11,7 @@ export class MainwindowComponent implements OnInit {
   role: string = '';
   name: string = '';
   isSidebarCollapsed = false;
+  isDarkMode = false;
   navMenu: NavMenuItem[] = [];
   expandedGroups: Record<string, boolean> = {};
   private currentRoles = new Set<string>();
@@ -39,9 +40,29 @@ export class MainwindowComponent implements OnInit {
         this.expandedGroups[item.name] = true;
       }
     }
+    
+    // Theme setup
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      this.isDarkMode = true;
+      document.documentElement.classList.add('dark');
+    } else {
+      this.isDarkMode = false;
+      document.documentElement.classList.remove('dark');
+    }
   }
   toggleSidebar(): void {
     this.isSidebarCollapsed = !this.isSidebarCollapsed;
+  }
+  toggleTheme(): void {
+    this.isDarkMode = !this.isDarkMode;
+    if (this.isDarkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
   }
   toggleGroup(group: string): void {
     this.expandedGroups[group] = !this.expandedGroups[group];
@@ -64,6 +85,23 @@ export class MainwindowComponent implements OnInit {
   }
   getIconPath(icon: string): string {
     return this.iconPaths[icon] || 'M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z';
+  }
+  getRoutePath(route: string): string {
+    if (!route) return '';
+    return route.split('?')[0];
+  }
+  getRouteQueryParams(route: string): Record<string, string> {
+    if (!route || !route.includes('?')) return {};
+    const queryString = route.split('?')[1];
+    const params: Record<string, string> = {};
+    const pairs = queryString.split('&');
+    for (const pair of pairs) {
+      const [key, value] = pair.split('=');
+      if (key) {
+        params[key] = value || '';
+      }
+    }
+    return params;
   }
   private getDisplayName(): string {
     const savedName = localStorage.getItem('name')?.trim();
@@ -93,7 +131,11 @@ export class MainwindowComponent implements OnInit {
     return new Set(rawRoles.split(',').map((role) => this.normalizeRole(role)).filter(Boolean));
   }
   private normalizeRole(role: string): string {
-    return role.trim().toUpperCase();
+    let r = role.trim().toUpperCase();
+    if (r.startsWith('ROLE_')) {
+      r = r.substring(5);
+    }
+    return r;
   }
   private hasAccess(allowedRoles: string[]): boolean {
     if (this.currentRoles.size === 0) {

@@ -1,0 +1,228 @@
+<div class="space-y-6 animate-fade-in">
+  <!-- Dynamic Stats Header Bar -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-900 leading-none tracking-tight flex items-center gap-2">
+        <span class="w-2.5 h-6 bg-indigo-600 rounded-full"></span>
+        Restaurant Tables & Dining Floor
+      </h1>
+      <p class="text-[13px] text-slate-500 mt-1.5">
+        Manage restaurant seating capacities, monitor table reservation occupancy, and register dining zones.
+      </p>
+    </div>
+    
+    <!-- Quick Nav Toggle -->
+    <div class="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200">
+      <a routerLink="/main/tables" [queryParams]="{ tab: 'grid' }"
+         class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none"
+         [ngClass]="activeTab === 'grid' ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:text-slate-800'">
+        Floor Grid Map
+      </a>
+      <a routerLink="/main/tables" [queryParams]="{ tab: 'occupancy' }"
+         class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none"
+         [ngClass]="activeTab === 'occupancy' ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:text-slate-800'">
+        Location Analytics
+      </a>
+    </div>
+  </div>
+
+  <!-- Status Counter Widgets -->
+  <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+    <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-600 font-bold border border-slate-100">
+        {{ tables.length }}
+      </div>
+      <div>
+        <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Tables</p>
+        <p class="text-[14px] font-extrabold text-slate-850">Floor Capacity</p>
+      </div>
+    </div>
+    <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold border border-emerald-100">
+        {{ getTablesCountByStatus('AVAILABLE') }}
+      </div>
+      <div>
+        <p class="text-[11px] font-bold text-emerald-500 uppercase tracking-wider">Available</p>
+        <p class="text-[14px] font-extrabold text-slate-850">Ready to Seat</p>
+      </div>
+    </div>
+    <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold border border-blue-100">
+        {{ getTablesCountByStatus('RESERVED') }}
+      </div>
+      <div>
+        <p class="text-[11px] font-bold text-blue-500 uppercase tracking-wider">Reserved</p>
+        <p class="text-[14px] font-extrabold text-slate-850">Booked Slots</p>
+      </div>
+    </div>
+    <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold border border-indigo-100">
+        {{ getTablesCountByStatus('OCCUPIED') }}
+      </div>
+      <div>
+        <p class="text-[11px] font-bold text-indigo-500 uppercase tracking-wider">Occupied</p>
+        <p class="text-[14px] font-extrabold text-slate-850">Active Dining</p>
+      </div>
+    </div>
+    <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold border border-amber-100">
+        {{ getTablesCountByStatus('CLEANING') }}
+      </div>
+      <div>
+        <p class="text-[11px] font-bold text-amber-500 uppercase tracking-wider">Cleaning</p>
+        <p class="text-[14px] font-extrabold text-slate-850">Sanitizing</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 1: FLOOR MAP DIRECTORY -->
+  <div *ngIf="activeTab === 'grid'" class="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-6 items-start">
+    
+    <!-- Table Registry Card Form -->
+    <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-50 pb-3">
+        <h2 class="text-[14px] font-bold text-slate-900 flex items-center gap-2">
+          <span class="w-1.5 h-3.5 bg-indigo-600 rounded-full"></span>
+          {{ editingId ? 'Update Table Profile' : 'Register New Dining Table' }}
+        </h2>
+      </div>
+
+      <div *ngIf="errorMessage" class="bg-red-50 border border-red-100 text-red-600 text-[12px] p-3.5 rounded-xl font-semibold">
+        {{ errorMessage }}
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="saveTable()" class="space-y-4">
+        <div>
+          <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Table Number / Label</label>
+          <input type="text" formControlName="tableNumber" placeholder="e.g. Table 12, VIP-1" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all"/>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3.5">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Seating Capacity</label>
+            <input type="number" formControlName="capacity" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all"/>
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Section / Location</label>
+            <select formControlName="location" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all">
+              <option value="Main Dining Hall">Main Dining Hall</option>
+              <option value="Outdoor Terrace">Outdoor Terrace</option>
+              <option value="Rooftop Balcony">Rooftop Balcony</option>
+              <option value="VIP Private Lounge">VIP Private Lounge</option>
+              <option value="Garden Poolside">Garden Poolside</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Initial Status</label>
+          <select formControlName="status" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all">
+            <option value="AVAILABLE">🟢 AVAILABLE / VACANT</option>
+            <option value="RESERVED">🔵 RESERVED</option>
+            <option value="OCCUPIED">🟣 OCCUPIED / DINING</option>
+            <option value="CLEANING">🟡 CLEANING / DIRTY</option>
+          </select>
+        </div>
+
+        <div class="flex items-center gap-3 pt-2">
+          <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white text-[13px] font-bold py-2.5 rounded-xl cursor-pointer shadow-sm transition-all">
+            {{ editingId ? 'Apply Update' : 'Add to Floor Map' }}
+          </button>
+          <button type="button" (click)="clearForm()" class="bg-slate-50 hover:bg-slate-100 text-slate-650 text-[13px] font-bold px-4 py-2.5 rounded-xl cursor-pointer border border-slate-200 transition-all">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Active Tables Grid Map -->
+    <div class="space-y-6">
+      <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-50 pb-3">
+          <h2 class="text-[14px] font-bold text-slate-900 flex items-center gap-2">
+            <span class="w-1.5 h-3.5 bg-indigo-600 rounded-full"></span>
+            Restaurant Floorboard Grid
+          </h2>
+          <button (click)="loadTables()" class="text-[12px] font-bold text-indigo-600 hover:text-indigo-850 flex items-center gap-1 transition-all cursor-pointer">
+            Sync System
+          </button>
+        </div>
+
+        <div *ngIf="tables.length > 0; else emptyState" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div *ngFor="let tb of tables" class="bg-slate-50 hover:bg-white rounded-2xl p-4 border border-slate-150/60 hover:border-slate-300 hover:shadow-lg transition-all duration-200 flex flex-col justify-between gap-3 group relative">
+            <div>
+              <div class="flex items-start justify-between">
+                <div>
+                  <h3 class="text-base font-extrabold text-slate-900">{{ tb.tableNumber }}</h3>
+                  <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mt-0.5">{{ tb.location }}</p>
+                </div>
+                
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm"
+                      [ngClass]="{
+                        'bg-emerald-50 border border-emerald-200 text-emerald-600': tb.status === 'AVAILABLE',
+                        'bg-blue-50 border border-blue-200 text-blue-600': tb.status === 'RESERVED',
+                        'bg-indigo-50 border border-indigo-200 text-indigo-600': tb.status === 'OCCUPIED',
+                        'bg-amber-50 border border-amber-200 text-amber-600': tb.status === 'CLEANING'
+                      }">
+                  {{ tb.status }}
+                </span>
+              </div>
+
+              <div class="grid grid-cols-1 gap-2 mt-3 text-[12px] text-slate-500 border-t border-slate-100 pt-2">
+                <span class="flex items-center gap-1.5"><strong class="text-slate-800">Capacity:</strong> {{ tb.capacity }} Seats</span>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between border-t border-slate-100 pt-3 mt-1">
+              <div class="flex items-center gap-1">
+                <button *ngIf="tb.status !== 'AVAILABLE'" (click)="quickStatusUpdate(tb, 'AVAILABLE')" class="text-[10px] bg-emerald-50 border border-emerald-200 text-emerald-600 font-bold px-2 py-0.5 rounded hover:bg-emerald-600 hover:text-white transition-all cursor-pointer">
+                  Vacate
+                </button>
+                <button *ngIf="tb.status === 'AVAILABLE'" (click)="quickStatusUpdate(tb, 'OCCUPIED')" class="text-[10px] bg-indigo-50 border border-indigo-200 text-indigo-600 font-bold px-2 py-0.5 rounded hover:bg-indigo-600 hover:text-white transition-all cursor-pointer">
+                  Seat
+                </button>
+              </div>
+              
+              <div class="flex items-center gap-1">
+                <button (click)="editTable(tb)" class="text-[11px] font-bold text-indigo-600 bg-indigo-50/50 hover:bg-indigo-600 hover:text-white px-2.5 py-1 rounded-lg transition-all cursor-pointer">
+                  Edit
+                </button>
+                <button (click)="deleteTable(tb.id!)" class="text-[11px] font-bold text-rose-600 bg-rose-50/50 hover:bg-rose-600 hover:text-white px-2 py-1.5 rounded-lg transition-all cursor-pointer">
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <ng-template #emptyState>
+          <div class="text-center py-12 text-slate-400">
+            <p class="font-bold text-[14px]">No Tables Registered</p>
+          </div>
+        </ng-template>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: ANALYTICS -->
+  <div *ngIf="activeTab === 'occupancy'" class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm space-y-6">
+    <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+      <span class="w-2 h-4 bg-indigo-600 rounded-full"></span>
+      Location Seating Analytics
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div class="bg-gradient-to-br from-slate-50 to-slate-100 p-5 rounded-2xl border border-slate-200/60">
+        <h3 class="text-sm font-bold text-slate-800">Main Dining Hall</h3>
+        <p class="text-2xl font-extrabold text-indigo-600 mt-2">
+          {{ tables.filter(t => t.location === 'Main Dining Hall').length }} <span class="text-xs font-semibold text-slate-400">Tables</span>
+        </p>
+      </div>
+      <div class="bg-gradient-to-br from-slate-50 to-slate-100 p-5 rounded-2xl border border-slate-200/60">
+        <h3 class="text-sm font-bold text-slate-800">Outdoor Terrace</h3>
+        <p class="text-2xl font-extrabold text-emerald-600 mt-2">
+          {{ tables.filter(t => t.location === 'Outdoor Terrace').length }} <span class="text-xs font-semibold text-slate-400">Tables</span>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

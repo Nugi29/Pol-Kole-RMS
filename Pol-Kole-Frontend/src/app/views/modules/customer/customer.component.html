@@ -1,0 +1,108 @@
+<div class="space-y-6">
+  <div>
+    <h1 class="text-[22px] font-bold text-slate-900 leading-none">Guests Directory Management</h1>
+    <p class="text-[13px] text-slate-400 mt-2">Manage customer profiles, passport records, and check loyalty program points balances.</p>
+  </div>
+
+  <div class="grid grid-cols-[380px_1fr] gap-6 items-start">
+    <!-- Left Column: Form -->
+    <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm space-y-4">
+      <h2 class="text-[14px] font-bold text-slate-900 mb-2">{{ editingId ? 'Update Guest Profile' : 'Register New Guest' }}</h2>
+
+      <div *ngIf="errorMessage" class="bg-red-50 text-red-600 text-[12px] p-3 rounded-lg font-semibold">
+        {{ errorMessage }}
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="saveCustomer()" class="space-y-3.5">
+        <div>
+          <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Full Name</label>
+          <input type="text" formControlName="name" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-[13px] focus:outline-none focus:border-indigo-400"/>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Passport / NIC</label>
+          <input type="text" formControlName="nicPassport" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-[13px] focus:outline-none focus:border-indigo-400"/>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Phone Number</label>
+          <input type="text" formControlName="phone" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-[13px] focus:outline-none focus:border-indigo-400"/>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Email Address</label>
+          <input type="email" formControlName="email" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-[13px] focus:outline-none focus:border-indigo-400"/>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Nationality</label>
+          <input type="text" formControlName="nationality" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-[13px] focus:outline-none focus:border-indigo-400"/>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Residential Address</label>
+          <textarea formControlName="address" rows="2" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-[13px] focus:outline-none focus:border-indigo-400"></textarea>
+        </div>
+
+        <div class="flex items-center gap-2 pt-2">
+          <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-[13px] font-bold py-2 rounded-lg cursor-pointer transition-all">
+            {{ editingId ? 'Update Details' : 'Register Guest' }}
+          </button>
+          <button type="button" (click)="clearForm()" class="bg-slate-50 hover:bg-slate-100 text-slate-600 text-[13px] font-bold px-3 py-2 rounded-lg cursor-pointer border border-slate-200 transition-all">
+            Clear
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Right Column: Table List -->
+    <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm space-y-4">
+      <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+        <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg>
+        <input type="text" [(ngModel)]="searchQuery" (input)="loadCustomers()" placeholder="Search guests by name, passport or phone..." class="border-none outline-none text-[13px] text-slate-700 placeholder-slate-400 bg-transparent w-full"/>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table mat-table [dataSource]="dataSource" class="w-full text-left text-[13px] text-slate-700">
+          
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef class="font-bold text-slate-900 border-b border-slate-100 pb-3">Guest Name</th>
+            <td mat-cell *matCellDef="let cust" class="py-3 border-b border-slate-50 font-bold text-slate-900">{{ cust.name }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="passport">
+            <th mat-header-cell *matHeaderCellDef class="font-bold text-slate-900 border-b border-slate-100 pb-3">Passport / NIC</th>
+            <td mat-cell *matCellDef="let cust" class="py-3 border-b border-slate-50 font-mono">{{ cust.nicPassport }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="phone">
+            <th mat-header-cell *matHeaderCellDef class="font-bold text-slate-900 border-b border-slate-100 pb-3">Phone</th>
+            <td mat-cell *matCellDef="let cust" class="py-3 border-b border-slate-50">{{ cust.phone }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="email">
+            <th mat-header-cell *matHeaderCellDef class="font-bold text-slate-900 border-b border-slate-100 pb-3">Email Address</th>
+            <td mat-cell *matCellDef="let cust" class="py-3 border-b border-slate-50">{{ cust.email || '-' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="loyalty">
+            <th mat-header-cell *matHeaderCellDef class="font-bold text-slate-900 border-b border-slate-100 pb-3">Loyalty Points</th>
+            <td mat-cell *matCellDef="let cust" class="py-3 border-b border-slate-50"><span class="bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full text-[11px] font-bold">{{ cust.loyaltyPoints }} pts</span></td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef class="font-bold text-slate-900 border-b border-slate-100 pb-3 text-right">Actions</th>
+            <td mat-cell *matCellDef="let cust" class="py-3 border-b border-slate-50 text-right space-x-1">
+              <button (click)="editCustomer(cust)" class="text-[12px] bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 px-2.5 py-1 rounded cursor-pointer transition-all">Edit</button>
+              <button (click)="deleteCustomer(cust.id)" class="text-[12px] bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 px-2.5 py-1 rounded cursor-pointer transition-all">Archive</button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+      </div>
+      <mat-paginator [pageSizeOptions]="[10, 20]" showFirstLastButtons class="border-t border-slate-100 pt-2"></mat-paginator>
+    </div>
+  </div>
+</div>

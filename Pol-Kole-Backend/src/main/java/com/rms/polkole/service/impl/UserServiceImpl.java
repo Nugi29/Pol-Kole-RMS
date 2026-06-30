@@ -69,7 +69,7 @@ public class UserServiceImpl implements UserService{
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
         }
 
-        String token = jwtUtil.generateToken(user.getEmail());
+        String token = jwtUtil.generateToken(user.getEmail(), user.getRole() != null ? user.getRole().getName() : "");
 
         return LoginResponse.builder()
                 .token(token)

@@ -1,15 +1,15 @@
 package com.rms.polkole.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-
+import lombok.*;
 import java.math.BigDecimal;
-import java.util.LinkedHashSet;
-import java.util.Set;
 
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "order_items")
 public class OrderItemEntity {
@@ -19,28 +19,20 @@ public class OrderItemEntity {
     private Integer id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id")
+    @JoinColumn(name = "order_id", nullable = false)
+    @JsonIgnore
     private OrderEntity order;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "menu_item_id")
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "menu_item_id", nullable = false)
     private MenuItemEntity menuItem;
 
     @Column(name = "quantity", nullable = false)
     private Integer quantity;
 
-    @Column(name = "unit_price", nullable = false, precision = 10, scale = 2)
-    private BigDecimal unitPrice;
+    @Column(name = "price", nullable = false, precision = 10, scale = 2)
+    private BigDecimal price; // Price of item at ordering time
 
-    @Lob
-    @Column(name = "special_note")
-    private String specialNote;
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "order_item_status_id", nullable = false)
-    private OrderItemStatusEntity orderItemStatus;
-
-    @OneToMany(mappedBy = "orderItem")
-    private Set<KitchenTicketEntity> kitchenTickets = new LinkedHashSet<>();
-
+    @Column(name = "notes", length = 200)
+    private String notes; // Custom instructions like "No onions", "Extra cheese"
 }

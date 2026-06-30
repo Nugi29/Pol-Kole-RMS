@@ -1,0 +1,275 @@
+<div class="space-y-6 animate-fade-in">
+  <!-- Header Bar -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-900 leading-none tracking-tight flex items-center gap-2">
+        <span class="w-2.5 h-6 bg-indigo-600 rounded-full"></span>
+        {{ activeTab === 'payments' ? 'Payments Ledger & Transaction History' : 'Billing Console & Invoice Registry' }}
+      </h1>
+      <p class="text-[13px] text-slate-500 mt-1.5">
+        {{ activeTab === 'payments' ? 'Audit settled bills history, check transaction references, and print official Jasper PDF receipts.' : 'Generate stay invoices, calculate custom loyalty points deductions, and process checkout payments.' }}
+      </p>
+    </div>
+
+    <!-- Toggle Selector -->
+    <div class="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200">
+      <a routerLink="/main/billing" [queryParams]="{ tab: 'invoices' }"
+         class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none"
+         [ngClass]="activeTab === 'invoices' ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:text-slate-800'">
+        Invoices Ledger
+      </a>
+      <a routerLink="/main/billing" [queryParams]="{ tab: 'payments' }"
+         class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none"
+         [ngClass]="activeTab === 'payments' ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:text-slate-800'">
+        Payments Ledger
+      </a>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div *ngIf="successMessage" class="bg-emerald-50 border border-emerald-150 text-emerald-655 text-[13px] p-4 rounded-xl font-bold">
+    {{ successMessage }}
+  </div>
+  <div *ngIf="errorMessage" class="bg-rose-50 border border-rose-150 text-rose-655 text-[13px] p-4 rounded-xl font-bold">
+    {{ errorMessage }}
+  </div>
+
+  <!-- Detail Invoice View modal overlay -->
+  <div *ngIf="activeInvoice" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in">
+    <div class="bg-white rounded-3xl p-6 border border-slate-100 max-w-lg w-full shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-50 pb-3">
+        <h3 class="text-[16px] font-extrabold text-slate-900 flex items-center gap-2">
+          <span class="w-1.5 h-3.5 bg-indigo-600 rounded-full"></span>
+          Invoice: {{ activeInvoice.invoiceNumber }}
+        </h3>
+        <button (click)="closeInvoice()" class="text-slate-400 hover:text-slate-655 cursor-pointer bg-slate-50 hover:bg-slate-100 p-1.5 rounded-lg border transition-all">Close</button>
+      </div>
+
+      <div class="space-y-4">
+        <!-- Item list -->
+        <div class="border border-slate-100 rounded-xl overflow-hidden shadow-sm">
+          <table class="w-full text-left text-[12.5px] border-collapse">
+            <tr class="bg-slate-50 text-slate-400 font-bold border-b border-slate-100">
+              <th class="p-3 uppercase text-[10px] tracking-wider">Description</th>
+              <th class="p-3 text-right uppercase text-[10px] tracking-wider">Total</th>
+            </tr>
+            <tr *ngFor="let item of activeInvoice.items" class="border-b border-slate-50 text-slate-700">
+              <td class="p-3 font-medium">{{ item.description }}</td>
+              <td class="p-3 text-right font-extrabold text-slate-800">${{ item.totalPrice }}</td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- Totals summary -->
+        <div class="space-y-2 text-[13px] border-t border-slate-100 pt-3">
+          <div class="flex justify-between"><span class="text-slate-400">Base Room Charges:</span><span class="font-bold text-slate-850">${{ activeInvoice.roomCharges }}</span></div>
+          <div class="flex justify-between text-rose-500"><span class="text-slate-400">Applied Discount:</span><span class="font-bold">-${{ activeInvoice.discountAmount }}</span></div>
+          <div class="flex justify-between"><span class="text-slate-400">Aggregated Taxes:</span><span class="font-bold text-slate-850">${{ activeInvoice.taxAmount }}</span></div>
+          <div class="flex justify-between text-[15px] border-t border-slate-100 pt-2.5"><span class="font-extrabold text-slate-900">TOTAL BILL AMOUNT:</span><span class="font-extrabold text-indigo-650">${{ activeInvoice.totalAmount }}</span></div>
+        </div>
+
+        <!-- Payment forms if Unpaid -->
+        <div *ngIf="activeInvoice.paymentStatus === 'UNPAID'" class="bg-slate-50 p-4 rounded-2xl border border-slate-200/60 space-y-3">
+          <h4 class="text-[13px] font-bold text-slate-800 flex items-center gap-1.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+            Process Checkout Payment
+          </h4>
+          <div class="grid grid-cols-2 gap-3.5">
+            <div>
+              <label class="block text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Pay Method</label>
+              <select [(ngModel)]="paymentMethod" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-[12.5px] focus:outline-none">
+                <option value="CASH">💵 CASH</option>
+                <option value="CARD">💳 CARD</option>
+                <option value="ONLINE">🌐 ONLINE</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Reference ID</label>
+              <input type="text" [(ngModel)]="paymentRef" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-[12.5px] focus:outline-none" placeholder="Card txn / ref id..."/>
+            </div>
+          </div>
+          <button (click)="submitPayment()" class="w-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white text-[13px] font-bold py-2.5 rounded-xl cursor-pointer transition-all shadow-sm">
+            Settle Stay Invoice &amp; Check-Out
+          </button>
+        </div>
+
+        <div class="flex items-center gap-2 pt-2">
+          <button (click)="downloadInvoicePdf(activeInvoice)" class="flex-1 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white text-[13px] font-bold py-2.5 rounded-xl cursor-pointer transition-all flex items-center justify-center gap-2 shadow-sm">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16"/></svg>
+            Print Jasper PDF Receipt
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 1: INVOICES COCKPIT -->
+  <div *ngIf="activeTab === 'invoices'" class="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-6 items-start">
+    
+    <!-- Invoice Generator Form -->
+    <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm space-y-4">
+      <h2 class="text-[14px] font-bold text-slate-900 border-b border-slate-50 pb-3 flex items-center gap-2">
+        <span class="w-1.5 h-3.5 bg-indigo-600 rounded-full"></span>
+        Invoice Compiler
+      </h2>
+      
+      <div class="space-y-4">
+        <div>
+          <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Select Active Order</label>
+          <select [(ngModel)]="selectedOrderId" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500">
+            <option [value]="null">Select restaurant order...</option>
+            <option *ngFor="let order of orders" [value]="order.id">Order #{{ order.id }} - Table {{ order.tableNumber || 'Takeaway' }} - {{ order.customerName || 'Walk-in Guest' }} (${{ order.totalAmount }})</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Discount Voucher / Coupon</label>
+          <input type="text" [(ngModel)]="discountCode" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500" placeholder="e.g. WELCOME10..."/>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Redeem Loyalty Points ($0.10/point)</label>
+          <input type="number" [(ngModel)]="redeemPoints" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500"/>
+        </div>
+
+        <button (click)="triggerGenerateInvoice()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-[13px] font-bold py-2.5 rounded-xl cursor-pointer transition-all shadow-md active:scale-[0.98]">
+          Compile Stays Invoice
+        </button>
+      </div>
+    </div>
+
+    <!-- Active Invoices Ledger Table -->
+    <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-50 pb-3">
+        <h2 class="text-[14px] font-bold text-slate-900 flex items-center gap-2">
+          <span class="w-1.5 h-3.5 bg-indigo-600 rounded-full"></span>
+          Staying Invoices Directory
+        </h2>
+        <button (click)="loadInvoices()" class="text-[12px] font-bold text-indigo-600 hover:text-indigo-850 flex items-center gap-1 cursor-pointer transition-all">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.27 15H18"/></svg>
+          Sync Ledger
+        </button>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table mat-table [dataSource]="invoiceDataSource" class="w-full text-left text-[13px] text-slate-700 border-collapse">
+          <!-- Invoice ID Column -->
+          <ng-container matColumnDef="invoiceNumber">
+            <th mat-header-cell *matHeaderCellDef class="pb-3 font-bold uppercase tracking-wider text-[11px]">Invoice ID</th>
+            <td mat-cell *matCellDef="let inv" class="py-3.5 font-bold text-slate-950 flex items-center gap-1.5">
+              <span class="w-1.5 h-1.5 rounded-full" [ngClass]="inv.paymentStatus === 'PAID' ? 'bg-emerald-500' : 'bg-rose-500'"></span>
+              {{ inv.invoiceNumber }}
+            </td>
+          </ng-container>
+
+          <!-- Due Total Column -->
+          <ng-container matColumnDef="totalAmount">
+            <th mat-header-cell *matHeaderCellDef class="pb-3 font-bold uppercase tracking-wider text-[11px]">Due Total</th>
+            <td mat-cell *matCellDef="let inv" class="py-3.5 font-extrabold text-slate-805">${{ inv.totalAmount }}</td>
+          </ng-container>
+
+          <!-- Payment Status Column -->
+          <ng-container matColumnDef="paymentStatus">
+            <th mat-header-cell *matHeaderCellDef class="pb-3 font-bold uppercase tracking-wider text-[11px]">Payment Status</th>
+            <td mat-cell *matCellDef="let inv" class="py-3.5">
+              <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full border inline-block shadow-sm"
+                    [ngClass]="inv.paymentStatus === 'PAID' ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : 'bg-rose-50 border-rose-200 text-rose-600'">
+                {{ inv.paymentStatus }}
+              </span>
+            </td>
+          </ng-container>
+
+          <!-- Ledger Actions Column -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef class="pb-3 font-bold uppercase tracking-wider text-[11px] text-right">Ledger Actions</th>
+            <td mat-cell *matCellDef="let inv" class="py-3.5 text-right space-x-1.5">
+              <button (click)="viewInvoice(inv)"
+                      class="text-[12px] font-bold bg-indigo-50 hover:bg-indigo-150 border border-indigo-200 text-indigo-600 px-3 py-1.5 rounded-lg cursor-pointer transition-all">
+                {{ inv.paymentStatus === 'PAID' ? 'Review Details' : 'Settle Payment' }}
+              </button>
+              <button (click)="downloadInvoicePdf(inv)" class="text-[12px] font-bold bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-655 px-2.5 py-1.5 rounded-lg cursor-pointer transition-all">
+                PDF
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns" class="border-b border-slate-100 text-slate-400"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="border-b border-slate-50 hover:bg-slate-50 transition-all duration-150"></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: PAYMENTS LEDGER -->
+  <div *ngIf="activeTab === 'payments'" class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm space-y-4">
+    <div class="flex items-center justify-between border-b border-slate-50 pb-3">
+      <h2 class="text-[14px] font-bold text-slate-900 flex items-center gap-2">
+        <span class="w-1.5 h-3.5 bg-emerald-600 rounded-full"></span>
+        Paid Transactions ledger
+      </h2>
+      <button (click)="loadInvoices()" class="text-[12px] font-bold text-indigo-600 hover:text-indigo-850 flex items-center gap-1 cursor-pointer transition-all">
+        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.27 15H18"/></svg>
+        Sync Payments
+      </button>
+    </div>
+
+    <!-- Payments Ledger Table -->
+    <div *ngIf="paymentsLedger.length > 0; else noPayments" class="overflow-x-auto">
+      <table mat-table [dataSource]="paymentDataSource" class="w-full text-left text-[13px] text-slate-700 border-collapse">
+        <!-- Invoice Reference Column -->
+        <ng-container matColumnDef="invoiceNumber">
+          <th mat-header-cell *matHeaderCellDef class="pb-3 font-bold uppercase tracking-wider text-[11px]">Invoice Reference</th>
+          <td mat-cell *matCellDef="let pay" class="py-3.5 font-bold text-slate-950 flex items-center gap-1.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            {{ pay.invoiceNumber }}
+          </td>
+        </ng-container>
+
+        <!-- Settled Amount Column -->
+        <ng-container matColumnDef="totalAmount">
+          <th mat-header-cell *matHeaderCellDef class="pb-3 font-bold uppercase tracking-wider text-[11px]">Settled Amount</th>
+          <td mat-cell *matCellDef="let pay" class="py-3.5 font-extrabold text-emerald-600">${{ pay.totalAmount }}</td>
+        </ng-container>
+
+        <!-- Payment Method Column -->
+        <ng-container matColumnDef="paymentMethodName">
+          <th mat-header-cell *matHeaderCellDef class="pb-3 font-bold uppercase tracking-wider text-[11px]">Payment Method</th>
+          <td mat-cell *matCellDef="let pay" class="py-3.5">
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 border text-slate-655 uppercase tracking-wide">
+              {{ pay.paymentMethodName || 'SETTLED' }}
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- Txn Reference Column -->
+        <ng-container matColumnDef="transactionReference">
+          <th mat-header-cell *matHeaderCellDef class="pb-3 font-bold uppercase tracking-wider text-[11px]">Txn Reference</th>
+          <td mat-cell *matCellDef="let pay" class="py-3.5 font-mono text-slate-450">{{ pay.transactionReference || 'N/A' }}</td>
+        </ng-container>
+
+        <!-- Official Receipt Column -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="pb-3 font-bold uppercase tracking-wider text-[11px] text-right">Official Receipt</th>
+          <td mat-cell *matCellDef="let pay" class="py-3.5 text-right">
+            <button (click)="downloadInvoicePdf(pay)" class="text-[12px] font-bold bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-655 px-3 py-1.5 rounded-lg cursor-pointer transition-all flex items-center gap-1 ml-auto">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16"/></svg>
+              PDF Receipt
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="paymentDisplayedColumns" class="border-b border-slate-100 text-slate-400"></tr>
+        <tr mat-row *matRowDef="let row; columns: paymentDisplayedColumns;" class="border-b border-slate-50 hover:bg-slate-50 transition-all duration-150"></tr>
+      </table>
+    </div>
+
+    <!-- Empty Ledger -->
+    <ng-template #noPayments>
+      <div class="text-center py-16 text-slate-400">
+        <svg class="w-12 h-12 mx-auto text-slate-300 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+        <p class="font-bold text-[14px] text-slate-700">No Transactions Found</p>
+        <span class="text-[12px] text-slate-450">Complete stays checkouts and process payments to list receipts history.</span>
+      </div>
+    </ng-template>
+  </div>
+</div>

@@ -13,7 +13,7 @@ import java.util.List;
 @RestController
 @CrossOrigin
 @RequiredArgsConstructor
-@RequestMapping("api/list")
+@RequestMapping("/api/list")
 public class LookupController {
 
     private final LookupService service;

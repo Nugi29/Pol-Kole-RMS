@@ -1,0 +1,97 @@
+<div class="space-y-6 animate-fade-in">
+  <!-- Header Bar -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-900 leading-none tracking-tight flex items-center gap-2">
+        <span class="w-2.5 h-6 bg-indigo-600 rounded-full"></span>
+        {{ activeTab === 'arrivals' ? 'Hotel Arrivals Lobby' : 'Current Hotel Stays' }}
+      </h1>
+      <p class="text-[13px] text-slate-500 mt-1.5">
+        {{ activeTab === 'arrivals' ? 'Verify confirmed bookings, configure guest lists, and perform check-ins.' : 'Monitor active guests stays, manage checkout dates and process key returns.' }}
+      </p>
+    </div>
+
+    <!-- Toggle Selector -->
+    <div class="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200">
+      <a routerLink="/main/check-in-out" [queryParams]="{ tab: 'arrivals' }"
+         class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none"
+         [ngClass]="activeTab === 'arrivals' ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:text-slate-800'">
+        Arrivals
+      </a>
+      <a routerLink="/main/check-in-out" [queryParams]="{ tab: 'stays' }"
+         class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none"
+         [ngClass]="activeTab === 'stays' ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:text-slate-800'">
+        Current Stays
+      </a>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div *ngIf="successMessage" class="bg-emerald-50 border border-emerald-150 text-emerald-650 text-[13px] p-4 rounded-xl font-bold">
+    {{ successMessage }}
+  </div>
+  <div *ngIf="errorMessage" class="bg-rose-50 border border-rose-150 text-rose-650 text-[13px] p-4 rounded-xl font-bold">
+    {{ errorMessage }}
+  </div>
+
+  <!-- Operational Grid -->
+  <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm space-y-4">
+    <div class="flex items-center justify-between border-b border-slate-50 pb-3">
+      <h2 class="text-[14px] font-bold text-slate-900 flex items-center gap-2">
+        <span class="w-1.5 h-3.5 bg-indigo-600 rounded-full"></span>
+        {{ activeTab === 'arrivals' ? 'Pending Arrivals' : 'Active Room Occupancy' }}
+      </h2>
+      <button (click)="loadReservations()" class="text-[12px] font-bold text-indigo-600 hover:text-indigo-850 flex items-center gap-1 cursor-pointer transition-all">
+        Sync lobby
+      </button>
+    </div>
+
+    <!-- Active filtered stays -->
+    <div *ngIf="reservations.length > 0; else noReservations" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div *ngFor="let res of reservations" class="bg-slate-50 hover:bg-white rounded-2xl p-5 border border-slate-155 hover:border-slate-300 hover:shadow-lg transition-all duration-200 flex flex-col justify-between gap-4 group">
+        <div>
+          <div class="flex items-start justify-between">
+            <div>
+              <h3 class="text-base font-extrabold text-slate-900">Room {{ res.roomNumber }}</h3>
+              <p class="text-[11px] font-semibold text-slate-450 uppercase tracking-wide mt-0.5">Guest: {{ res.customerName }}</p>
+            </div>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border shadow-sm bg-blue-50 text-blue-600">
+              {{ res.status }}
+            </span>
+          </div>
+
+          <!-- Stays Range Details -->
+          <div class="mt-4 bg-white/60 p-3.5 rounded-xl border border-slate-200/55 space-y-2 text-[12.5px] text-slate-655">
+            <p><strong class="text-slate-800">Check In:</strong> {{ res.checkInDate }}</p>
+            <p><strong class="text-slate-800">Check Out:</strong> {{ res.checkOutDate }}</p>
+            <p><strong class="text-slate-800">Guests Count:</strong> {{ res.guestsCount }} Adults</p>
+            <p><strong class="text-slate-800">NIC/Passport:</strong> {{ res.customerPassport }}</p>
+          </div>
+        </div>
+
+        <!-- Action buttons -->
+        <div class="border-t border-slate-100 pt-3 flex items-center justify-end">
+          <button *ngIf="activeTab === 'arrivals'"
+                  (click)="performCheckIn(res.id!, res.guestsCount)"
+                  class="bg-indigo-600 hover:bg-indigo-700 text-white text-[12px] font-bold px-4 py-2 rounded-xl cursor-pointer shadow-sm transition-all">
+            Process Check-In
+          </button>
+          
+          <button *ngIf="activeTab === 'stays'"
+                  (click)="performCheckOut(res.id!)"
+                  class="bg-rose-600 hover:bg-rose-750 text-white text-[12px] font-bold px-4 py-2 rounded-xl cursor-pointer shadow-sm transition-all">
+            Process Check-Out
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty stay state -->
+    <ng-template #noReservations>
+      <div class="text-center py-16 text-slate-400">
+        <p class="font-bold text-[14px]">No Guests Found</p>
+        <span class="text-[12px] text-slate-450">There are no matches for this section right now.</span>
+      </div>
+    </ng-template>
+  </div>
+</div>
