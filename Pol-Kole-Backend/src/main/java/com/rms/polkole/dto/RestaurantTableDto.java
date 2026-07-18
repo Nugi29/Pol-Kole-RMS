@@ -24,5 +24,16 @@ public class RestaurantTableDto {
 
     private String location; // e.g. Main Hall, Terrace
 
-    private boolean isAvailableForReservation = true;
+    @Builder.Default
+    private Boolean isAvailableForReservation = true;
+    // Maintain the original boolean-style accessor used across the codebase.
+    // Return primitive boolean to avoid callers needing to handle null.
+    public boolean isAvailableForReservation() {
+        return Boolean.TRUE.equals(this.isAvailableForReservation);
+    }
+
+    // Provide a primitive setter keeping the old API shape.
+    public void setAvailableForReservation(boolean available) {
+        this.isAvailableForReservation = available;
+    }
 }
