@@ -48,35 +48,60 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Registered Guest / Customer</label>
-            <select formControlName="customerId" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all">
-              <option [value]="null">Select registered guest...</option>
-              <option *ngFor="let cust of customers" [value]="cust.id">{{ cust.name }} (Passport/NIC: {{ cust.nicPassport }})</option>
+            <select formControlName="customerId"
+                    [ngClass]="form.get('customerId')?.invalid && form.get('customerId')?.touched ? 'border-rose-500 bg-rose-50/10' : 'border-slate-200'"
+                    class="w-full bg-slate-50 border rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all">
+              <option [ngValue]="null">Select registered guest...</option>
+              <option *ngFor="let cust of customers" [ngValue]="cust.id">{{ cust.name }} (Passport/NIC: {{ cust.nicPassport }})</option>
             </select>
+            <p *ngIf="form.get('customerId')?.invalid && form.get('customerId')?.touched" class="text-rose-600 text-[11px] mt-1 font-bold animate-fade-in">
+              Please select a registered guest.
+            </p>
           </div>
 
           <div>
             <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Select Available Table</label>
-            <select formControlName="tableId" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all">
-              <option [value]="null">Select available table...</option>
-              <option *ngFor="let rm of rooms" [value]="rm.id">{{ rm.tableNumber }} - {{ rm.location }} (Cap: {{ rm.capacity }} Pax)</option>
+            <select formControlName="tableId"
+                    [ngClass]="form.get('tableId')?.invalid && form.get('tableId')?.touched ? 'border-rose-500 bg-rose-50/10' : 'border-slate-200'"
+                    class="w-full bg-slate-50 border rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all">
+              <option [ngValue]="null">Select available table...</option>
+              <option *ngFor="let rm of rooms" [ngValue]="rm.id">{{ rm.tableNumber }} - {{ rm.location }} (Cap: {{ rm.capacity }} Pax)</option>
             </select>
+            <p *ngIf="form.get('tableId')?.invalid && form.get('tableId')?.touched" class="text-rose-600 text-[11px] mt-1 font-bold animate-fade-in">
+              Please select a dining table.
+            </p>
           </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Reservation Date</label>
-            <input type="date" formControlName="reservationDate" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all"/>
+            <input type="date" formControlName="reservationDate"
+                   [ngClass]="form.get('reservationDate')?.invalid && form.get('reservationDate')?.touched ? 'border-rose-500 bg-rose-50/10' : 'border-slate-200'"
+                   class="w-full bg-slate-50 border rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all"/>
+            <p *ngIf="form.get('reservationDate')?.invalid && form.get('reservationDate')?.touched" class="text-rose-600 text-[11px] mt-1 font-bold animate-fade-in">
+              Reservation date is required.
+            </p>
           </div>
 
           <div>
             <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Time Slot (HH:MM)</label>
-            <input type="text" placeholder="e.g. 19:30" formControlName="reservationTime" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all"/>
+            <input type="text" placeholder="e.g. 19:30" formControlName="reservationTime"
+                   [ngClass]="form.get('reservationTime')?.invalid && form.get('reservationTime')?.touched ? 'border-rose-500 bg-rose-50/10' : 'border-slate-200'"
+                   class="w-full bg-slate-50 border rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all"/>
+            <p *ngIf="form.get('reservationTime')?.invalid && form.get('reservationTime')?.touched" class="text-rose-600 text-[11px] mt-1 font-bold animate-fade-in">
+              Valid format (HH:MM) is required (e.g. 19:30).
+            </p>
           </div>
 
           <div>
             <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Guests Count</label>
-            <input type="number" formControlName="guestsCount" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all"/>
+            <input type="number" formControlName="guestsCount"
+                   [ngClass]="form.get('guestsCount')?.invalid && form.get('guestsCount')?.touched ? 'border-rose-500 bg-rose-50/10' : 'border-slate-200'"
+                   class="w-full bg-slate-50 border rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all"/>
+            <p *ngIf="form.get('guestsCount')?.invalid && form.get('guestsCount')?.touched" class="text-rose-600 text-[11px] mt-1 font-bold animate-fade-in">
+              Guest count must be at least 1.
+            </p>
           </div>
         </div>
 
@@ -187,11 +212,11 @@
           <td mat-cell *matCellDef="let res" class="py-3.5 border-b border-slate-50">
             <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full inline-block border shadow-sm"
                   [ngClass]="{
-                    'bg-indigo-50 border-indigo-200 text-indigo-600': res.reservationStatusName === 'CONFIRMED',
-                    'bg-emerald-50 border-emerald-200 text-emerald-600': res.reservationStatusName === 'COMPLETED',
-                    'bg-rose-50 border-rose-200 text-rose-600': res.reservationStatusName === 'CANCELLED',
-                    'bg-amber-50 border-amber-200 text-amber-600': res.reservationStatusName === 'PENDING',
-                    'bg-purple-50 border-purple-200 text-purple-600': res.reservationStatusName === 'OCCUPIED'
+                    'bg-indigo-50 border-indigo-200 text-indigo-600': res.reservationStatusName?.toUpperCase() === 'CONFIRMED',
+                    'bg-emerald-50 border-emerald-200 text-emerald-600': res.reservationStatusName?.toUpperCase() === 'COMPLETED' || res.reservationStatusName?.toUpperCase() === 'CHECKED OUT' || res.reservationStatusName?.toUpperCase() === 'CHECKED_OUT',
+                    'bg-rose-50 border-rose-200 text-rose-600': res.reservationStatusName?.toUpperCase() === 'CANCELLED',
+                    'bg-amber-50 border-amber-200 text-amber-600': res.reservationStatusName?.toUpperCase() === 'PENDING',
+                    'bg-purple-50 border-purple-200 text-purple-600': res.reservationStatusName?.toUpperCase() === 'OCCUPIED' || res.reservationStatusName?.toUpperCase() === 'CHECKED IN' || res.reservationStatusName?.toUpperCase() === 'CHECKED_IN'
                   }">
               {{ res.reservationStatusName }}
             </span>
@@ -201,12 +226,12 @@
         <ng-container matColumnDef="actions">
           <th mat-header-cell *matHeaderCellDef class="font-bold text-slate-900 border-b border-slate-100 pb-3 text-right">Actions</th>
           <td mat-cell *matCellDef="let res" class="py-3.5 border-b border-slate-50 text-right">
-            <button *ngIf="res.reservationStatusName === 'CONFIRMED' || res.reservationStatusName === 'PENDING'"
+            <button *ngIf="res.reservationStatusName?.toUpperCase() === 'CONFIRMED' || res.reservationStatusName?.toUpperCase() === 'PENDING'"
                     (click)="cancelBooking(res.id)" class="text-[12px] bg-rose-550 text-rose-600 hover:bg-rose-100 hover:text-rose-700 border border-rose-200 px-3 py-1.5 rounded-lg cursor-pointer font-bold transition-all">
               Cancel
             </button>
-            <span *ngIf="res.reservationStatusName === 'CANCELLED'" class="text-[12px] text-slate-400 font-semibold">Cancelled</span>
-            <span *ngIf="res.reservationStatusName === 'COMPLETED'" class="text-[12px] text-slate-400 font-semibold">Seated / Completed</span>
+            <span *ngIf="res.reservationStatusName?.toUpperCase() === 'CANCELLED'" class="text-[12px] text-slate-400 font-semibold">Cancelled</span>
+            <span *ngIf="res.reservationStatusName?.toUpperCase() === 'CHECKED OUT' || res.reservationStatusName?.toUpperCase() === 'COMPLETED'" class="text-[12px] text-slate-400 font-semibold">Seated / Completed</span>
           </td>
         </ng-container>
 

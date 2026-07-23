@@ -89,6 +89,8 @@ export class ReservationComponent implements OnInit {
   createBooking(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      this.errorMessage = 'Please fill out all required fields with valid values.';
+      console.warn('Form validation failed:', this.form.controls);
       return;
     }
 
