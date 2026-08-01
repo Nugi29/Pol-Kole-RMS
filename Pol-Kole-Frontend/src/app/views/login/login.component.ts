@@ -1,22 +1,36 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService, LoginPayload, LoginResponse } from '../../services/auth.service';
+
 @Component({
   selector: 'app-login',
   standalone: false,
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css'],
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   readonly state = 'User';
   email = '';
   password = '';
   isSubmitting = false;
+  isCheckingSession = false;
+  hidePassword = true;
   public errorMessage = '';
+
   constructor(
     private readonly auth: AuthService,
     private readonly router: Router,
   ) {}
+
+  ngOnInit() {
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
+    if (token && role) {
+      this.isCheckingSession = true;
+      this.redirectToMainWindow();
+    }
+  }
+
   onSubmit() {
     if (!this.email.trim() || !this.password.trim()) {
       this.errorMessage = 'Email and password are required.';
@@ -51,16 +65,14 @@ export class LoginComponent {
         }
         this.redirectToMainWindow();
       },
-      error: () => {
+      error: (err) => {
         this.errorMessage = 'Login failed. Please check your credentials.';
         console.log(this.errorMessage);
         this.isSubmitting = false;
-      },
-      complete: () => {
-        this.isSubmitting = false;
-      },
+      }
     });
   }
+
   private getTokenFromResponse(res: LoginResponse): string {
     const candidate = res as unknown as {
       token?: string;
@@ -69,6 +81,7 @@ export class LoginComponent {
     };
     return candidate.token ?? candidate.data?.token ?? candidate.result?.token ?? '';
   }
+
   private getRoleFromResponse(res: LoginResponse): string {
     const candidate = res as unknown as {
       role?: string;
@@ -77,6 +90,7 @@ export class LoginComponent {
     };
     return candidate.role ?? candidate.data?.role ?? candidate.result?.role ?? '';
   }
+
   private getNameFromResponse(res: LoginResponse): string {
     const candidate = res as unknown as {
       name?: string;
@@ -85,13 +99,29 @@ export class LoginComponent {
     };
     return candidate.name ?? candidate.data?.name ?? candidate.result?.name ?? '';
   }
+
   private getNameFromEmail(email: string): string {
     const emailPrefix = email.trim().split('@')[0] ?? '';
     return emailPrefix.trim();
   }
+
   private redirectToMainWindow() {
-    this.router.navigate(['/main', 'dashboard']).catch(() => {
-      this.router.navigate(['/']);
-    });
+    this.router.navigate(['/main', 'dashboard']).then(
+      (success) => {
+        if (!success) {
+          this.handleRedirectFailure();
+        }
+      },
+      () => {
+        this.handleRedirectFailure();
+      }
+    );
+  }
+
+  private handleRedirectFailure() {
+    localStorage.clear();
+    this.isSubmitting = false;
+    this.isCheckingSession = false;
+    this.errorMessage = 'Authentication and redirection failed. Please sign in again.';
   }
 }

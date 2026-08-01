@@ -15,6 +15,7 @@ import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { MatDialogModule } from '@angular/material/dialog';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { AppRoutingModule } from './app-routing-module';
 import { AppComponent } from './app.component';
@@ -83,6 +84,7 @@ import { InventoryComponent } from './views/modules/inventory/inventory.componen
     MatTableModule,
     MatPaginatorModule,
     MatDialogModule,
+    MatProgressSpinnerModule,
     ConfirmComponent,
     MessageComponent,
     ButtonLabel,

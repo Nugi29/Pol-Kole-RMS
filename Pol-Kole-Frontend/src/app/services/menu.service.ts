@@ -17,7 +17,7 @@ export interface MenuItem {
   price: number;
   categoryId: number;
   categoryName?: string;
-  availability: boolean;
+  isAvailable: boolean;
   preparationTime: number;
 }
 

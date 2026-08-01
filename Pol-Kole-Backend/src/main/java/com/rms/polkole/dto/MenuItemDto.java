@@ -3,6 +3,8 @@ package com.rms.polkole.dto;
 import jakarta.validation.constraints.*;
 import lombok.*;
 import java.math.BigDecimal;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonAlias;
 
 @Getter
 @Setter
@@ -27,11 +29,26 @@ public class MenuItemDto {
 
     private String categoryName;
 
-    private boolean isAvailable = true;
+    @JsonProperty("isAvailable")
+    @JsonAlias({"availability", "available"})
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
+    @Builder.Default
+    private Boolean isAvailable = true;
 
     @NotNull(message = "Preparation time is required")
     @Min(value = 1, message = "Preparation time must be at least 1 minute")
     private Integer preparationTime;
 
     private String imageUrl;
+
+    @JsonProperty("isAvailable")
+    public boolean isAvailable() {
+        return Boolean.TRUE.equals(this.isAvailable);
+    }
+
+    @JsonProperty("isAvailable")
+    public void setAvailable(boolean available) {
+        this.isAvailable = available;
+    }
 }

@@ -39,7 +39,7 @@ export class MenuComponent implements OnInit {
       price: [10.00, [Validators.required, Validators.min(0)]],
       categoryId: ['', Validators.required],
       preparationTime: [15, [Validators.required, Validators.min(1)]],
-      availability: [true]
+      isAvailable: [true]
     });
 
     this.catForm = this.fb.group({
@@ -130,7 +130,7 @@ export class MenuComponent implements OnInit {
       price: item.price,
       categoryId: item.categoryId,
       preparationTime: item.preparationTime,
-      availability: item.availability
+      isAvailable: item.isAvailable
     });
   }
 
@@ -159,7 +159,7 @@ export class MenuComponent implements OnInit {
       price: 10.00,
       categoryId: '',
       preparationTime: 15,
-      availability: true
+      isAvailable: true
     });
   }
 
