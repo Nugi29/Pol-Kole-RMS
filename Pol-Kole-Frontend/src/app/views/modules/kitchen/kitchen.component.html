@@ -41,66 +41,141 @@
         <span class="w-1.5 h-3.5 bg-indigo-600 rounded-full"></span>
         {{ activeTab === 'active' ? 'Active Kitchen Tickets' : 'Served & Delivered Tickets' }}
       </h2>
-      <button (click)="loadKitchenOrders()" class="text-[12px] font-bold text-indigo-600 hover:text-indigo-850 flex items-center gap-1 cursor-pointer transition-all">
+      <button (click)="loadAll()" class="text-[12px] font-bold text-indigo-600 hover:text-indigo-850 flex items-center gap-1 cursor-pointer transition-all">
         Sync Kitchen Board
       </button>
     </div>
 
     <!-- Active filtered stays -->
-    <div *ngIf="activeTickets.length > 0; else noStays" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      <div *ngFor="let res of activeTickets" class="bg-slate-50 hover:bg-white rounded-2xl p-5 border border-slate-155 hover:border-slate-300 hover:shadow-lg transition-all duration-200 flex flex-col justify-between gap-4 group">
-        <div>
+    <div *ngIf="activeTickets.length > 0; else noStays" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div *ngFor="let res of activeTickets" class="kitchen-card relative bg-white hover:shadow-xl rounded-2xl border border-slate-100 hover:border-indigo-150 transition-all duration-350 flex flex-col justify-between overflow-hidden group">
+        <!-- Glowing top line depending on ticket status -->
+        <div class="absolute top-0 left-0 right-0 h-1.5 transition-all duration-300"
+             [ngClass]="{
+               'bg-amber-400': res.preparationStatus === 'RECEIVED',
+               'bg-blue-500 animate-pulse': res.preparationStatus === 'PREPARING',
+               'bg-emerald-500': res.preparationStatus === 'READY',
+               'bg-slate-350': res.preparationStatus === 'DELIVERED'
+             }">
+        </div>
+
+        <div class="p-5 space-y-4">
+          <!-- Header of the Ticket -->
           <div class="flex items-start justify-between">
             <div>
-              <h3 class="text-base font-extrabold text-slate-900">Table {{ res.tableNumber }}</h3>
-              <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mt-0.5">Order ID: #{{ res.orderId }}</p>
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full inline-block"
+                      [ngClass]="{
+                        'bg-amber-400 animate-ping-slow': res.preparationStatus === 'RECEIVED',
+                        'bg-blue-500 animate-pulse': res.preparationStatus === 'PREPARING',
+                        'bg-emerald-500': res.preparationStatus === 'READY',
+                        'bg-slate-400': res.preparationStatus === 'DELIVERED'
+                      }"></span>
+                <h3 class="text-base font-extrabold text-slate-800 tracking-tight">Table {{ res.tableNumber || 'N/A' }}</h3>
+              </div>
+              <p class="text-[11px] font-semibold text-slate-400 tracking-wider uppercase mt-1">Ticket #{{ res.id }} • Order #{{ res.orderId }}</p>
             </div>
-            <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border shadow-sm"
+            
+            <!-- Status Badge -->
+            <span class="text-[10px] font-bold px-2.5 py-1 rounded-full border shadow-sm tracking-wider"
                   [ngClass]="{
                     'bg-amber-50 border-amber-200 text-amber-600': res.preparationStatus === 'RECEIVED',
                     'bg-blue-50 border-blue-200 text-blue-600': res.preparationStatus === 'PREPARING',
-                    'bg-emerald-50 border-emerald-200 text-emerald-600': res.preparationStatus === 'READY',
-                    'bg-slate-200 border-slate-300 text-slate-655': res.preparationStatus === 'DELIVERED'
+                    'bg-emerald-50 border-emerald-250 text-emerald-600': res.preparationStatus === 'READY',
+                    'bg-slate-100 border-slate-200 text-slate-500': res.preparationStatus === 'DELIVERED'
                   }">
               {{ res.preparationStatus }}
             </span>
           </div>
 
-          <!-- Stays Range Details -->
-          <div class="mt-4 bg-white/60 p-3.5 rounded-xl border border-slate-200/55 space-y-2 text-[12.5px] text-slate-600">
-            <p class="text-slate-800 text-[11px] font-extrabold uppercase tracking-wide border-b border-slate-100 pb-1 mb-2">Order Items:</p>
-            <div *ngFor="let item of res.items" class="flex justify-between items-center text-[13px] py-1 border-b border-slate-50 last:border-0">
-              <span class="font-semibold text-slate-700">{{ item.menuItemName }}</span>
-              <span class="bg-indigo-50 text-indigo-600 font-extrabold px-1.5 py-0.5 rounded-lg text-xs">x{{ item.quantity }}</span>
+          <!-- Active cooking animation / progress bar if status is PREPARING -->
+          <div *ngIf="res.preparationStatus === 'PREPARING'" class="space-y-1.5">
+            <div class="flex justify-between text-[11px] font-bold text-blue-600">
+              <span>Active Cooking...</span>
+              <span class="animate-pulse">Chef is preparing</span>
+            </div>
+            <div class="h-1.5 w-full bg-blue-50 rounded-full overflow-hidden border border-blue-100">
+              <div class="h-full bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full animate-progress-bar"></div>
+            </div>
+          </div>
+
+          <!-- Order Items Section -->
+          <div class="bg-slate-50/60 p-4 rounded-xl border border-slate-100 space-y-2.5">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-1.5 mb-1.5">
+              <p class="text-slate-800 text-[11px] font-extrabold uppercase tracking-wider">Ordered Items</p>
+              <span class="text-[10px] font-bold text-slate-450">Qty</span>
             </div>
             
-            <div *ngIf="res.notes" class="mt-2 text-xs text-rose-500 bg-rose-50/50 p-2 rounded-lg border border-rose-100">
-              ✍️ <strong>Chef Note:</strong> {{ res.notes }}
+            <div *ngFor="let item of res.items" class="flex flex-col py-1.5 border-b border-slate-100/50 last:border-0">
+              <div class="flex justify-between items-center text-[13px]">
+                <span class="font-bold text-slate-700">{{ item.menuItemName }}</span>
+                <span class="bg-indigo-50/80 border border-indigo-100 text-indigo-600 font-extrabold px-2 py-0.5 rounded-lg text-xs">x{{ item.quantity }}</span>
+              </div>
+              <!-- Item level chef notes -->
+              <div *ngIf="item.notes" class="mt-1 flex items-center gap-1 text-[11.5px] font-medium text-amber-700 bg-amber-50/40 px-2 py-0.5 rounded-md border border-amber-100/40">
+                <span class="text-xs">✏️</span>
+                <span>"{{ item.notes }}"</span>
+              </div>
+            </div>
+            
+            <!-- General ticket notes -->
+            <div *ngIf="res.notes" class="mt-3 text-[11.5px] text-rose-600 bg-rose-50/60 p-2.5 rounded-xl border border-rose-100">
+              <span class="font-bold">📝 Ticket Note:</span> "{{ res.notes }}"
             </div>
           </div>
         </div>
 
-        <!-- Action buttons -->
-        <div class="border-t border-slate-100 pt-3 flex items-center justify-between">
-          <span class="text-[12px] font-bold text-slate-450">{{ res.preparationTimer || 15 }} min est prep</span>
-          
-          <button *ngIf="res.preparationStatus === 'RECEIVED'"
-                  (click)="updateTicketStatus(res.id!, 'PREPARING')"
-                  class="bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-bold px-4 py-2 rounded-xl cursor-pointer shadow-sm transition-all">
-            Start Cooking
-          </button>
-          
-          <button *ngIf="res.preparationStatus === 'PREPARING'"
-                  (click)="updateTicketStatus(res.id!, 'READY')"
-                  class="bg-emerald-600 hover:bg-emerald-700 text-white text-[12px] font-bold px-4 py-2 rounded-xl cursor-pointer shadow-sm transition-all">
-            Mark Ready
-          </button>
+        <!-- Bottom Info & Action Bar -->
+        <div class="p-5 pt-0 border-t border-slate-50 mt-auto">
+          <!-- Time timestamps -->
+          <div class="flex justify-between items-center text-[11.5px] text-slate-400 font-medium py-3">
+            <div class="flex items-center gap-1">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>Recv: {{ res.startTime | date:'hh:mm a' }}</span>
+            </div>
+            <div *ngIf="res.endTime" class="flex items-center gap-1 text-slate-500">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span class="font-bold">Served: {{ res.endTime | date:'hh:mm a' }}</span>
+            </div>
+            <div *ngIf="!res.endTime" class="text-slate-450 font-semibold">
+              Est: {{ res.preparationTimer || 15 }} mins
+            </div>
+          </div>
 
-          <button *ngIf="res.preparationStatus === 'READY'"
-                  (click)="updateTicketStatus(res.id!, 'DELIVERED')"
-                  class="bg-slate-700 hover:bg-slate-800 text-white text-[12px] font-bold px-4 py-2 rounded-xl cursor-pointer shadow-sm transition-all">
-            Deliver / Serve
-          </button>
+          <!-- Actions -->
+          <div class="pt-1.5">
+            <button *ngIf="res.preparationStatus === 'RECEIVED'"
+                    (click)="updateTicketStatus(res.id!, 'PREPARING')"
+                    class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-[0.98] text-white text-[13px] font-bold py-2.5 rounded-xl cursor-pointer shadow-md transition-all flex items-center justify-center gap-1.5">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              Start Cooking / Prep
+            </button>
+            
+            <button *ngIf="res.preparationStatus === 'PREPARING'"
+                    (click)="updateTicketStatus(res.id!, 'READY')"
+                    class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 active:scale-[0.98] text-white text-[13px] font-bold py-2.5 rounded-xl cursor-pointer shadow-md transition-all flex items-center justify-center gap-1.5">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Mark Ready for Serving
+            </button>
+
+            <div *ngIf="res.preparationStatus === 'READY'"
+                 class="w-full bg-emerald-50 text-emerald-600 text-[12.5px] font-bold py-2.5 rounded-xl flex items-center justify-center gap-1.5 border border-emerald-250">
+              Ready for Serving
+            </div>
+
+            <div *ngIf="res.preparationStatus === 'DELIVERED'"
+                 class="w-full bg-slate-100 text-slate-500 text-[12.5px] font-bold py-2.5 rounded-xl flex items-center justify-center gap-1.5 border border-slate-200">
+              Served & Completed
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -128,13 +128,14 @@ export class OrdersComponent implements OnInit {
     const items: OrderItemInput[] = this.cart.map(c => ({
       menuItemId: c.item.id!,
       quantity: c.quantity,
+      price: c.item.price,
       notes: c.notes || undefined
     }));
 
     const payload = {
       customerId: this.selectedCustomerId,
       tableId: this.selectedTableId,
-      orderItems: items
+      items: items
     };
 
     this.orderService.createOrder(payload).subscribe({

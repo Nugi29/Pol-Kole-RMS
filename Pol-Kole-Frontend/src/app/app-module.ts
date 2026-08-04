@@ -45,6 +45,7 @@ import { MenuComponent } from './views/modules/menu/menu.component';
 import { OrdersComponent } from './views/modules/orders/orders.component';
 import { KitchenComponent } from './views/modules/kitchen/kitchen.component';
 import { InventoryComponent } from './views/modules/inventory/inventory.component';
+import { WaiterComponent } from './views/modules/waiter/waiter.component';
 
 @NgModule({
   declarations: [
@@ -63,6 +64,7 @@ import { InventoryComponent } from './views/modules/inventory/inventory.componen
     MenuComponent,
     OrdersComponent,
     KitchenComponent,
+    WaiterComponent,
     InventoryComponent,
   ],
   imports: [

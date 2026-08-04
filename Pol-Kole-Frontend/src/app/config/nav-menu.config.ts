@@ -71,6 +71,15 @@ export const NAV_MENU = [
     roles: ['ADMIN', 'MANAGER', 'CHEF'],
   },
   {
+    name: 'Waiter Service Hub',
+    icon: 'restaurant',
+    roles: ['ADMIN', 'MANAGER', 'WAITER'],
+    children: [
+      { name: 'Ready to Serve', route: '/main/waiter?tab=ready', roles: ['ADMIN', 'MANAGER', 'WAITER'] },
+      { name: 'Served History', route: '/main/waiter?tab=history', roles: ['ADMIN', 'MANAGER', 'WAITER'] },
+    ],
+  },
+  {
     name: 'Billing POS',
     icon: 'receipt',
     roles: ['ADMIN', 'MANAGER', 'CASHIER'],

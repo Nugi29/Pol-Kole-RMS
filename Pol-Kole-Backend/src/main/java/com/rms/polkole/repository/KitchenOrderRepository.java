@@ -13,4 +13,9 @@ public interface KitchenOrderRepository extends JpaRepository<KitchenOrderEntity
 
     @Query("SELECT k FROM KitchenOrderEntity k WHERE k.preparationStatus = 'RECEIVED' OR k.preparationStatus = 'PREPARING' ORDER BY k.startTime ASC")
     List<KitchenOrderEntity> findActiveKitchenOrders();
+
+    List<KitchenOrderEntity> findByPreparationStatus(String preparationStatus);
+
+    @Query("SELECT k FROM KitchenOrderEntity k WHERE k.preparationStatus = 'READY' OR k.preparationStatus = 'DELIVERED' ORDER BY k.endTime DESC")
+    List<KitchenOrderEntity> findServedKitchenOrders();
 }

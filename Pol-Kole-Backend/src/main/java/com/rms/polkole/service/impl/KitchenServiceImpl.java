@@ -61,6 +61,22 @@ public class KitchenServiceImpl implements KitchenService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<KitchenOrderDto> getKitchenOrdersByStatus(String status) {
+        return kitchenOrderRepository.findByPreparationStatus(status).stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<KitchenOrderDto> getServedKitchenOrders() {
+        return kitchenOrderRepository.findServedKitchenOrders().stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
+    }
+
     private KitchenOrderDto mapToDto(KitchenOrderEntity kOrder) {
         KitchenOrderDto dto = KitchenOrderDto.builder()
                 .id(kOrder.getId())
@@ -74,6 +90,10 @@ public class KitchenServiceImpl implements KitchenService {
 
         if (kOrder.getOrder().getTable() != null) {
             dto.setTableNumber(kOrder.getOrder().getTable().getTableNumber());
+        }
+
+        if (kOrder.getOrder().getCustomer() != null) {
+            dto.setCustomerName(kOrder.getOrder().getCustomer().getName());
         }
 
         dto.setItems(kOrder.getOrder().getItems().stream().map(item -> {

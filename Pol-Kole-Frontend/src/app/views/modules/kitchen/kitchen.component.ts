@@ -19,6 +19,9 @@ export interface KitchenOrder {
   notes?: string;
   preparationStatus: string; // RECEIVED, PREPARING, READY, DELIVERED
   preparationTimer?: number;
+  startTime?: string;
+  endTime?: string;
+  customerName?: string;
 }
 
 @Component({
@@ -29,6 +32,7 @@ export interface KitchenOrder {
 })
 export class KitchenComponent implements OnInit {
   kitchenOrders: KitchenOrder[] = [];
+  servedOrders: KitchenOrder[] = [];
   loading = false;
   successMessage = '';
   errorMessage = '';
@@ -39,7 +43,12 @@ export class KitchenComponent implements OnInit {
   constructor(private readonly http: HttpClient) {}
 
   ngOnInit(): void {
+    this.loadAll();
+  }
+
+  loadAll(): void {
     this.loadKitchenOrders();
+    this.loadServedOrders();
   }
 
   loadKitchenOrders(): void {
@@ -58,6 +67,22 @@ export class KitchenComponent implements OnInit {
     });
   }
 
+  loadServedOrders(): void {
+    this.loading = true;
+    this.http.get<ApiResponse<KitchenOrder[]>>(`${this.baseUrl}/orders/served`).pipe(
+      map(res => res.data)
+    ).subscribe({
+      next: (orders) => {
+        this.servedOrders = orders;
+        this.loading = false;
+      },
+      error: () => {
+        this.errorMessage = 'Failed to load served history.';
+        this.loading = false;
+      }
+    });
+  }
+
   updateTicketStatus(id: number, status: string): void {
     this.loading = true;
     this.errorMessage = '';
@@ -68,7 +93,7 @@ export class KitchenComponent implements OnInit {
     ).subscribe({
       next: () => {
         this.successMessage = `Ticket #${id} status updated to ${status}.`;
-        this.loadKitchenOrders();
+        this.loadAll();
       },
       error: () => {
         this.errorMessage = 'Failed to update ticket status.';
@@ -81,7 +106,7 @@ export class KitchenComponent implements OnInit {
     if (this.activeTab === 'active') {
       return this.kitchenOrders.filter(t => t.preparationStatus === 'RECEIVED' || t.preparationStatus === 'PREPARING');
     } else {
-      return this.kitchenOrders.filter(t => t.preparationStatus === 'READY' || t.preparationStatus === 'DELIVERED');
+      return this.servedOrders;
     }
   }
 }

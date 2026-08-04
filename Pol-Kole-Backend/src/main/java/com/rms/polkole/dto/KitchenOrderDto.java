@@ -19,4 +19,5 @@ public class KitchenOrderDto {
     private Integer preparationTimer;
     private Instant startTime;
     private Instant endTime;
+    private String customerName;
 }

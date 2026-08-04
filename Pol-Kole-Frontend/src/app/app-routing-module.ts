@@ -15,6 +15,7 @@ import { MenuComponent } from './views/modules/menu/menu.component';
 import { OrdersComponent } from './views/modules/orders/orders.component';
 import { KitchenComponent } from './views/modules/kitchen/kitchen.component';
 import { InventoryComponent } from './views/modules/inventory/inventory.component';
+import { WaiterComponent } from './views/modules/waiter/waiter.component';
 import { AuthGuard } from './services/auth.guard';
 
 const routes: Routes = [
@@ -93,6 +94,12 @@ const routes: Routes = [
         component: KitchenComponent,
         canActivate: [AuthGuard],
         data: { roles: ['ADMIN', 'MANAGER', 'CHEF'] }
+      },
+      {
+        path: 'waiter',
+        component: WaiterComponent,
+        canActivate: [AuthGuard],
+        data: { roles: ['ADMIN', 'MANAGER', 'WAITER'] }
       },
       {
         path: 'inventory',

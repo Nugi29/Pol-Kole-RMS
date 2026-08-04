@@ -7,6 +7,7 @@ import { ApiResponse, Page } from './room.service';
 export interface OrderItemInput {
   menuItemId: number;
   quantity: number;
+  price: number;
   notes?: string;
 }
 
@@ -28,7 +29,7 @@ export interface Order {
   statusId?: number;
   statusName?: string;
   totalAmount: number;
-  orderItems: OrderItem[];
+  items: OrderItem[];
   orderTime?: string;
 }
 

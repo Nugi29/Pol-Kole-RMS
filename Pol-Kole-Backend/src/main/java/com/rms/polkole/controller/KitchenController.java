@@ -30,4 +30,16 @@ public class KitchenController {
         auditLogService.log("UPDATE KITCHEN TICKET STATUS", "Updated kitchen ticket ID " + id + " to " + status);
         return ResponseEntity.ok(ApiResponse.success(updated, "Kitchen preparation status updated successfully"));
     }
+
+    @GetMapping("/orders/status")
+    public ResponseEntity<ApiResponse<List<KitchenOrderDto>>> getKitchenOrdersByStatus(@RequestParam String status) {
+        List<KitchenOrderDto> orders = kitchenService.getKitchenOrdersByStatus(status);
+        return ResponseEntity.ok(ApiResponse.success(orders));
+    }
+
+    @GetMapping("/orders/served")
+    public ResponseEntity<ApiResponse<List<KitchenOrderDto>>> getServedKitchenOrders() {
+        List<KitchenOrderDto> orders = kitchenService.getServedKitchenOrders();
+        return ResponseEntity.ok(ApiResponse.success(orders));
+    }
 }
