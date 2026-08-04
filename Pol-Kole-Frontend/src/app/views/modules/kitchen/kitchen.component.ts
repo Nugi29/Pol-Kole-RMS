@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { ActivatedRoute } from '@angular/router';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ApiResponse } from '../../../services/room.service';
@@ -40,10 +41,18 @@ export class KitchenComponent implements OnInit {
 
   private readonly baseUrl = 'http://localhost:8080/api/kitchen';
 
-  constructor(private readonly http: HttpClient) {}
+  constructor(
+    private readonly http: HttpClient,
+    private readonly route: ActivatedRoute
+  ) {}
 
   ngOnInit(): void {
-    this.loadAll();
+    this.route.queryParams.subscribe(params => {
+      if (params['tab']) {
+        this.activeTab = params['tab'];
+      }
+      this.loadAll();
+    });
   }
 
   loadAll(): void {

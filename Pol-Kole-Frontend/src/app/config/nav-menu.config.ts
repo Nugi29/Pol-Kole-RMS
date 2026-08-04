@@ -68,6 +68,10 @@ export const NAV_MENU = [
     name: 'Chef Kitchen Hub',
     icon: 'kitchen',
     route: '/main/kitchen',
+    children: [
+      { name: 'Active Chef Queue', route: '/main/kitchen?tab=active', roles: ['ADMIN', 'MANAGER', 'CHEF'] },
+      { name: 'Served Ledger', route: '/main/kitchen?tab=served', roles: ['ADMIN', 'MANAGER', 'CHEF'] },
+    ],
     roles: ['ADMIN', 'MANAGER', 'CHEF'],
   },
   {
@@ -87,15 +91,6 @@ export const NAV_MENU = [
       { name: 'Cashier Settle', route: '/main/billing?tab=settle', roles: ['ADMIN', 'MANAGER', 'CASHIER'] },
       { name: 'Invoices Ledger', route: '/main/billing?tab=invoices', roles: ['ADMIN', 'MANAGER', 'CASHIER'] },
       { name: 'Payments Ledger', route: '/main/billing?tab=payments', roles: ['ADMIN', 'MANAGER', 'CASHIER'] },
-    ],
-  },
-  {
-    name: 'Inventory Stock',
-    icon: 'inventory',
-    roles: ['ADMIN', 'MANAGER', 'CHEF'],
-    children: [
-      { name: 'Stock Levels', route: '/main/inventory?tab=stock', roles: ['ADMIN', 'MANAGER', 'CHEF'] },
-      { name: 'Transactions Log', route: '/main/inventory?tab=transactions', roles: ['ADMIN', 'MANAGER'] },
     ],
   },
   {

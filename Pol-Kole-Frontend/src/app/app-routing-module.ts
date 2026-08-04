@@ -14,7 +14,7 @@ import { TablesComponent } from './views/modules/tables/tables.component';
 import { MenuComponent } from './views/modules/menu/menu.component';
 import { OrdersComponent } from './views/modules/orders/orders.component';
 import { KitchenComponent } from './views/modules/kitchen/kitchen.component';
-import { InventoryComponent } from './views/modules/inventory/inventory.component';
+
 import { WaiterComponent } from './views/modules/waiter/waiter.component';
 import { AuthGuard } from './services/auth.guard';
 
@@ -101,12 +101,7 @@ const routes: Routes = [
         canActivate: [AuthGuard],
         data: { roles: ['ADMIN', 'MANAGER', 'WAITER'] }
       },
-      {
-        path: 'inventory',
-        component: InventoryComponent,
-        canActivate: [AuthGuard],
-        data: { roles: ['ADMIN', 'MANAGER', 'CHEF'] }
-      },
+
       {
         path: 'audit-logs',
         component: AuditLogsComponent,

@@ -109,11 +109,12 @@ INSERT INTO `reservation_status` (`id`, `status_name`, `description`) VALUES
 -- 10. Populate order_status
 TRUNCATE TABLE `order_status`;
 INSERT INTO `order_status` (`id`, `name`) VALUES
-(1, 'Pending'),
-(2, 'Preparing'),
-(3, 'Served'),
-(4, 'Paid'),
-(5, 'Cancelled');
+(1, 'PENDING'),
+(2, 'PREPARING'),
+(3, 'SERVED'),
+(4, 'COMPLETED'),
+(5, 'CANCELLED'),
+(6, 'READY');
 
 -- 11. Populate payment_methods
 TRUNCATE TABLE `payment_methods`;

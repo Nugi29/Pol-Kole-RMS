@@ -13,16 +13,16 @@
 
     <!-- Toggle Selector -->
     <div class="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200">
-      <button (click)="activeTab = 'active'"
+      <a routerLink="/main/kitchen" [queryParams]="{ tab: 'active' }"
          class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none"
          [ngClass]="activeTab === 'active' ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:text-slate-800'">
         Active Chef Queue
-      </button>
-      <button (click)="activeTab = 'served'"
+      </a>
+      <a routerLink="/main/kitchen" [queryParams]="{ tab: 'served' }"
          class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none"
          [ngClass]="activeTab === 'served' ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:text-slate-800'">
         Served Ledger
-      </button>
+      </a>
     </div>
   </div>
 

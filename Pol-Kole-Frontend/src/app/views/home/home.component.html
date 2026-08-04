@@ -123,7 +123,7 @@
       </div>
 
       <!-- Schedule + Today's check-ins -->
-      <div class="grid grid-cols-2 gap-6">
+      <div class="grid grid-cols-1 gap-6">
         <!-- Card: arrivals today -->
         <div class="bg-white rounded-3xl p-6 border border-slate-100">
           <h3 class="text-[14px] font-bold text-slate-900 mb-4 flex items-center gap-2">
@@ -137,22 +137,6 @@
           <div *ngIf="stats.activeReservationsToday > 0" class="flex flex-col items-center py-6 text-emerald-600 bg-emerald-50/40 rounded-xl">
             <span class="text-[24px] font-extrabold leading-none">{{ stats.activeReservationsToday }}</span>
             <span class="text-[11px] text-slate-500 mt-1 font-bold">Bookings to seat today</span>
-          </div>
-        </div>
-
-        <!-- Card: low stock alerts -->
-        <div class="bg-white rounded-3xl p-6 border border-slate-100">
-          <h3 class="text-[14px] font-bold text-slate-900 mb-4 flex items-center gap-2">
-            <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-            Inventory Warning Alerts ({{ stats.lowStockInventoryAlerts }})
-          </h3>
-          <div *ngIf="stats.lowStockInventoryAlerts === 0" class="flex flex-col items-center py-6 text-slate-400">
-            <svg class="w-8 h-8 mb-2 stroke-current" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            <span class="text-[12px] font-semibold">All stock levels fully sufficient</span>
-          </div>
-          <div *ngIf="stats.lowStockInventoryAlerts > 0" class="flex flex-col items-center py-6 text-rose-600 bg-rose-50/40 rounded-xl border border-rose-100/50">
-            <span class="text-[24px] font-extrabold leading-none">{{ stats.lowStockInventoryAlerts }}</span>
-            <span class="text-[11px] text-slate-500 mt-1 font-bold">Ingredients below threshold</span>
           </div>
         </div>
       </div>
