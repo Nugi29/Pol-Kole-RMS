@@ -171,10 +171,10 @@
                   
                   <span class="text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm"
                         [ngClass]="{
-                          'bg-emerald-50 border border-emerald-200 text-emerald-600': rm.status === 'AVAILABLE',
-                          'bg-indigo-50 border border-indigo-200 text-indigo-600': rm.status === 'OCCUPIED',
-                          'bg-amber-50 border border-amber-200 text-amber-600': rm.status === 'CLEANING',
-                          'bg-rose-50 border border-rose-200 text-rose-600': rm.status === 'MAINTENANCE'
+                          'bg-emerald-50 border border-emerald-200 text-emerald-600': rm.status?.toUpperCase() === 'AVAILABLE',
+                          'bg-indigo-50 border border-indigo-200 text-indigo-600': rm.status?.toUpperCase() === 'OCCUPIED',
+                          'bg-amber-50 border border-amber-200 text-amber-600': rm.status?.toUpperCase() === 'CLEANING',
+                          'bg-rose-50 border border-rose-200 text-rose-600': rm.status?.toUpperCase() === 'MAINTENANCE'
                         }">
                     {{ rm.status }}
                   </span>
@@ -187,10 +187,10 @@
 
               <div class="flex items-center justify-between border-t border-slate-100 pt-3 mt-1">
                 <div class="flex items-center gap-1">
-                  <button *ngIf="rm.status !== 'AVAILABLE'" (click)="quickStatusUpdate(rm, 'AVAILABLE')" class="text-[10px] bg-emerald-50 border border-emerald-200 text-emerald-600 font-bold px-2 py-0.5 rounded hover:bg-emerald-600 hover:text-white transition-all cursor-pointer">
+                  <button *ngIf="rm.status?.toUpperCase() !== 'AVAILABLE'" (click)="quickStatusUpdate(rm, 'AVAILABLE')" class="text-[10px] bg-emerald-50 border border-emerald-200 text-emerald-600 font-bold px-2 py-0.5 rounded hover:bg-emerald-600 hover:text-white transition-all cursor-pointer">
                     Vacate
                   </button>
-                  <button *ngIf="rm.status === 'AVAILABLE'" (click)="quickStatusUpdate(rm, 'OCCUPIED')" class="text-[10px] bg-indigo-50 border border-indigo-200 text-indigo-600 font-bold px-2 py-0.5 rounded hover:bg-indigo-600 hover:text-white transition-all cursor-pointer">
+                  <button *ngIf="rm.status?.toUpperCase() === 'AVAILABLE'" (click)="quickStatusUpdate(rm, 'OCCUPIED')" class="text-[10px] bg-indigo-50 border border-indigo-200 text-indigo-600 font-bold px-2 py-0.5 rounded hover:bg-indigo-600 hover:text-white transition-all cursor-pointer">
                     Occupy
                   </button>
                 </div>
@@ -234,10 +234,10 @@
                 <td mat-cell *matCellDef="let rm" class="py-3.5">
                   <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full border inline-block shadow-sm"
                         [ngClass]="{
-                          'bg-emerald-50 border-emerald-200 text-emerald-600': rm.status === 'AVAILABLE',
-                          'bg-indigo-50 border-indigo-200 text-indigo-600': rm.status === 'OCCUPIED',
-                          'bg-amber-50 border-amber-200 text-amber-600': rm.status === 'CLEANING',
-                          'bg-rose-50 border-rose-200 text-rose-600': rm.status === 'MAINTENANCE'
+                          'bg-emerald-50 border-emerald-200 text-emerald-600': rm.status?.toUpperCase() === 'AVAILABLE',
+                          'bg-indigo-50 border-indigo-200 text-indigo-600': rm.status?.toUpperCase() === 'OCCUPIED',
+                          'bg-amber-50 border-amber-200 text-amber-600': rm.status?.toUpperCase() === 'CLEANING',
+                          'bg-rose-50 border-rose-200 text-rose-600': rm.status?.toUpperCase() === 'MAINTENANCE'
                         }">
                     {{ rm.status }}
                   </span>
@@ -248,10 +248,10 @@
               <ng-container matColumnDef="actions">
                 <th mat-header-cell *matHeaderCellDef class="pb-3 font-bold uppercase tracking-wider text-[11px] text-right">Actions</th>
                 <td mat-cell *matCellDef="let rm" class="py-3.5 text-right space-x-1.5">
-                  <button *ngIf="rm.status !== 'AVAILABLE'" (click)="quickStatusUpdate(rm, 'AVAILABLE')" class="text-[10px] bg-emerald-50 border border-emerald-200 text-emerald-600 font-bold px-2 py-1 rounded hover:bg-emerald-600 hover:text-white transition-all cursor-pointer">
+                  <button *ngIf="rm.status?.toUpperCase() !== 'AVAILABLE'" (click)="quickStatusUpdate(rm, 'AVAILABLE')" class="text-[10px] bg-emerald-50 border border-emerald-200 text-emerald-600 font-bold px-2 py-1 rounded hover:bg-emerald-600 hover:text-white transition-all cursor-pointer">
                     Vacate
                   </button>
-                  <button *ngIf="rm.status === 'AVAILABLE'" (click)="quickStatusUpdate(rm, 'OCCUPIED')" class="text-[10px] bg-indigo-50 border border-indigo-200 text-indigo-600 font-bold px-2 py-1 rounded hover:bg-indigo-600 hover:text-white transition-all cursor-pointer">
+                  <button *ngIf="rm.status?.toUpperCase() === 'AVAILABLE'" (click)="quickStatusUpdate(rm, 'OCCUPIED')" class="text-[10px] bg-indigo-50 border border-indigo-200 text-indigo-600 font-bold px-2 py-1 rounded hover:bg-indigo-600 hover:text-white transition-all cursor-pointer">
                     Occupy
                   </button>
                   <button (click)="editRoom(rm)" class="text-[11px] font-bold text-indigo-600 bg-indigo-50/50 hover:bg-indigo-600 hover:text-white px-2 py-1 rounded-lg transition-all cursor-pointer">

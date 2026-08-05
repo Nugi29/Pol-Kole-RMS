@@ -10,4 +10,8 @@ public interface BillingService {
     InvoiceDto getInvoiceByOrderId(Integer orderId);
     InvoiceDto getInvoiceById(Integer id);
     List<InvoiceDto> getAllInvoices();
+    InvoiceDto generateStayInvoice(Integer reservationId, String discountCode, int redeemPoints);
+    InvoiceDto getInvoiceByReservationId(Integer reservationId);
+    InvoiceDto generateTableInvoice(Integer reservationId, String discountCode, int redeemPoints);
+    InvoiceDto getInvoiceByTableReservationId(Integer reservationId);
 }

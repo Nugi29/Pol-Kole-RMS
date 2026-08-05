@@ -8,4 +8,6 @@ public interface CheckInOutService {
     CheckOutDto checkOut(CheckOutDto dto);
     CheckInDto getCheckInByReservationId(Integer reservationId);
     CheckOutDto getCheckOutByReservationId(Integer reservationId);
+    void tableCheckIn(Integer reservationId);
+    void tableCheckOut(Integer reservationId);
 }

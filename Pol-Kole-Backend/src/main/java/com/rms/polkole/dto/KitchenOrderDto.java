@@ -13,6 +13,7 @@ public class KitchenOrderDto {
     private Integer id;
     private Integer orderId;
     private String tableNumber;
+    private String roomNumber;
     private List<OrderItemDto> items;
     private String notes;
     private String preparationStatus; // RECEIVED, PREPARING, READY, DELIVERED

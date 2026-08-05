@@ -6,6 +6,8 @@ import { ActivatedRoute } from '@angular/router';
 import { Reservation, ReservationService } from '../../../services/reservation.service';
 import { RestaurantTable, TableService } from '../../../services/table.service';
 import { CustomerDto, CustomerService } from '../../../services/customer.service';
+import { Room, RoomService } from '../../../services/room.service';
+import { HotelReservation, HotelReservationService } from '../../../services/hotel-reservation.service';
 
 @Component({
   selector: 'app-reservation',
@@ -22,6 +24,13 @@ export class ReservationComponent implements OnInit {
   displayedColumns = ['id', 'customer', 'table', 'date', 'time', 'guestsCount', 'status', 'actions'];
   dataSource = new MatTableDataSource<Reservation>([]);
 
+  // Hotel Stays Reservations
+  hotelReservations: HotelReservation[] = [];
+  hotelRooms: Room[] = [];
+  hotelReservationForm: FormGroup;
+  hotelDataSource = new MatTableDataSource<HotelReservation>([]);
+  hotelDisplayedColumns = ['id', 'customer', 'room', 'checkInDate', 'checkOutDate', 'guestsCount', 'status', 'actions'];
+
   form: FormGroup;
   loading = false;
   errorMessage = '';
@@ -33,6 +42,8 @@ export class ReservationComponent implements OnInit {
     private readonly reservationService: ReservationService,
     private readonly roomService: TableService,
     private readonly customerService: CustomerService,
+    private readonly hotelRoomService: RoomService,
+    private readonly hotelReservationService: HotelReservationService,
     private readonly route: ActivatedRoute
   ) {
     this.form = this.fb.group({
@@ -43,12 +54,22 @@ export class ReservationComponent implements OnInit {
       guestsCount: [2, [Validators.required, Validators.min(1)]],
       specialRequests: ['']
     });
+
+    this.hotelReservationForm = this.fb.group({
+      customerId: [null, Validators.required],
+      roomId: [null, Validators.required],
+      checkInDate: ['', Validators.required],
+      checkOutDate: ['', Validators.required],
+      guestsCount: [1, [Validators.required, Validators.min(1)]]
+    });
   }
 
   ngOnInit(): void {
     this.loadReservations();
     this.loadRooms();
     this.loadCustomers();
+    this.loadHotelReservations();
+    this.loadHotelRooms();
     this.route.queryParams.subscribe(params => {
       if (params['tab']) {
         this.activeTab = params['tab'];
@@ -68,7 +89,7 @@ export class ReservationComponent implements OnInit {
         this.loading = false;
       },
       error: () => {
-        this.errorMessage = 'Failed to load reservations.';
+        this.errorMessage = 'Failed to load table reservations ledger.';
         this.loading = false;
       }
     });
@@ -83,6 +104,27 @@ export class ReservationComponent implements OnInit {
   loadCustomers(): void {
     this.customerService.searchCustomers(undefined, 0, 100).subscribe(page => {
       this.customers = page.content;
+    });
+  }
+
+  loadHotelReservations(): void {
+    this.loading = true;
+    this.hotelReservationService.filterReservations(undefined, undefined, undefined, undefined, undefined, 0, 100).subscribe({
+      next: (page) => {
+        this.hotelReservations = page.content;
+        this.hotelDataSource.data = page.content;
+        this.loading = false;
+      },
+      error: () => {
+        this.errorMessage = 'Failed to load hotel room reservations ledger.';
+        this.loading = false;
+      }
+    });
+  }
+
+  loadHotelRooms(): void {
+    this.hotelRoomService.filterRooms(undefined, undefined, 0, 100).subscribe(page => {
+      this.hotelRooms = page.content.filter(r => r.status?.toUpperCase() === 'AVAILABLE');
     });
   }
 
@@ -105,6 +147,7 @@ export class ReservationComponent implements OnInit {
         this.loadReservations();
         this.form.reset({ guestsCount: 2 });
         this.loading = false;
+        this.activeTab = 'list';
       },
       error: (err) => {
         this.errorMessage = err.error?.message || 'Failed to place reservation. Verify table availability and slot.';
@@ -114,15 +157,61 @@ export class ReservationComponent implements OnInit {
   }
 
   cancelBooking(id: number): void {
-    if (confirm('Are you sure you want to cancel this reservation?')) {
+    if (confirm('Are you sure you want to cancel this booking?')) {
       this.loading = true;
       this.reservationService.cancelReservation(id).subscribe({
         next: () => {
+          this.successMessage = 'Booking cancelled successfully.';
           this.loadReservations();
-          this.loading = false;
         },
-        error: () => {
-          this.errorMessage = 'Failed to cancel reservation.';
+        error: (err) => {
+          this.errorMessage = err.error?.message || 'Failed to cancel reservation.';
+          this.loading = false;
+        }
+      });
+    }
+  }
+
+  createHotelBooking(): void {
+    if (this.hotelReservationForm.invalid) {
+      this.hotelReservationForm.markAllAsTouched();
+      this.errorMessage = 'Please fill out all required fields with valid values.';
+      return;
+    }
+
+    const payload = this.hotelReservationForm.value;
+    payload.status = 'CONFIRMED';
+    this.loading = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    this.hotelReservationService.createReservation(payload).subscribe({
+      next: () => {
+        this.successMessage = 'Hotel Room Reservation booked successfully.';
+        this.loadHotelReservations();
+        this.loadHotelRooms();
+        this.hotelReservationForm.reset({ guestsCount: 1 });
+        this.loading = false;
+        this.activeTab = 'listRooms';
+      },
+      error: (err) => {
+        this.errorMessage = err.error?.message || 'Failed to place room reservation. Verify room availability.';
+        this.loading = false;
+      }
+    });
+  }
+
+  cancelHotelBooking(id: number): void {
+    if (confirm('Are you sure you want to cancel this room reservation?')) {
+      this.loading = true;
+      this.hotelReservationService.cancelReservation(id).subscribe({
+        next: () => {
+          this.successMessage = 'Hotel Room reservation cancelled successfully.';
+          this.loadHotelReservations();
+          this.loadHotelRooms();
+        },
+        error: (err) => {
+          this.errorMessage = err.error?.message || 'Failed to cancel room reservation.';
           this.loading = false;
         }
       });

@@ -30,4 +30,7 @@ public class OrderDto {
     private Instant orderTime;
     private BigDecimal totalAmount;
     private String notes;
+
+    private Integer roomId;
+    private String roomNumber;
 }

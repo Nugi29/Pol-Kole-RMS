@@ -55,4 +55,10 @@ export class HotelReservationService {
       map(() => undefined)
     );
   }
+
+  getReservationById(id: number): Observable<HotelReservation> {
+    return this.http.get<ApiResponse<HotelReservation>>(`${this.baseUrl}/${id}`).pipe(
+      map(r => r.data)
+    );
+  }
 }

@@ -4,24 +4,44 @@
     <div>
       <h1 class="text-2xl font-bold text-slate-900 leading-none tracking-tight flex items-center gap-2">
         <span class="w-2.5 h-6 bg-indigo-600 rounded-full"></span>
-        {{ activeTab === 'list' ? 'Table Bookings Directory & Audits' : 'Table Reservation Planner & Desk' }}
+        {{ 
+          activeTab === 'new' ? 'Table Reservation Planner & Desk' :
+          activeTab === 'list' ? 'Table Bookings Directory & Audits' :
+          activeTab === 'newRoom' ? 'Hotel Room Booking & Reservation Desk' :
+          'Hotel Room Reservations Directory'
+        }}
       </h1>
       <p class="text-[13px] text-slate-500 mt-1.5">
-        {{ activeTab === 'list' ? 'Browse active table reservations ledger, monitor seating schedules, and perform cancellations.' : 'Plan dining schedules, preview table seating options, and confirm active table bookings.' }}
+        {{ 
+          activeTab === 'new' ? 'Plan dining schedules, preview table seating options, and confirm active table bookings.' :
+          activeTab === 'list' ? 'Browse active table reservations ledger, monitor seating schedules, and perform cancellations.' :
+          activeTab === 'newRoom' ? 'Plan hotel room reservations, select available guest rooms, and confirm checked-in stays.' :
+          'Browse active hotel room stays and reservation logs, track room check-ins, and perform cancellations.'
+        }}
       </p>
     </div>
 
     <!-- Switcher -->
-    <div class="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200">
+    <div class="flex items-center bg-slate-105 p-0.5 rounded-xl border border-slate-200 flex-wrap gap-1">
       <a routerLink="/main/reservations" [queryParams]="{ tab: 'new' }"
          class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none"
          [ngClass]="activeTab === 'new' ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:text-slate-800'">
-        Booking Desk
+        🍽️ Table Desk
       </a>
       <a routerLink="/main/reservations" [queryParams]="{ tab: 'list' }"
          class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none"
          [ngClass]="activeTab === 'list' ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:text-slate-800'">
-        Bookings Ledger
+        📋 Table Ledgers
+      </a>
+      <a routerLink="/main/reservations" [queryParams]="{ tab: 'newRoom' }"
+         class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none"
+         [ngClass]="activeTab === 'newRoom' ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:text-slate-800'">
+        🏨 Room Desk
+      </a>
+      <a routerLink="/main/reservations" [queryParams]="{ tab: 'listRooms' }"
+         class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none"
+         [ngClass]="activeTab === 'listRooms' ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:text-slate-800'">
+        🗂️ Room Ledgers
       </a>
     </div>
   </div>
@@ -240,5 +260,171 @@
       </table>
     </div>
     <mat-paginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons class="border-t border-slate-100 pt-2"></mat-paginator>
+  </div>
+
+  <!-- TAB 3: NEW HOTEL ROOM RESERVATION DESK -->
+  <div *ngIf="activeTab === 'newRoom'" class="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-6 items-start animate-fade-in text-[13px]">
+    
+    <!-- Room Planner Form -->
+    <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm space-y-4">
+      <div class="border-b border-slate-50 pb-3 flex items-center gap-2">
+        <span class="w-1.5 h-3.5 bg-indigo-600 rounded-full"></span>
+        <h2 class="text-[14px] font-bold text-slate-900">Hotel Room Reservation Planner</h2>
+      </div>
+
+      <form [formGroup]="hotelReservationForm" (ngSubmit)="createHotelBooking()" class="space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Registered Guest / Customer</label>
+            <select formControlName="customerId"
+                    [ngClass]="hotelReservationForm.get('customerId')?.invalid && hotelReservationForm.get('customerId')?.touched ? 'border-rose-500 bg-rose-50/10' : 'border-slate-200'"
+                    class="w-full bg-slate-50 border rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all">
+              <option [ngValue]="null">Select registered guest...</option>
+              <option *ngFor="let cust of customers" [ngValue]="cust.id">{{ cust.name }} (Passport/NIC: {{ cust.nicPassport }})</option>
+            </select>
+            <p *ngIf="hotelReservationForm.get('customerId')?.invalid && hotelReservationForm.get('customerId')?.touched" class="text-rose-600 text-[11px] mt-1 font-bold animate-fade-in">
+              Please select a registered guest.
+            </p>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Select Available Room</label>
+            <select formControlName="roomId"
+                    [ngClass]="hotelReservationForm.get('roomId')?.invalid && hotelReservationForm.get('roomId')?.touched ? 'border-rose-500 bg-rose-50/10' : 'border-slate-200'"
+                    class="w-full bg-slate-50 border rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all">
+              <option [ngValue]="null">Select available room...</option>
+              <option *ngFor="let rm of hotelRooms" [ngValue]="rm.id">Room {{ rm.roomNumber }} - {{ rm.roomTypeName }}</option>
+            </select>
+            <p *ngIf="hotelReservationForm.get('roomId')?.invalid && hotelReservationForm.get('roomId')?.touched" class="text-rose-600 text-[11px] mt-1 font-bold animate-fade-in">
+              Please select an available room.
+            </p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Check-In Date</label>
+            <input type="date" formControlName="checkInDate"
+                   [ngClass]="hotelReservationForm.get('checkInDate')?.invalid && hotelReservationForm.get('checkInDate')?.touched ? 'border-rose-500 bg-rose-50/10' : 'border-slate-200'"
+                   class="w-full bg-slate-50 border rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all"/>
+            <p *ngIf="hotelReservationForm.get('checkInDate')?.invalid && hotelReservationForm.get('checkInDate')?.touched" class="text-rose-600 text-[11px] mt-1 font-bold animate-fade-in">
+              Check-in date is required.
+            </p>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Check-Out Date</label>
+            <input type="date" formControlName="checkOutDate"
+                   [ngClass]="hotelReservationForm.get('checkOutDate')?.invalid && hotelReservationForm.get('checkOutDate')?.touched ? 'border-rose-500 bg-rose-50/10' : 'border-slate-200'"
+                   class="w-full bg-slate-50 border rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all"/>
+            <p *ngIf="hotelReservationForm.get('checkOutDate')?.invalid && hotelReservationForm.get('checkOutDate')?.touched" class="text-rose-600 text-[11px] mt-1 font-bold animate-fade-in">
+              Check-out date is required.
+            </p>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Guests Count</label>
+            <input type="number" formControlName="guestsCount"
+                   [ngClass]="hotelReservationForm.get('guestsCount')?.invalid && hotelReservationForm.get('guestsCount')?.touched ? 'border-rose-500 bg-rose-50/10' : 'border-slate-200'"
+                   class="w-full bg-slate-50 border rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all"/>
+            <p *ngIf="hotelReservationForm.get('guestsCount')?.invalid && hotelReservationForm.get('guestsCount')?.touched" class="text-rose-600 text-[11px] mt-1 font-bold animate-fade-in">
+              Guest count must be at least 1.
+            </p>
+          </div>
+        </div>
+
+        <button type="submit" [disabled]="loading"
+                class="w-full bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] text-white text-[13.5px] font-bold py-3 rounded-xl cursor-pointer shadow-md transition-all flex items-center justify-center gap-2">
+          Confirm Room Booking
+        </button>
+      </form>
+    </div>
+
+    <!-- Live Cost Calculator Card -->
+    <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm space-y-5">
+      <div class="border-b border-slate-50 pb-3 flex items-center gap-2">
+        <span class="w-1.5 h-3.5 bg-emerald-600 rounded-full"></span>
+        <h2 class="text-[14px] font-bold text-slate-900">Hotel Stays Guidelines</h2>
+      </div>
+
+      <div class="space-y-4">
+        <div class="bg-gradient-to-br from-slate-50 to-slate-100/50 rounded-xl p-5 border border-slate-200/50 space-y-3.5">
+          <div class="text-[12.5px] text-slate-600 leading-relaxed space-y-2">
+            <p>🏨 <strong>Check-in Policy:</strong> Standard check-in is at 14:00 PM. Early check-in is subject to room availability.</p>
+            <p>🔑 <strong>Checkout Policy:</strong> Standard checkout is at 12:00 PM. Late checkout may incur fee charges.</p>
+            <p>💳 <strong>Charges Breakdown:</strong> Nights stayed * room type price per night + tax amounts + any unpaid room orders settled at checkout.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 4: ROOM BOOKINGS LEDGER -->
+  <div *ngIf="activeTab === 'listRooms'" class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm space-y-4 animate-fade-in text-[13px]">
+    <div class="border-b border-slate-50 pb-3 flex items-center justify-between">
+      <h2 class="text-[14px] font-bold text-slate-900 flex items-center gap-2">
+        <span class="w-1.5 h-3.5 bg-indigo-600 rounded-full"></span>
+        Hotel Stays Bookings Ledger
+      </h2>
+      <button (click)="loadHotelReservations()" class="text-[12px] font-bold text-indigo-600 hover:text-indigo-850 flex items-center gap-1 cursor-pointer transition-all">
+        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.27 15H18"/></svg>
+        Refresh
+      </button>
+    </div>
+
+    <!-- Booking stay ledger list -->
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-[13px] text-slate-700 border-collapse">
+        <thead>
+          <tr class="bg-slate-50 text-slate-400 font-bold border-b border-slate-100">
+            <th class="p-3 uppercase text-[10px] tracking-wider">Booking ID</th>
+            <th class="p-3 uppercase text-[10px] tracking-wider">Guest Profile</th>
+            <th class="p-3 uppercase text-[10px] tracking-wider">Room Number</th>
+            <th class="p-3 uppercase text-[10px] tracking-wider">Check In</th>
+            <th class="p-3 uppercase text-[10px] tracking-wider">Check Out</th>
+            <th class="p-3 uppercase text-[10px] tracking-wider">Guests</th>
+            <th class="p-3 uppercase text-[10px] tracking-wider">Status</th>
+            <th class="p-3 uppercase text-[10px] tracking-wider text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let res of hotelReservations" class="border-b border-slate-50 hover:bg-slate-50/50 transition-all text-slate-700">
+            <td class="p-3 font-mono text-slate-400">#{{ res.id }}</td>
+            <td class="p-3">
+              <span class="font-bold text-slate-900 block">{{ res.customerName }}</span>
+              <span class="text-[11px] text-slate-400 block mt-0.5">Passport/NIC: {{ res.customerPassport || 'N/A' }}</span>
+            </td>
+            <td class="p-3 font-extrabold text-indigo-650">Room {{ res.roomNumber }}</td>
+            <td class="p-3 text-slate-600">{{ res.checkInDate }}</td>
+            <td class="p-3 text-slate-600">{{ res.checkOutDate }}</td>
+            <td class="p-3 font-bold text-slate-900">{{ res.guestsCount }} Pax</td>
+            <td class="p-3">
+              <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full inline-block border shadow-sm animate-fade-in"
+                    [ngClass]="{
+                      'bg-indigo-50 border-indigo-200 text-indigo-650': res.status.toUpperCase() === 'CONFIRMED',
+                      'bg-emerald-50 border-emerald-200 text-emerald-650': res.status.toUpperCase() === 'COMPLETED' || res.status.toUpperCase() === 'CHECKED OUT' || res.status.toUpperCase() === 'CHECKED_OUT',
+                      'bg-rose-50 border-rose-200 text-rose-650': res.status.toUpperCase() === 'CANCELLED',
+                      'bg-amber-50 border-amber-200 text-amber-650': res.status.toUpperCase() === 'PENDING',
+                      'bg-purple-50 border-purple-200 text-purple-650': res.status.toUpperCase() === 'OCCUPIED' || res.status.toUpperCase() === 'CHECKED IN' || res.status.toUpperCase() === 'CHECKED_IN'
+                    }">
+                {{ res.status }}
+              </span>
+            </td>
+            <td class="p-3 text-right">
+              <button *ngIf="res.status.toUpperCase() === 'CONFIRMED' || res.status.toUpperCase() === 'PENDING'"
+                      (click)="cancelHotelBooking(res.id!)" class="text-[12px] bg-rose-550 text-rose-600 hover:bg-rose-100 hover:text-rose-700 border border-rose-200 px-3 py-1.5 rounded-lg cursor-pointer font-bold transition-all">
+                Cancel
+              </button>
+              <span *ngIf="res.status.toUpperCase() === 'CANCELLED'" class="text-[12px] text-slate-400 font-semibold animate-fade-in">Cancelled</span>
+              <span *ngIf="res.status.toUpperCase() === 'CHECKED_OUT'" class="text-[12px] text-slate-400 font-semibold animate-fade-in">Checked Out</span>
+              <span *ngIf="res.status.toUpperCase() === 'CHECKED_IN'" class="text-[12px] text-indigo-600 font-semibold animate-fade-in">Checked In / In Stay</span>
+            </td>
+          </tr>
+          <tr *ngIf="hotelReservations.length === 0">
+            <td colspan="8" class="text-center py-8 text-slate-400">No room bookings registered yet.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>

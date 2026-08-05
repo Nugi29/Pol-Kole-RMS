@@ -14,9 +14,12 @@ export interface InvoiceItem {
 
 export interface Invoice {
   id?: number;
-  reservationId: number;
+  orderId?: number;
+  reservationId?: number;
+  tableReservationId?: number;
   invoiceNumber: string;
-  roomCharges: number;
+  orderSubtotal?: number;
+  roomCharges?: number;
   taxAmount: number;
   discountAmount: number;
   totalAmount: number;
@@ -44,6 +47,20 @@ export class BillingService {
 
   generateInvoice(reservationId: number, discountCode?: string, redeemPoints: number = 0): Observable<Invoice> {
     return this.http.post<ApiResponse<Invoice>>(`${this.baseUrl}/invoices/generate/${reservationId}`, {
+      discountCode,
+      redeemPoints,
+    }).pipe(map(res => res.data));
+  }
+
+  generateStayInvoice(reservationId: number, discountCode?: string, redeemPoints: number = 0): Observable<Invoice> {
+    return this.http.post<ApiResponse<Invoice>>(`${this.baseUrl}/invoices/generate/stay/${reservationId}`, {
+      discountCode,
+      redeemPoints,
+    }).pipe(map(res => res.data));
+  }
+
+  generateTableInvoice(reservationId: number, discountCode?: string, redeemPoints: number = 0): Observable<Invoice> {
+    return this.http.post<ApiResponse<Invoice>>(`${this.baseUrl}/invoices/generate/table/${reservationId}`, {
       discountCode,
       redeemPoints,
     }).pipe(map(res => res.data));

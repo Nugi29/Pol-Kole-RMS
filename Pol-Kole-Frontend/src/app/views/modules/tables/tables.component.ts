@@ -167,6 +167,6 @@ export class TablesComponent implements OnInit {
   }
 
   getTablesCountByStatus(status: string): number {
-    return this.tables.filter(t => t.status === status).length;
+    return this.tables.filter(t => t.status?.toUpperCase() === status.toUpperCase()).length;
   }
 }

@@ -28,4 +28,14 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Integer> {
 
     @Query("SELECT o FROM OrderEntity o WHERE o.isDeleted = false AND o.status.name != 'COMPLETED' AND o.status.name != 'CANCELLED'")
     List<OrderEntity> findActiveOrders();
+
+    @Query("SELECT o FROM OrderEntity o WHERE o.isDeleted = false " +
+           "AND o.room.id = :roomId " +
+           "AND o.status.name != 'COMPLETED' AND o.status.name != 'CANCELLED'")
+    List<OrderEntity> findUnpaidOrdersByRoom(@Param("roomId") Integer roomId);
+
+    @Query("SELECT o FROM OrderEntity o WHERE o.isDeleted = false " +
+           "AND o.table.id = :tableId " +
+           "AND o.status.name != 'COMPLETED' AND o.status.name != 'CANCELLED'")
+    List<OrderEntity> findUnpaidOrdersByTable(@Param("tableId") Integer tableId);
 }

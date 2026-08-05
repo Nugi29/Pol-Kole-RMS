@@ -32,6 +32,10 @@ public class OrderEntity {
     @JoinColumn(name = "table_id")
     private RestaurantTableEntity table;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "room_id")
+    private RoomEntity room;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "status_id", nullable = false)
     private OrderStatusEntity status;

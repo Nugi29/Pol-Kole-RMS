@@ -58,6 +58,12 @@ export class ReservationService {
     );
   }
 
+  getReservationById(id: number): Observable<Reservation> {
+    return this.http.get<ApiResponse<Reservation>>(`${this.baseUrl}/${id}`).pipe(
+      map(res => res.data)
+    );
+  }
+
   getReservationsByCustomerId(customerId: number): Observable<Reservation[]> {
     return this.http.get<ApiResponse<Reservation[]>>(`${this.baseUrl}/customer/${customerId}`).pipe(
       map(res => res.data)

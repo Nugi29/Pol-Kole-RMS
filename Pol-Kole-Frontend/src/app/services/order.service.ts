@@ -24,8 +24,10 @@ export interface Order {
   id?: number;
   customerId: number;
   customerName?: string;
-  tableId: number;
+  tableId?: number;
   tableNumber?: string;
+  roomId?: number;
+  roomNumber?: string;
   statusId?: number;
   statusName?: string;
   totalAmount: number;

@@ -7,6 +7,7 @@ import { Order, OrderService, OrderItemInput } from '../../../services/order.ser
 import { RestaurantTable, TableService } from '../../../services/table.service';
 import { CustomerDto, CustomerService } from '../../../services/customer.service';
 import { MenuItem, MenuService } from '../../../services/menu.service';
+import { HotelReservationService } from '../../../services/hotel-reservation.service';
 
 @Component({
   selector: 'app-orders',
@@ -32,6 +33,10 @@ export class OrdersComponent implements OnInit {
   // POS Order Form Builder Helper state
   selectedCustomerId: number | null = null;
   selectedTableId: number | null = null;
+  serviceType: 'TABLE' | 'ROOM' = 'TABLE';
+  selectedRoomId: number | null = null;
+  selectedReservationId: number | null = null;
+  checkedInReservations: any[] = [];
   cart: { item: MenuItem; quantity: number; notes: string }[] = [];
 
   constructor(
@@ -39,6 +44,7 @@ export class OrdersComponent implements OnInit {
     private readonly tableService: TableService,
     private readonly customerService: CustomerService,
     private readonly menuService: MenuService,
+    private readonly reservationService: HotelReservationService,
     private readonly route: ActivatedRoute
   ) {}
 
@@ -47,6 +53,7 @@ export class OrdersComponent implements OnInit {
     this.loadCustomers();
     this.loadMenuItems();
     this.loadOrders();
+    this.loadCheckedInReservations();
     this.route.queryParams.subscribe(params => {
       if (params['tab']) {
         this.activeTab = params['tab'];
@@ -70,6 +77,23 @@ export class OrdersComponent implements OnInit {
     this.menuService.filterMenuItems(undefined, true, undefined, 0, 100).subscribe(page => {
       this.menuItems = page.content;
     });
+  }
+
+  loadCheckedInReservations(): void {
+    this.reservationService.filterReservations(undefined, undefined, 'CHECKED_IN').subscribe(page => {
+      this.checkedInReservations = page.content;
+    });
+  }
+
+  onReservationChange(): void {
+    const res = this.checkedInReservations.find(r => r.id == this.selectedReservationId);
+    if (res) {
+      this.selectedRoomId = res.roomId;
+      this.selectedCustomerId = res.customerId;
+    } else {
+      this.selectedRoomId = null;
+      this.selectedCustomerId = null;
+    }
   }
 
   loadOrders(): void {
@@ -116,8 +140,9 @@ export class OrdersComponent implements OnInit {
   }
 
   submitOrder(): void {
-    if (!this.selectedCustomerId || !this.selectedTableId || this.cart.length === 0) {
-      this.errorMessage = 'Please select a customer, table and add at least one item to cart.';
+    const isLocationValid = this.serviceType === 'TABLE' ? this.selectedTableId : this.selectedRoomId;
+    if (!this.selectedCustomerId || !isLocationValid || this.cart.length === 0) {
+      this.errorMessage = 'Please select a customer, service location (table or room), and add items to cart.';
       return;
     }
 
@@ -134,7 +159,8 @@ export class OrdersComponent implements OnInit {
 
     const payload = {
       customerId: this.selectedCustomerId,
-      tableId: this.selectedTableId,
+      tableId: this.serviceType === 'TABLE' ? this.selectedTableId : null,
+      roomId: this.serviceType === 'ROOM' ? this.selectedRoomId : null,
       items: items
     };
 
@@ -143,8 +169,12 @@ export class OrdersComponent implements OnInit {
         this.successMessage = 'Order placed successfully to Chef Kitchen Hub!';
         this.cart = [];
         this.selectedTableId = null;
+        this.selectedRoomId = null;
+        this.selectedReservationId = null;
         this.selectedCustomerId = null;
+        this.serviceType = 'TABLE';
         this.loadOrders();
+        this.loadCheckedInReservations();
         this.loading = false;
         this.activeTab = 'list';
       },

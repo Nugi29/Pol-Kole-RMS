@@ -16,6 +16,7 @@ export interface KitchenOrder {
   id?: number;
   orderId: number;
   tableNumber: string;
+  roomNumber?: string;
   items: KitchenOrderItem[];
   notes?: string;
   preparationStatus: string; // RECEIVED, PREPARING, READY, DELIVERED

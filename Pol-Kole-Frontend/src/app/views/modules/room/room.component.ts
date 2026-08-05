@@ -180,6 +180,6 @@ export class RoomComponent implements OnInit {
   }
 
   getRoomsCountByStatus(status: string): number {
-    return this.rooms.filter(r => r.status === status).length;
+    return this.rooms.filter(r => r.status?.toUpperCase() === status.toUpperCase()).length;
   }
 }

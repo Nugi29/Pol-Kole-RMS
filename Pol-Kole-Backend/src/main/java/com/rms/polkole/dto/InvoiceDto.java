@@ -12,6 +12,8 @@ import java.util.List;
 public class InvoiceDto {
     private Integer id;
     private Integer orderId;
+    private Integer reservationId;
+    private Integer tableReservationId;
     private String invoiceNumber;
     private BigDecimal orderSubtotal;
     private BigDecimal taxAmount;

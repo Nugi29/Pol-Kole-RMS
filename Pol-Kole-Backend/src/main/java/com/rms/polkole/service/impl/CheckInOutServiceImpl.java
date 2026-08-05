@@ -17,6 +17,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import com.rms.polkole.entity.ReservationEntity;
+import com.rms.polkole.entity.ReservationStatusEntity;
+import com.rms.polkole.entity.RestaurantTableEntity;
+import com.rms.polkole.repository.ReservationRepository;
+import com.rms.polkole.repository.ReservationStatusRepository;
+import com.rms.polkole.repository.RestaurantTableRepository;
 
 import java.time.Instant;
 
@@ -28,6 +34,9 @@ public class CheckInOutServiceImpl implements CheckInOutService {
     private final CheckOutRepository checkOutRepository;
     private final HotelReservationRepository reservationRepository;
     private final RoomRepository roomRepository;
+    private final ReservationRepository tableReservationRepository;
+    private final RestaurantTableRepository tableRepository;
+    private final ReservationStatusRepository tableStatusRepository;
     private final ModelMapper mapper;
 
     @Override
@@ -79,6 +88,7 @@ public class CheckInOutServiceImpl implements CheckInOutService {
         checkOut = checkOutRepository.save(checkOut);
 
         reservation.setStatus("CHECKED_OUT");
+        reservation.setCheckOutDate(java.time.LocalDate.now());
         reservationRepository.save(reservation);
 
         RoomEntity room = reservation.getRoom();
@@ -118,5 +128,47 @@ public class CheckInOutServiceImpl implements CheckInOutService {
         dto.setRoomNumber(checkOut.getReservation().getRoom().getRoomNumber());
         dto.setCustomerName(checkOut.getReservation().getCustomer().getName());
         return dto;
+    }
+
+    @Override
+    @Transactional
+    public void tableCheckIn(Integer reservationId) {
+        ReservationEntity reservation = tableReservationRepository.findById(reservationId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Table reservation not found"));
+
+        if (reservation.getReservationStatus() != null && "Checked In".equalsIgnoreCase(reservation.getReservationStatus().getStatusName())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Already checked in");
+        }
+
+        ReservationStatusEntity status = tableStatusRepository.findByStatusNameIgnoreCase("Checked In")
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Status 'Checked In' not found"));
+
+        reservation.setReservationStatus(status);
+        tableReservationRepository.save(reservation);
+
+        RestaurantTableEntity table = reservation.getTable();
+        table.setStatus("OCCUPIED");
+        tableRepository.save(table);
+    }
+
+    @Override
+    @Transactional
+    public void tableCheckOut(Integer reservationId) {
+        ReservationEntity reservation = tableReservationRepository.findById(reservationId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Table reservation not found"));
+
+        if (reservation.getReservationStatus() != null && "Checked Out".equalsIgnoreCase(reservation.getReservationStatus().getStatusName())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Already checked out");
+        }
+
+        ReservationStatusEntity status = tableStatusRepository.findByStatusNameIgnoreCase("Checked Out")
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Status 'Checked Out' not found"));
+
+        reservation.setReservationStatus(status);
+        tableReservationRepository.save(reservation);
+
+        RestaurantTableEntity table = reservation.getTable();
+        table.setStatus("AVAILABLE");
+        tableRepository.save(table);
     }
 }

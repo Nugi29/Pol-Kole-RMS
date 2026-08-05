@@ -52,19 +52,25 @@
         <div>
           <div class="flex items-start justify-between">
             <div>
-              <h3 class="text-base font-extrabold text-slate-900">Room {{ res.roomNumber }}</h3>
-              <p class="text-[11px] font-semibold text-slate-450 uppercase tracking-wide mt-0.5">Guest: {{ res.customerName }}</p>
+              <h3 class="text-base font-extrabold text-slate-900">
+                {{ res.type === 'ROOM' ? 'Room ' + res.itemNumber : 'Table ' + res.itemNumber }}
+              </h3>
+              <p class="text-[11px] font-semibold text-slate-450 uppercase tracking-wide mt-0.5">
+                Type: <span class="text-indigo-650 font-bold">{{ res.type }}</span> | Guest: {{ res.customerName }}
+              </p>
             </div>
             <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border shadow-sm bg-blue-50 text-blue-600">
               {{ res.status }}
             </span>
           </div>
 
-          <!-- Stays Range Details -->
+          <!-- Stays Range / Reservation Details -->
           <div class="mt-4 bg-white/60 p-3.5 rounded-xl border border-slate-200/55 space-y-2 text-[12.5px] text-slate-655">
-            <p><strong class="text-slate-800">Check In:</strong> {{ res.checkInDate }}</p>
-            <p><strong class="text-slate-800">Check Out:</strong> {{ res.checkOutDate }}</p>
-            <p><strong class="text-slate-800">Guests Count:</strong> {{ res.guestsCount }} Adults</p>
+            <p *ngIf="res.type === 'ROOM'"><strong class="text-slate-800">Check In:</strong> {{ res.checkInDate }}</p>
+            <p *ngIf="res.type === 'ROOM'"><strong class="text-slate-800">Check Out:</strong> {{ res.checkOutDate }}</p>
+            <p *ngIf="res.type === 'TABLE'"><strong class="text-slate-800">Date:</strong> {{ res.reservationDate }}</p>
+            <p *ngIf="res.type === 'TABLE'"><strong class="text-slate-800">Time:</strong> {{ res.reservationTime }}</p>
+            <p><strong class="text-slate-800">Guests Count:</strong> {{ res.guestsCount }} Guests</p>
             <p><strong class="text-slate-800">NIC/Passport:</strong> {{ res.customerPassport }}</p>
           </div>
         </div>
@@ -72,13 +78,13 @@
         <!-- Action buttons -->
         <div class="border-t border-slate-100 pt-3 flex items-center justify-end">
           <button *ngIf="activeTab === 'arrivals'"
-                  (click)="performCheckIn(res.id!, res.guestsCount)"
+                  (click)="performCheckIn(res)"
                   class="bg-indigo-600 hover:bg-indigo-700 text-white text-[12px] font-bold px-4 py-2 rounded-xl cursor-pointer shadow-sm transition-all">
             Process Check-In
           </button>
           
           <button *ngIf="activeTab === 'stays'"
-                  (click)="performCheckOut(res.id!)"
+                  (click)="performCheckOut(res)"
                   class="bg-rose-600 hover:bg-rose-750 text-white text-[12px] font-bold px-4 py-2 rounded-xl cursor-pointer shadow-sm transition-all">
             Process Check-Out
           </button>

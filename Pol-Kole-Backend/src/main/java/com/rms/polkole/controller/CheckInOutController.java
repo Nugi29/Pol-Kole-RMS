@@ -33,6 +33,20 @@ public class CheckInOutController {
         return ResponseEntity.ok(ApiResponse.success(created, "Guest checked out successfully"));
     }
 
+    @PostMapping("/table-check-in/{reservationId}")
+    public ResponseEntity<ApiResponse<Void>> tableCheckIn(@PathVariable Integer reservationId) {
+        checkInOutService.tableCheckIn(reservationId);
+        auditLogService.log("TABLE CHECK-IN", "Checked in table reservation ID: " + reservationId);
+        return ResponseEntity.ok(ApiResponse.success(null, "Table checked in successfully"));
+    }
+
+    @PostMapping("/table-check-out/{reservationId}")
+    public ResponseEntity<ApiResponse<Void>> tableCheckOut(@PathVariable Integer reservationId) {
+        checkInOutService.tableCheckOut(reservationId);
+        auditLogService.log("TABLE CHECK-OUT", "Checked out table reservation ID: " + reservationId);
+        return ResponseEntity.ok(ApiResponse.success(null, "Table checked out successfully"));
+    }
+
     @GetMapping("/check-in/{reservationId}")
     public ResponseEntity<ApiResponse<CheckInDto>> getCheckInByReservationId(@PathVariable Integer reservationId) {
         CheckInDto checkIn = checkInOutService.getCheckInByReservationId(reservationId);

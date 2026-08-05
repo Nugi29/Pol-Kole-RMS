@@ -92,6 +92,10 @@ public class KitchenServiceImpl implements KitchenService {
             dto.setTableNumber(kOrder.getOrder().getTable().getTableNumber());
         }
 
+        if (kOrder.getOrder().getRoom() != null) {
+            dto.setRoomNumber(kOrder.getOrder().getRoom().getRoomNumber());
+        }
+
         if (kOrder.getOrder().getCustomer() != null) {
             dto.setCustomerName(kOrder.getOrder().getCustomer().getName());
         }

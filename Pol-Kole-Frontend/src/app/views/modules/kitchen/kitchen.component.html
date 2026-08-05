@@ -71,7 +71,9 @@
                         'bg-emerald-500': res.preparationStatus === 'READY',
                         'bg-slate-400': res.preparationStatus === 'DELIVERED'
                       }"></span>
-                <h3 class="text-base font-extrabold text-slate-800 tracking-tight">Table {{ res.tableNumber || 'N/A' }}</h3>
+                <h3 class="text-base font-extrabold text-slate-800 tracking-tight">
+                  {{ res.tableNumber ? 'Table ' + res.tableNumber : (res.roomNumber ? 'Room ' + res.roomNumber : 'Order #' + res.orderId) }}
+                </h3>
               </div>
               <p class="text-[11px] font-semibold text-slate-400 tracking-wider uppercase mt-1">Ticket #{{ res.id }} • Order #{{ res.orderId }}</p>
             </div>

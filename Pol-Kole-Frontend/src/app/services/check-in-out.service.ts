@@ -44,6 +44,18 @@ export class CheckInOutService {
     );
   }
 
+  tableCheckIn(reservationId: number): Observable<void> {
+    return this.http.post<ApiResponse<void>>(`${this.baseUrl}/table-check-in/${reservationId}`, {}).pipe(
+      map(() => undefined)
+    );
+  }
+
+  tableCheckOut(reservationId: number): Observable<void> {
+    return this.http.post<ApiResponse<void>>(`${this.baseUrl}/table-check-out/${reservationId}`, {}).pipe(
+      map(() => undefined)
+    );
+  }
+
   getCheckInByReservation(reservationId: number): Observable<CheckIn> {
     return this.http.get<ApiResponse<CheckIn>>(`${this.baseUrl}/check-in/${reservationId}`).pipe(
       map(res => res.data)

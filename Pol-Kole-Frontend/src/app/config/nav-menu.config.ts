@@ -43,7 +43,11 @@ export const NAV_MENU = [
     roles: ['ADMIN', 'MANAGER', 'WAITER'],
     children: [
       { name: 'Book Table', route: '/main/reservations?tab=new', roles: ['ADMIN', 'MANAGER', 'WAITER'] },
-      { name: 'Bookings List', route: '/main/reservations?tab=list', roles: ['ADMIN', 'MANAGER', 'WAITER'] },
+      { name: 'Table Bookings', route: '/main/reservations?tab=list', roles: ['ADMIN', 'MANAGER', 'WAITER'] },
+      { name: 'Book Room', route: '/main/reservations?tab=newRoom', roles: ['ADMIN', 'MANAGER', 'WAITER'] },
+      { name: 'Room Bookings', route: '/main/reservations?tab=listRooms', roles: ['ADMIN', 'MANAGER', 'WAITER'] },
+      { name: 'Front Desk Arrivals', route: '/main/check-in-out?tab=arrivals', roles: ['ADMIN', 'MANAGER', 'WAITER'] },
+      { name: 'Room Stays checkout', route: '/main/check-in-out?tab=stays', roles: ['ADMIN', 'MANAGER', 'WAITER'] },
     ],
   },
   {

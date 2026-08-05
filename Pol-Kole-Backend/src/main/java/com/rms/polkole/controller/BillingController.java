@@ -37,6 +37,42 @@ public class BillingController {
         return ResponseEntity.ok(ApiResponse.success(invoice, "Invoice generated successfully"));
     }
 
+    @PostMapping("/invoices/generate/stay/{reservationId}")
+    public ResponseEntity<ApiResponse<InvoiceDto>> generateStayInvoice(
+            @PathVariable Integer reservationId,
+            @RequestBody(required = false) InvoiceGenerationRequest req) {
+        String code = req != null ? req.getDiscountCode() : null;
+        int points = req != null ? req.getRedeemPoints() : 0;
+
+        InvoiceDto invoice = billingService.generateStayInvoice(reservationId, code, points);
+        auditLogService.log("GENERATE STAY INVOICE", "Generated stay invoice " + invoice.getInvoiceNumber() + " for reservation checkout.");
+        return ResponseEntity.ok(ApiResponse.success(invoice, "Stay invoice generated successfully"));
+    }
+
+    @GetMapping("/invoices/reservation/{reservationId}")
+    public ResponseEntity<ApiResponse<InvoiceDto>> getInvoiceByReservation(@PathVariable Integer reservationId) {
+        InvoiceDto invoice = billingService.getInvoiceByReservationId(reservationId);
+        return ResponseEntity.ok(ApiResponse.success(invoice));
+    }
+
+    @PostMapping("/invoices/generate/table/{reservationId}")
+    public ResponseEntity<ApiResponse<InvoiceDto>> generateTableInvoice(
+            @PathVariable Integer reservationId,
+            @RequestBody(required = false) InvoiceGenerationRequest req) {
+        String code = req != null ? req.getDiscountCode() : null;
+        int points = req != null ? req.getRedeemPoints() : 0;
+
+        InvoiceDto invoice = billingService.generateTableInvoice(reservationId, code, points);
+        auditLogService.log("GENERATE TABLE INVOICE", "Generated table invoice " + invoice.getInvoiceNumber() + " for table reservation checkout.");
+        return ResponseEntity.ok(ApiResponse.success(invoice, "Table invoice generated successfully"));
+    }
+
+    @GetMapping("/invoices/table-reservation/{reservationId}")
+    public ResponseEntity<ApiResponse<InvoiceDto>> getInvoiceByTableReservation(@PathVariable Integer reservationId) {
+        InvoiceDto invoice = billingService.getInvoiceByTableReservationId(reservationId);
+        return ResponseEntity.ok(ApiResponse.success(invoice));
+    }
+
     @PostMapping("/payments")
     public ResponseEntity<ApiResponse<Void>> processPayment(@Valid @RequestBody PaymentDto paymentDto) {
         billingService.processPayment(paymentDto);

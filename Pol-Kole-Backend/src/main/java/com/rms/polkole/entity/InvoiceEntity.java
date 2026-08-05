@@ -25,9 +25,17 @@ public class InvoiceEntity {
     @Column(name = "id", nullable = false)
     private Integer id;
 
-    @OneToOne(fetch = FetchType.EAGER, optional = false)
-    @JoinColumn(name = "order_id", nullable = false, unique = true)
+    @OneToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "order_id", unique = true)
     private OrderEntity order;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "hotel_reservation_id")
+    private HotelReservationEntity hotelReservation;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "table_reservation_id")
+    private ReservationEntity tableReservation;
 
     @Column(name = "invoice_number", nullable = false, unique = true, length = 30)
     private String invoiceNumber;

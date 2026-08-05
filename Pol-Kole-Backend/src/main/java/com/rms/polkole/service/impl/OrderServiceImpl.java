@@ -30,6 +30,7 @@ public class OrderServiceImpl implements OrderService {
     private final CustomerRepository customerRepository;
     private final MenuItemRepository menuItemRepository;
     private final KitchenOrderRepository kitchenOrderRepository;
+    private final RoomRepository roomRepository;
     private final ModelMapper mapper;
 
     @Override
@@ -46,6 +47,12 @@ public class OrderServiceImpl implements OrderService {
             tableRepository.save(table);
         }
 
+        RoomEntity room = null;
+        if (dto.getRoomId() != null) {
+            room = roomRepository.findById(dto.getRoomId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Room not found with ID: " + dto.getRoomId()));
+        }
+
         CustomerEntity customer = null;
         if (dto.getCustomerId() != null) {
             customer = customerRepository.findById(dto.getCustomerId())
@@ -54,6 +61,7 @@ public class OrderServiceImpl implements OrderService {
 
         OrderEntity order = OrderEntity.builder()
                 .table(table)
+                .room(room)
                 .customer(customer)
                 .status(initialStatus)
                 .orderTime(Instant.now())
@@ -190,6 +198,10 @@ public class OrderServiceImpl implements OrderService {
         if (order.getTable() != null) {
             dto.setTableId(order.getTable().getId());
             dto.setTableNumber(order.getTable().getTableNumber());
+        }
+        if (order.getRoom() != null) {
+            dto.setRoomId(order.getRoom().getId());
+            dto.setRoomNumber(order.getRoom().getRoomNumber());
         }
         dto.setStatusId(order.getStatus().getId());
         dto.setStatusName(order.getStatus().getName());
