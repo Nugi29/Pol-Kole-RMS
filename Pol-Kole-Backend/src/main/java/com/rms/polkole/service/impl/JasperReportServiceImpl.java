@@ -180,12 +180,12 @@ public class JasperReportServiceImpl implements JasperReportService {
                 "            <textField>\n" +
                 "                <reportElement x=\"350\" y=\"5\" width=\"100\" height=\"15\"/>\n" +
                 "                <textElement textAlignment=\"Right\"/>\n" +
-                "                <textFieldExpression><![CDATA[\"$\" + $F{unitPrice}]]></textFieldExpression>\n" +
+                "                <textFieldExpression><![CDATA[\"Rs. \" + $F{unitPrice}]]></textFieldExpression>\n" +
                 "            </textField>\n" +
                 "            <textField>\n" +
                 "                <reportElement x=\"450\" y=\"5\" width=\"105\" height=\"15\"/>\n" +
                 "                <textElement textAlignment=\"Right\"/>\n" +
-                "                <textFieldExpression><![CDATA[\"$\" + $F{totalPrice}]]></textFieldExpression>\n" +
+                "                <textFieldExpression><![CDATA[\"Rs. \" + $F{totalPrice}]]></textFieldExpression>\n" +
                 "            </textField>\n" +
                 "        </band>\n" +
                 "    </detail>\n" +
@@ -202,7 +202,7 @@ public class JasperReportServiceImpl implements JasperReportService {
                 "            <textField>\n" +
                 "                <reportElement x=\"450\" y=\"15\" width=\"105\" height=\"15\"/>\n" +
                 "                <textElement textAlignment=\"Right\"/>\n" +
-                "                <textFieldExpression><![CDATA[\"$\" + $P{roomCharges}]]></textFieldExpression>\n" +
+                "                <textFieldExpression><![CDATA[\"Rs. \" + $P{roomCharges}]]></textFieldExpression>\n" +
                 "            </textField>\n" +
                 "            <staticText>\n" +
                 "                <reportElement x=\"320\" y=\"35\" width=\"120\" height=\"15\"/>\n" +
@@ -212,7 +212,7 @@ public class JasperReportServiceImpl implements JasperReportService {
                 "            <textField>\n" +
                 "                <reportElement x=\"450\" y=\"35\" width=\"105\" height=\"15\"/>\n" +
                 "                <textElement textAlignment=\"Right\"/>\n" +
-                "                <textFieldExpression><![CDATA[\"-$\" + $P{discountAmount}]]></textFieldExpression>\n" +
+                "                <textFieldExpression><![CDATA[\"-Rs. \" + $P{discountAmount}]]></textFieldExpression>\n" +
                 "            </textField>\n" +
                 "            <staticText>\n" +
                 "                <reportElement x=\"320\" y=\"55\" width=\"120\" height=\"15\"/>\n" +
@@ -222,7 +222,7 @@ public class JasperReportServiceImpl implements JasperReportService {
                 "            <textField>\n" +
                 "                <reportElement x=\"450\" y=\"55\" width=\"105\" height=\"15\"/>\n" +
                 "                <textElement textAlignment=\"Right\"/>\n" +
-                "                <textFieldExpression><![CDATA[\"$\" + $P{taxAmount}]]></textFieldExpression>\n" +
+                "                <textFieldExpression><![CDATA[\"Rs. \" + $P{taxAmount}]]></textFieldExpression>\n" +
                 "            </textField>\n" +
                 "            <staticText>\n" +
                 "                <reportElement x=\"320\" y=\"75\" width=\"120\" height=\"20\"/>\n" +
@@ -236,7 +236,7 @@ public class JasperReportServiceImpl implements JasperReportService {
                 "                <textElement textAlignment=\"Right\">\n" +
                 "                    <font size=\"12\" isBold=\"true\"/>\n" +
                 "                </textElement>\n" +
-                "                <textFieldExpression><![CDATA[\"$\" + $P{totalAmount}]]></textFieldExpression>\n" +
+                "                <textFieldExpression><![CDATA[\"Rs. \" + $P{totalAmount}]]></textFieldExpression>\n" +
                 "            </textField>\n" +
                 "            <textField>\n" +
                 "                <reportElement x=\"0\" y=\"105\" width=\"250\" height=\"25\"/>\n" +

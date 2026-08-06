@@ -49,7 +49,7 @@
           <div>
             <div class="flex items-start justify-between">
               <h3 class="text-sm font-extrabold text-slate-900">{{ mi.name }}</h3>
-              <span class="text-xs font-extrabold text-indigo-600">${{ mi.price }}</span>
+              <span class="text-xs font-extrabold text-indigo-600">Rs. {{ mi.price }}</span>
             </div>
             <p class="text-[11px] text-slate-400 mt-2 line-clamp-2">{{ mi.description }}</p>
           </div>
@@ -127,7 +127,7 @@
             <div class="flex justify-between items-start">
               <div>
                 <p class="text-[12.5px] font-bold text-slate-800">{{ item.item.name }}</p>
-                <p class="text-[11px] text-slate-450 mt-0.5">${{ item.item.price }} each</p>
+                <p class="text-[11px] text-slate-450 mt-0.5">Rs. {{ item.item.price }} each</p>
               </div>
               <button (click)="removeFromCart(item.item.id!)" class="text-rose-500 hover:text-rose-700 text-xs font-bold transition-all cursor-pointer">Remove</button>
             </div>
@@ -156,7 +156,7 @@
       <!-- Settle summaries -->
       <div class="border-t border-slate-100 pt-4 flex justify-between items-center text-slate-900">
         <span class="text-[13px] font-bold text-slate-500">Cart Subtotal:</span>
-        <span class="text-base font-extrabold text-indigo-650">${{ cartTotal }}</span>
+        <span class="text-base font-extrabold text-indigo-650">Rs. {{ cartTotal }}</span>
       </div>
 
       <button (click)="submitOrder()" [disabled]="cart.length === 0" class="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-200 disabled:cursor-not-allowed text-white text-[13px] font-bold py-2.5 rounded-xl cursor-pointer shadow-sm active:scale-[0.98] transition-all flex items-center justify-center gap-2">
@@ -195,7 +195,7 @@
             <td class="px-4 py-3.5 font-bold text-slate-900">#{{ ord.id }}</td>
             <td class="px-4 py-3.5 font-semibold text-slate-700">{{ ord.customerName }}</td>
             <td class="px-4 py-3.5">{{ ord.tableNumber ? 'Table ' + ord.tableNumber : 'Room ' + ord.roomNumber }}</td>
-            <td class="px-4 py-3.5 font-extrabold text-slate-800">${{ ord.totalAmount }}</td>
+            <td class="px-4 py-3.5 font-extrabold text-slate-800">Rs. {{ ord.totalAmount }}</td>
             <td class="px-4 py-3.5">
               <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border shadow-sm"
                     [ngClass]="{

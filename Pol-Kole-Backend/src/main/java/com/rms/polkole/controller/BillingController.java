@@ -76,7 +76,7 @@ public class BillingController {
     @PostMapping("/payments")
     public ResponseEntity<ApiResponse<Void>> processPayment(@Valid @RequestBody PaymentDto paymentDto) {
         billingService.processPayment(paymentDto);
-        auditLogService.log("PROCESS PAYMENT", "Recorded payment for Invoice ID: " + paymentDto.getInvoiceId() + " Amount: $" + paymentDto.getAmount());
+        auditLogService.log("PROCESS PAYMENT", "Recorded payment for Invoice ID: " + paymentDto.getInvoiceId() + " Amount: Rs. " + paymentDto.getAmount());
         return ResponseEntity.ok(ApiResponse.success(null, "Payment processed successfully. Invoice is now fully settled."));
     }
 

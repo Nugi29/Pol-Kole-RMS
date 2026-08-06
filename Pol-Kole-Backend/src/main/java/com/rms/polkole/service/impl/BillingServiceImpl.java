@@ -330,7 +330,7 @@ public class BillingServiceImpl implements BillingService {
         
         // Add Room Stay Charge Item
         items.add(InvoiceItemEntity.builder()
-                .description("Room stay charges: Room " + reservation.getRoom().getRoomNumber() + " (" + nights + " nights @ $" + roomPrice + ")")
+                .description("Room stay charges: Room " + reservation.getRoom().getRoomNumber() + " (" + nights + " nights @ Rs. " + roomPrice + ")")
                 .quantity(1)
                 .unitPrice(roomCharges)
                 .totalPrice(roomCharges)

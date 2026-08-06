@@ -54,7 +54,7 @@ public class MenuController {
     @PostMapping("/items")
     public ResponseEntity<ApiResponse<MenuItemDto>> createMenuItem(@Valid @RequestBody MenuItemDto dto) {
         MenuItemDto created = menuService.createMenuItem(dto);
-        auditLogService.log("CREATE MENU ITEM", "Created menu item: " + created.getName() + " price: $" + created.getPrice());
+        auditLogService.log("CREATE MENU ITEM", "Created menu item: " + created.getName() + " price: Rs. " + created.getPrice());
         return ResponseEntity.ok(ApiResponse.success(created, "Menu item created successfully"));
     }
 

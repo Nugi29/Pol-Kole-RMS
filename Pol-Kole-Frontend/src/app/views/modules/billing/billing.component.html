@@ -75,17 +75,17 @@
             </tr>
             <tr *ngFor="let item of activeInvoice.items" class="border-b border-slate-50 text-slate-700">
               <td class="p-3 font-medium">{{ item.description }}</td>
-              <td class="p-3 text-right font-extrabold text-slate-800">${{ item.totalPrice }}</td>
+              <td class="p-3 text-right font-extrabold text-slate-800">Rs. {{ item.totalPrice }}</td>
             </tr>
           </table>
         </div>
 
         <!-- Totals summary -->
         <div class="space-y-2 text-[13px] border-t border-slate-100 pt-3">
-          <div class="flex justify-between"><span class="text-slate-400">Base Room Charges:</span><span class="font-bold text-slate-850">${{ activeInvoice.orderSubtotal || activeInvoice.roomCharges }}</span></div>
-          <div class="flex justify-between text-rose-500"><span class="text-slate-400">Applied Discount:</span><span class="font-bold">-${{ activeInvoice.discountAmount }}</span></div>
-          <div class="flex justify-between"><span class="text-slate-400">Aggregated Taxes:</span><span class="font-bold text-slate-850">${{ activeInvoice.taxAmount }}</span></div>
-          <div class="flex justify-between text-[15px] border-t border-slate-100 pt-2.5"><span class="font-extrabold text-slate-900">TOTAL BILL AMOUNT:</span><span class="font-extrabold text-indigo-650">${{ activeInvoice.totalAmount }}</span></div>
+          <div class="flex justify-between"><span class="text-slate-400">Base Room Charges:</span><span class="font-bold text-slate-850">Rs. {{ activeInvoice.orderSubtotal || activeInvoice.roomCharges }}</span></div>
+          <div class="flex justify-between text-rose-500"><span class="text-slate-400">Applied Discount:</span><span class="font-bold">-Rs. {{ activeInvoice.discountAmount }}</span></div>
+          <div class="flex justify-between"><span class="text-slate-400">Aggregated Taxes:</span><span class="font-bold text-slate-850">Rs. {{ activeInvoice.taxAmount }}</span></div>
+          <div class="flex justify-between text-[15px] border-t border-slate-100 pt-2.5"><span class="font-extrabold text-slate-900">TOTAL BILL AMOUNT:</span><span class="font-extrabold text-indigo-650">Rs. {{ activeInvoice.totalAmount }}</span></div>
         </div>
 
         <!-- Payment forms if Unpaid -->
@@ -157,7 +157,7 @@
           <select [(ngModel)]="selectedOrderId" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500">
             <option [value]="null">Select restaurant order...</option>
             <option *ngFor="let order of orders" [value]="order.id">
-              Order #{{ order.id }} - {{ order.tableNumber ? 'Table ' + order.tableNumber : 'Room ' + order.roomNumber }} - {{ order.customerName || 'Walk-in Guest' }} (${{ order.totalAmount }})
+              Order #{{ order.id }} - {{ order.tableNumber ? 'Table ' + order.tableNumber : 'Room ' + order.roomNumber }} - {{ order.customerName || 'Walk-in Guest' }} (Rs. {{ order.totalAmount }})
             </option>
           </select>
         </div>
@@ -179,7 +179,7 @@
         </div>
 
         <div>
-          <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Redeem Loyalty Points ($0.10/point)</label>
+          <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Redeem Loyalty Points (Rs. 0.10/point)</label>
           <input type="number" [(ngModel)]="redeemPoints" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500"/>
         </div>
 
@@ -232,7 +232,7 @@
           <!-- Due Total Column -->
           <ng-container matColumnDef="totalAmount">
             <th mat-header-cell *matHeaderCellDef class="pb-3 font-bold uppercase tracking-wider text-[11px]">Due Total</th>
-            <td mat-cell *matCellDef="let inv" class="py-3.5 font-extrabold text-slate-805">${{ inv.totalAmount }}</td>
+            <td mat-cell *matCellDef="let inv" class="py-3.5 font-extrabold text-slate-805">Rs. {{ inv.totalAmount }}</td>
           </ng-container>
 
           <!-- Payment Status Column -->
@@ -311,7 +311,7 @@
         <!-- Settled Amount Column -->
         <ng-container matColumnDef="totalAmount">
           <th mat-header-cell *matHeaderCellDef class="pb-3 font-bold uppercase tracking-wider text-[11px]">Settled Amount</th>
-          <td mat-cell *matCellDef="let pay" class="py-3.5 font-extrabold text-emerald-600">${{ pay.totalAmount }}</td>
+          <td mat-cell *matCellDef="let pay" class="py-3.5 font-extrabold text-emerald-600">Rs. {{ pay.totalAmount }}</td>
         </ng-container>
 
         <!-- Payment Method Column -->
@@ -390,7 +390,7 @@
              [ngClass]="activeInvoice?.id === inv.id ? 'bg-indigo-50/40 border-indigo-200 shadow-sm' : 'bg-slate-50 hover:bg-slate-100/50 border-slate-200/60'">
           <div class="flex items-center justify-between">
             <span class="font-bold text-[13px] text-slate-900">{{ inv.invoiceNumber }}</span>
-            <span class="text-[11px] font-extrabold text-indigo-650">${{ inv.totalAmount }}</span>
+            <span class="text-[11px] font-extrabold text-indigo-650">Rs. {{ inv.totalAmount }}</span>
           </div>
           <div class="flex items-center justify-between text-[11px] text-slate-500">
             <span>{{ inv.orderId ? 'Order #' + inv.orderId : 'Stay #' + inv.reservationId }}</span>
@@ -445,7 +445,7 @@
           </div>
           <div>
             <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Order Amount</span>
-            <span class="font-bold text-slate-800">${{ activeInvoiceOrder.totalAmount }}</span>
+            <span class="font-bold text-slate-800">Rs. {{ activeInvoiceOrder.totalAmount }}</span>
           </div>
         </div>
 
@@ -501,8 +501,8 @@
             <tr *ngFor="let item of activeInvoice.items" class="border-b border-slate-50 text-slate-700">
               <td class="p-3 font-medium">{{ item.description }}</td>
               <td class="p-3 text-center font-bold text-slate-600">{{ item.quantity }}</td>
-              <td class="p-3 text-right font-medium text-slate-600">${{ item.unitPrice }}</td>
-              <td class="p-3 text-right font-extrabold text-slate-800">${{ item.totalPrice }}</td>
+              <td class="p-3 text-right font-medium text-slate-600">Rs. {{ item.unitPrice }}</td>
+              <td class="p-3 text-right font-extrabold text-slate-800">Rs. {{ item.totalPrice }}</td>
             </tr>
           </table>
         </div>
@@ -516,19 +516,19 @@
             <div class="space-y-2 text-[12.5px]">
               <div class="flex justify-between">
                 <span class="text-slate-400">Order Subtotal:</span>
-                <span class="font-bold text-slate-850">${{ activeInvoice.orderSubtotal || activeInvoice.roomCharges }}</span>
+                <span class="font-bold text-slate-850">Rs. {{ activeInvoice.orderSubtotal || activeInvoice.roomCharges }}</span>
               </div>
               <div class="flex justify-between text-rose-500">
                 <span class="text-slate-400">Voucher / Loyalty Discount:</span>
-                <span class="font-bold">-${{ activeInvoice.discountAmount }}</span>
+                <span class="font-bold">-Rs. {{ activeInvoice.discountAmount }}</span>
               </div>
               <div class="flex justify-between">
                 <span class="text-slate-400">Taxes:</span>
-                <span class="font-bold text-slate-850">${{ activeInvoice.taxAmount }}</span>
+                <span class="font-bold text-slate-850">Rs. {{ activeInvoice.taxAmount }}</span>
               </div>
               <div class="flex justify-between text-[16px] border-t border-slate-200/60 pt-3">
                 <span class="font-extrabold text-slate-900">Total Due Amount:</span>
-                <span class="font-extrabold text-indigo-650">${{ activeInvoice.totalAmount }}</span>
+                <span class="font-extrabold text-indigo-650">Rs. {{ activeInvoice.totalAmount }}</span>
               </div>
             </div>
           </div>

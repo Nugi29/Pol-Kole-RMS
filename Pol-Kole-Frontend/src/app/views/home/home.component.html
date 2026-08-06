@@ -77,7 +77,7 @@
       <div class="flex items-start justify-between">
         <div>
           <p class="text-[11px] font-bold text-amber-500 uppercase tracking-wider">Revenue Today</p>
-          <p class="text-[32px] font-extrabold text-slate-900 mt-2 leading-none">${{ stats.revenueToday | number:'1.2-2' }}</p>
+          <p class="text-[32px] font-extrabold text-slate-900 mt-2 leading-none">Rs. {{ stats.revenueToday | number:'1.2-2' }}</p>
           <p class="text-[12px] text-slate-400 mt-3 font-medium">{{ stats.ordersToday }} orders placed today</p>
         </div>
         <div class="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
@@ -110,7 +110,7 @@
             <div class="relative w-12 flex justify-center items-end h-44">
               <!-- Value Tooltip -->
               <span class="absolute -top-7 scale-0 group-hover:scale-100 bg-slate-900 text-white text-[11px] font-semibold px-2 py-1 rounded-md transition-all shadow duration-150">
-                ${{ revenueValues[i] }}
+                Rs. {{ revenueValues[i] }}
               </span>
               <!-- Colored Column Bar -->
               <div class="w-8 rounded-t-lg bg-indigo-500 group-hover:bg-indigo-600 transition-all duration-300"

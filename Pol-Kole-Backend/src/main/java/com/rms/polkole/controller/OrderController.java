@@ -23,7 +23,7 @@ public class OrderController {
     @PostMapping
     public ResponseEntity<ApiResponse<OrderDto>> createOrder(@Valid @RequestBody OrderDto dto) {
         OrderDto created = orderService.createOrder(dto);
-        auditLogService.log("CREATE ORDER", "Placed customer order ID: " + created.getId() + " total: $" + created.getTotalAmount());
+        auditLogService.log("CREATE ORDER", "Placed customer order ID: " + created.getId() + " total: Rs. " + created.getTotalAmount());
         return ResponseEntity.ok(ApiResponse.success(created, "Order placed successfully"));
     }
 
