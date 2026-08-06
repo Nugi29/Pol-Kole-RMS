@@ -23,7 +23,7 @@ export interface UnifiedStayItem {
 })
 export class BillingComponent implements OnInit {
   invoices: Invoice[] = [];
-  orders: Order[] = [];
+  takeAwayOrders: Order[] = [];
   loading = false;
   successMessage = '';
   errorMessage = '';
@@ -35,10 +35,12 @@ export class BillingComponent implements OnInit {
   paymentDataSource = new MatTableDataSource<Invoice>([]);
 
   // Invoice Compiler state
-  compilerType: 'ORDER' | 'STAY' = 'ORDER';
-  selectedOrderId: number | null = null;
-  selectedStayValue: string | null = null;
-  checkedOutStays: UnifiedStayItem[] = [];
+  compilerType: 'TAKEAWAY' | 'TABLE' | 'ROOM' = 'TAKEAWAY';
+  selectedTakeAwayOrderId: number | null = null;
+  selectedTableReservationId: number | null = null;
+  selectedRoomReservationId: number | null = null;
+  checkedOutRooms: UnifiedStayItem[] = [];
+  checkedOutTables: UnifiedStayItem[] = [];
   discountCode = '';
   redeemPoints = 0;
 
@@ -133,9 +135,11 @@ export class BillingComponent implements OnInit {
   loadOrders(): void {
     this.orderService.filterOrders(undefined, undefined, undefined, 0, 100).subscribe(page => {
       const invoiceOrderIds = this.invoices.map(inv => inv.orderId || inv.reservationId || inv.tableReservationId);
-      this.orders = page.content.filter(o => 
+      this.takeAwayOrders = page.content.filter(o => 
         o.statusName !== 'COMPLETED' && 
         o.statusName !== 'CANCELLED' &&
+        !o.tableId &&
+        !o.roomId &&
         !invoiceOrderIds.includes(o.id)
       );
     });
@@ -150,7 +154,7 @@ export class BillingComponent implements OnInit {
         const invoiceReservationIds = this.invoices.map(inv => inv.reservationId);
         const invoiceTableReservationIds = this.invoices.map(inv => inv.tableReservationId);
 
-        const roomItems: UnifiedStayItem[] = results.rooms.content
+        this.checkedOutRooms = results.rooms.content
           .filter(res => !invoiceReservationIds.includes(res.id))
           .map(res => ({
             id: res.id!,
@@ -160,7 +164,7 @@ export class BillingComponent implements OnInit {
             roomOrTableNumber: res.roomNumber || ''
           }));
 
-        const tableItems: UnifiedStayItem[] = results.tables.content
+        this.checkedOutTables = results.tables.content
           .filter(res => !invoiceTableReservationIds.includes(res.id))
           .map(res => ({
             id: res.id!,
@@ -169,73 +173,75 @@ export class BillingComponent implements OnInit {
             customerPassport: res.customerPassport || '',
             roomOrTableNumber: res.tableNumber || ''
           }));
-
-        this.checkedOutStays = [...roomItems, ...tableItems];
       }
     });
   }
 
   triggerGenerateInvoice(): void {
-    if (this.compilerType === 'ORDER') {
-      if (!this.selectedOrderId) return;
-      this.loading = true;
-      this.errorMessage = '';
-      this.successMessage = '';
+    this.loading = true;
+    this.errorMessage = '';
+    this.successMessage = '';
 
-      this.billingService.generateInvoice(this.selectedOrderId, this.discountCode, this.redeemPoints).subscribe({
+    if (this.compilerType === 'TAKEAWAY') {
+      if (!this.selectedTakeAwayOrderId) {
+        this.loading = false;
+        return;
+      }
+
+      this.billingService.generateInvoice(this.selectedTakeAwayOrderId, this.discountCode, this.redeemPoints).subscribe({
         next: (invoice) => {
-          this.successMessage = `Restaurant invoice generated successfully: ${invoice.invoiceNumber}`;
+          this.successMessage = `Take Away invoice generated successfully: ${invoice.invoiceNumber}`;
           this.activeInvoice = invoice;
-          this.selectedOrderId = null;
+          this.selectedTakeAwayOrderId = null;
           this.discountCode = '';
           this.redeemPoints = 0;
           this.loadInvoices();
         },
         error: (err) => {
-          this.errorMessage = err.error?.message || 'Failed to generate invoice.';
+          this.errorMessage = err.error?.message || 'Failed to generate takeaway invoice.';
           this.loading = false;
         }
       });
-    } else {
-      if (!this.selectedStayValue) return;
-      this.loading = true;
-      this.errorMessage = '';
-      this.successMessage = '';
-
-      const [type, idStr] = this.selectedStayValue.split('_');
-      const id = parseInt(idStr, 10);
-
-      if (type === 'ROOM') {
-        this.billingService.generateStayInvoice(id, this.discountCode, this.redeemPoints).subscribe({
-          next: (invoice) => {
-            this.successMessage = `Stay invoice generated successfully: ${invoice.invoiceNumber}`;
-            this.activeInvoice = invoice;
-            this.selectedStayValue = null;
-            this.discountCode = '';
-            this.redeemPoints = 0;
-            this.loadInvoices();
-          },
-          error: (err) => {
-            this.errorMessage = err.error?.message || 'Failed to generate stay invoice.';
-            this.loading = false;
-          }
-        });
-      } else {
-        this.billingService.generateTableInvoice(id, this.discountCode, this.redeemPoints).subscribe({
-          next: (invoice) => {
-            this.successMessage = `Table invoice generated successfully: ${invoice.invoiceNumber}`;
-            this.activeInvoice = invoice;
-            this.selectedStayValue = null;
-            this.discountCode = '';
-            this.redeemPoints = 0;
-            this.loadInvoices();
-          },
-          error: (err) => {
-            this.errorMessage = err.error?.message || 'Failed to generate table invoice.';
-            this.loading = false;
-          }
-        });
+    } else if (this.compilerType === 'TABLE') {
+      if (!this.selectedTableReservationId) {
+        this.loading = false;
+        return;
       }
+
+      this.billingService.generateTableInvoice(this.selectedTableReservationId, this.discountCode, this.redeemPoints).subscribe({
+        next: (invoice) => {
+          this.successMessage = `Table checkout invoice generated successfully: ${invoice.invoiceNumber}`;
+          this.activeInvoice = invoice;
+          this.selectedTableReservationId = null;
+          this.discountCode = '';
+          this.redeemPoints = 0;
+          this.loadInvoices();
+        },
+        error: (err) => {
+          this.errorMessage = err.error?.message || 'Failed to generate table checkout invoice.';
+          this.loading = false;
+        }
+      });
+    } else if (this.compilerType === 'ROOM') {
+      if (!this.selectedRoomReservationId) {
+        this.loading = false;
+        return;
+      }
+
+      this.billingService.generateStayInvoice(this.selectedRoomReservationId, this.discountCode, this.redeemPoints).subscribe({
+        next: (invoice) => {
+          this.successMessage = `Room checkout invoice generated successfully: ${invoice.invoiceNumber}`;
+          this.activeInvoice = invoice;
+          this.selectedRoomReservationId = null;
+          this.discountCode = '';
+          this.redeemPoints = 0;
+          this.loadInvoices();
+        },
+        error: (err) => {
+          this.errorMessage = err.error?.message || 'Failed to generate room checkout invoice.';
+          this.loading = false;
+        }
+      });
     }
   }
 

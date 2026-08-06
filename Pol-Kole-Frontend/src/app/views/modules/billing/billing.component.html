@@ -137,38 +137,54 @@
         <!-- Compiler Type Toggle -->
         <div>
           <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Billing Category</label>
-          <div class="grid grid-cols-2 gap-2">
-            <button type="button" (click)="compilerType = 'ORDER'; selectedStayValue = null;"
+          <div class="grid grid-cols-3 gap-2">
+            <button type="button" (click)="compilerType = 'TAKEAWAY'; selectedTakeAwayOrderId = null;"
                     class="py-2.5 rounded-xl border font-bold text-[12px] cursor-pointer transition-all flex items-center justify-center gap-1"
-                    [ngClass]="compilerType === 'ORDER' ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'">
-              🍽️ Restaurant Order
+                    [ngClass]="compilerType === 'TAKEAWAY' ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'">
+              🥡 Take Away
             </button>
-            <button type="button" (click)="compilerType = 'STAY'; selectedOrderId = null;"
+            <button type="button" (click)="compilerType = 'TABLE'; selectedTableReservationId = null;"
                     class="py-2.5 rounded-xl border font-bold text-[12px] cursor-pointer transition-all flex items-center justify-center gap-1"
-                    [ngClass]="compilerType === 'STAY' ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-655 hover:bg-slate-100'">
-              🏨 Room Stay Checkout
+                    [ngClass]="compilerType === 'TABLE' ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-655 hover:bg-slate-100'">
+              🍽️ Table Checkout
+            </button>
+            <button type="button" (click)="compilerType = 'ROOM'; selectedRoomReservationId = null;"
+                    class="py-2.5 rounded-xl border font-bold text-[12px] cursor-pointer transition-all flex items-center justify-center gap-1"
+                    [ngClass]="compilerType === 'ROOM' ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-655 hover:bg-slate-100'">
+              🏨 Room Checkout
             </button>
           </div>
         </div>
 
-        <!-- Restaurant Order Selector -->
-        <div *ngIf="compilerType === 'ORDER'">
-          <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Select Active Order</label>
-          <select [(ngModel)]="selectedOrderId" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500">
-            <option [value]="null">Select restaurant order...</option>
-            <option *ngFor="let order of orders" [value]="order.id">
-              Order #{{ order.id }} - {{ order.tableNumber ? 'Table ' + order.tableNumber : 'Room ' + order.roomNumber }} - {{ order.customerName || 'Walk-in Guest' }} (Rs. {{ order.totalAmount }})
+        <!-- Take Away Order Selector -->
+        <div *ngIf="compilerType === 'TAKEAWAY'">
+          <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Select Active Takeaway Order</label>
+          <select [(ngModel)]="selectedTakeAwayOrderId" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500">
+            <option [value]="null">Select takeaway order...</option>
+            <option *ngFor="let order of takeAwayOrders" [value]="order.id">
+              Order #{{ order.id }} - {{ order.customerName || 'Walk-in Guest' }} (Rs. {{ order.totalAmount }})
             </option>
           </select>
         </div>
 
-        <!-- Stay Reservation Selector -->
-        <div *ngIf="compilerType === 'STAY'">
-          <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Select Occupied Guest Stay</label>
-          <select [(ngModel)]="selectedStayValue" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500">
-            <option [value]="null">Select guest stay checkout...</option>
-            <option *ngFor="let res of checkedOutStays" [value]="res.type + '_' + res.id">
-              [{{ res.type }}] {{ res.type === 'ROOM' ? 'Room' : 'Table' }} {{ res.roomOrTableNumber }} - {{ res.customerName }} (NIC/Passport: {{ res.customerPassport }})
+        <!-- Table Reservation Selector -->
+        <div *ngIf="compilerType === 'TABLE'">
+          <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Select Checked-out Table Stay</label>
+          <select [(ngModel)]="selectedTableReservationId" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500">
+            <option [value]="null">Select table checkout...</option>
+            <option *ngFor="let res of checkedOutTables" [value]="res.id">
+              Table {{ res.roomOrTableNumber }} - {{ res.customerName }} (NIC/Passport: {{ res.customerPassport }})
+            </option>
+          </select>
+        </div>
+
+        <!-- Room Reservation Selector -->
+        <div *ngIf="compilerType === 'ROOM'">
+          <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Select Checked-out Room Stay</label>
+          <select [(ngModel)]="selectedRoomReservationId" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500">
+            <option [value]="null">Select room checkout...</option>
+            <option *ngFor="let res of checkedOutRooms" [value]="res.id">
+              Room {{ res.roomOrTableNumber }} - {{ res.customerName }} (NIC/Passport: {{ res.customerPassport }})
             </option>
           </select>
         </div>
@@ -184,7 +200,9 @@
         </div>
 
         <button (click)="triggerGenerateInvoice()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-[13px] font-bold py-2.5 rounded-xl cursor-pointer transition-all shadow-md active:scale-[0.98]">
-          {{ compilerType === 'ORDER' ? 'Compile Order Invoice' : 'Compile Stay Checkout Invoice' }}
+          <span *ngIf="compilerType === 'TAKEAWAY'">Compile Take Away Invoice</span>
+          <span *ngIf="compilerType === 'TABLE'">Compile Table Checkout Invoice</span>
+          <span *ngIf="compilerType === 'ROOM'">Compile Room Checkout Invoice</span>
         </button>
       </div>
     </div>
@@ -217,8 +235,8 @@
           <ng-container matColumnDef="category">
             <th mat-header-cell *matHeaderCellDef class="pb-3 font-bold uppercase tracking-wider text-[11px]">Category</th>
             <td mat-cell *matCellDef="let inv" class="py-3.5">
-              <span *ngIf="inv.orderId" class="text-[11px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md border shadow-sm inline-block">
-                🍽️ Restaurant Order
+              <span *ngIf="inv.orderId" class="text-[11px] font-bold text-amber-650 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/50 shadow-sm inline-block animate-fade-in">
+                🥡 Take Away Invoice
               </span>
               <span *ngIf="inv.reservationId" class="text-[11px] font-bold text-indigo-650 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200/50 shadow-sm inline-block animate-fade-in">
                 🏨 Room Checkout Stay
@@ -296,8 +314,8 @@
         <ng-container matColumnDef="category">
           <th mat-header-cell *matHeaderCellDef class="pb-3 font-bold uppercase tracking-wider text-[11px]">Category</th>
           <td mat-cell *matCellDef="let pay" class="py-3.5">
-            <span *ngIf="pay.orderId" class="text-[11px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md border shadow-sm inline-block">
-              🍽️ Restaurant Order
+            <span *ngIf="pay.orderId" class="text-[11px] font-bold text-amber-650 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/50 shadow-sm inline-block animate-fade-in">
+              🥡 Take Away Invoice
             </span>
             <span *ngIf="pay.reservationId" class="text-[11px] font-bold text-indigo-650 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200/50 shadow-sm inline-block animate-fade-in">
               🏨 Room Checkout Stay

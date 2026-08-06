@@ -33,7 +33,7 @@ export class OrdersComponent implements OnInit {
   // POS Order Form Builder Helper state
   selectedCustomerId: number | null = null;
   selectedTableId: number | null = null;
-  serviceType: 'TABLE' | 'ROOM' = 'TABLE';
+  serviceType: 'TABLE' | 'ROOM' | 'TAKEAWAY' = 'TABLE';
   selectedRoomId: number | null = null;
   selectedReservationId: number | null = null;
   checkedInReservations: any[] = [];
@@ -62,7 +62,7 @@ export class OrdersComponent implements OnInit {
   }
 
   loadTables(): void {
-    this.tableService.filterTables(undefined, undefined, undefined, 0, 100).subscribe(page => {
+    this.tableService.filterTables('OCCUPIED', undefined, undefined, 0, 100).subscribe(page => {
       this.tables = page.content;
     });
   }
@@ -140,9 +140,9 @@ export class OrdersComponent implements OnInit {
   }
 
   submitOrder(): void {
-    const isLocationValid = this.serviceType === 'TABLE' ? this.selectedTableId : this.selectedRoomId;
+    const isLocationValid = this.serviceType === 'TAKEAWAY' ? true : (this.serviceType === 'TABLE' ? this.selectedTableId : this.selectedRoomId);
     if (!this.selectedCustomerId || !isLocationValid || this.cart.length === 0) {
-      this.errorMessage = 'Please select a customer, service location (table or room), and add items to cart.';
+      this.errorMessage = 'Please select a customer, service location, and add items to cart.';
       return;
     }
 
