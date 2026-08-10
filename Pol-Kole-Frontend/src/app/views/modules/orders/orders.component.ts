@@ -33,7 +33,7 @@ export class OrdersComponent implements OnInit {
   // POS Order Form Builder Helper state
   selectedCustomerId: number | null = null;
   selectedTableId: number | null = null;
-  serviceType: 'TABLE' | 'ROOM' | 'TAKEAWAY' = 'TABLE';
+  serviceType: 'TABLE' | 'ROOM' | 'TAKEAWAY' = 'TAKEAWAY';
   selectedRoomId: number | null = null;
   selectedReservationId: number | null = null;
   checkedInReservations: any[] = [];
@@ -140,9 +140,10 @@ export class OrdersComponent implements OnInit {
   }
 
   submitOrder(): void {
+    const isCustomerValid = this.serviceType === 'TAKEAWAY' ? true : (this.selectedCustomerId && String(this.selectedCustomerId) !== 'null');
     const isLocationValid = this.serviceType === 'TAKEAWAY' ? true : (this.serviceType === 'TABLE' ? this.selectedTableId : this.selectedRoomId);
-    if (!this.selectedCustomerId || !isLocationValid || this.cart.length === 0) {
-      this.errorMessage = 'Please select a customer, service location, and add items to cart.';
+    if (!isCustomerValid || !isLocationValid || this.cart.length === 0) {
+      this.errorMessage = this.serviceType === 'TAKEAWAY' ? 'Please add items to cart.' : 'Please select a customer, service location, and add items to cart.';
       return;
     }
 
@@ -158,15 +159,21 @@ export class OrdersComponent implements OnInit {
     }));
 
     const payload = {
-      customerId: this.selectedCustomerId,
+      customerId: this.selectedCustomerId && String(this.selectedCustomerId) !== 'null' ? Number(this.selectedCustomerId) : null,
       tableId: this.serviceType === 'TABLE' ? this.selectedTableId : null,
       roomId: this.serviceType === 'ROOM' ? this.selectedRoomId : null,
       items: items
     };
 
     this.orderService.createOrder(payload).subscribe({
-      next: () => {
+      next: (createdOrder) => {
         this.successMessage = 'Order placed successfully to Chef Kitchen Hub!';
+        
+        // Auto-print token for takeaway orders
+        if (this.serviceType === 'TAKEAWAY') {
+          this.printToken(createdOrder);
+        }
+
         this.cart = [];
         this.selectedTableId = null;
         this.selectedRoomId = null;
@@ -183,6 +190,155 @@ export class OrdersComponent implements OnInit {
         this.loading = false;
       }
     });
+  }
+
+  printToken(order: Order): void {
+    const printWindow = window.open('', '_blank', 'width=350,height=600');
+    if (!printWindow) {
+      alert('Please allow popups to print tokens.');
+      return;
+    }
+
+    const itemsHtml = order.items.map(item => `
+      <tr style="border-bottom: 1px dashed #eee;">
+        <td style="padding: 6px 0; font-weight: bold;">${item.menuItemName || 'Item'}</td>
+        <td style="padding: 6px 0; text-align: center;">x${item.quantity}</td>
+        <td style="padding: 6px 0; text-align: right;">Rs. ${(item.price * item.quantity).toFixed(2)}</td>
+      </tr>
+      ${item.notes ? `
+      <tr>
+        <td colspan="3" style="padding-bottom: 6px; font-size: 11px; color: #666; font-style: italic;">
+          * Note: ${item.notes}
+        </td>
+      </tr>` : ''}
+    `).join('');
+
+    const customerName = order.customerName || 'Walk-in Guest';
+    const orderType = order.roomNumber ? `ROOM: ${order.roomNumber}` : (order.tableNumber ? `TABLE: ${order.tableNumber}` : 'TAKEAWAY');
+    const orderTime = order.orderTime ? new Date(order.orderTime).toLocaleString() : new Date().toLocaleString();
+
+    const htmlContent = `
+      <html>
+        <head>
+          <title>Order Token #${order.id}</title>
+          <style>
+            @page {
+              size: auto;
+              margin: 0mm;
+            }
+            body {
+              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+              font-size: 13px;
+              color: #1a1a1a;
+              width: 300px;
+              margin: 0 auto;
+              padding: 20px 10px;
+              line-height: 1.4;
+            }
+            .text-center { text-align: center; }
+            .bold { font-weight: bold; }
+            .divider { border-top: 2px dashed #ccc; margin: 12px 0; }
+            .header-title { font-size: 16px; font-weight: 800; color: #000; }
+            .token-container {
+              background: #f8f9fa;
+              border: 2px solid #000;
+              border-radius: 8px;
+              padding: 12px;
+              margin: 15px 0;
+              text-align: center;
+            }
+            .token-label {
+              font-size: 11px;
+              text-transform: uppercase;
+              letter-spacing: 1px;
+              color: #666;
+              margin-bottom: 4px;
+            }
+            .token-number {
+              font-size: 24px;
+              font-weight: 900;
+              color: #000;
+            }
+            .info-table {
+              width: 100%;
+              margin-top: 10px;
+              font-size: 12px;
+            }
+            .info-table td {
+              padding: 3px 0;
+            }
+            .items-table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-top: 10px;
+              font-size: 12px;
+            }
+            .footer {
+              font-size: 10.5px;
+              color: #555;
+              margin-top: 20px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="text-center bold header-title">POL-KOLE ROYAL RESTAURANT</div>
+          <div class="text-center" style="font-size: 11px; color: #555;">Lounge & Cafe</div>
+          
+          <div class="divider"></div>
+          
+          <div class="text-center bold" style="font-size: 14px; text-transform: uppercase;">${orderType} ORDER TOKEN</div>
+          
+          <div class="token-container">
+            <div class="token-label">Token Number</div>
+            <div class="token-number">#${order.id}</div>
+          </div>
+          
+          <table class="info-table">
+            <tr>
+              <td style="color: #666; width: 80px;">Order ID:</td>
+              <td class="bold">#${order.id}</td>
+            </tr>
+            <tr>
+              <td style="color: #666;">Guest:</td>
+              <td class="bold">${customerName}</td>
+            </tr>
+            <tr>
+              <td style="color: #666;">Date/Time:</td>
+              <td>${orderTime}</td>
+            </tr>
+          </table>
+          
+          <div class="divider"></div>
+          <div class="bold" style="font-size: 12px; text-transform: uppercase; margin-bottom: 5px;">Ordered Items</div>
+          <table class="items-table">
+            ${itemsHtml}
+          </table>
+          
+          <div class="divider"></div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+            <span class="bold" style="font-size: 14px;">TOTAL AMOUNT:</span>
+            <span class="bold" style="font-size: 16px; color: #000;">Rs. ${(order.totalAmount || 0).toFixed(2)}</span>
+          </div>
+          
+          <div class="divider"></div>
+          <div class="text-center footer">
+            Please present this token to retrieve your takeaway order.<br>
+            <strong>Thank you for dining with us!</strong>
+          </div>
+          
+          <script>
+            window.onload = function() {
+              window.print();
+              setTimeout(function() { window.close(); }, 500);
+            };
+          </script>
+        </body>
+      </html>
+    `;
+
+    printWindow.document.open();
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
   }
 
   cancelOrder(id: number): void {

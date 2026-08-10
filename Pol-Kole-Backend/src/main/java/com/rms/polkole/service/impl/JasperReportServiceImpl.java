@@ -34,15 +34,63 @@ public class JasperReportServiceImpl implements JasperReportService {
             Map<String, Object> parameters = new HashMap<>();
             parameters.put("restaurantName", "Pol-Kole Royal Restaurant & Lounge");
             parameters.put("invoiceNumber", invoice.getInvoiceNumber());
-            parameters.put("customerName", invoice.getOrder().getCustomer() != null ? invoice.getOrder().getCustomer().getName() : "Walk-in Guest");
-            parameters.put("customerPassport", invoice.getOrder().getCustomer() != null ? invoice.getOrder().getCustomer().getPhone() : "N/A");
-            parameters.put("tableNumber", invoice.getOrder().getTable() != null ? invoice.getOrder().getTable().getTableNumber() : "Takeaway / Delivery");
+
+            String customerName = "Walk-in Guest";
+            String customerPassport = "N/A";
+            String tableNumber = "N/A";
+            String stayDates = "N/A";
+
+            if (invoice.getOrder() != null) {
+                if (invoice.getOrder().getCustomer() != null) {
+                    customerName = invoice.getOrder().getCustomer().getName();
+                    customerPassport = invoice.getOrder().getCustomer().getPhone() != null ? invoice.getOrder().getCustomer().getPhone() : "N/A";
+                }
+                if (invoice.getOrder().getTable() != null) {
+                    tableNumber = invoice.getOrder().getTable().getTableNumber();
+                } else {
+                    tableNumber = "Takeaway / Delivery";
+                }
+                if (invoice.getOrder().getOrderTime() != null) {
+                    stayDates = invoice.getOrder().getOrderTime().toString();
+                }
+            } else if (invoice.getHotelReservation() != null) {
+                if (invoice.getHotelReservation().getCustomer() != null) {
+                    customerName = invoice.getHotelReservation().getCustomer().getName();
+                    customerPassport = invoice.getHotelReservation().getCustomer().getPhone() != null ? invoice.getHotelReservation().getCustomer().getPhone() : "N/A";
+                }
+                if (invoice.getHotelReservation().getRoom() != null) {
+                    tableNumber = "Room " + invoice.getHotelReservation().getRoom().getRoomNumber();
+                }
+                if (invoice.getHotelReservation().getCheckInDate() != null && invoice.getHotelReservation().getCheckOutDate() != null) {
+                    stayDates = invoice.getHotelReservation().getCheckInDate().toString() + " to " + invoice.getHotelReservation().getCheckOutDate().toString();
+                } else if (invoice.getHotelReservation().getCheckInDate() != null) {
+                    stayDates = invoice.getHotelReservation().getCheckInDate().toString();
+                }
+            } else if (invoice.getTableReservation() != null) {
+                if (invoice.getTableReservation().getCustomer() != null) {
+                    customerName = invoice.getTableReservation().getCustomer().getName();
+                    customerPassport = invoice.getTableReservation().getCustomer().getPhone() != null ? invoice.getTableReservation().getCustomer().getPhone() : "N/A";
+                }
+                if (invoice.getTableReservation().getTable() != null) {
+                    tableNumber = invoice.getTableReservation().getTable().getTableNumber();
+                }
+                if (invoice.getTableReservation().getReservationDate() != null) {
+                    stayDates = invoice.getTableReservation().getReservationDate().toString();
+                    if (invoice.getTableReservation().getReservationTime() != null) {
+                        stayDates += " " + invoice.getTableReservation().getReservationTime();
+                    }
+                }
+            }
+
+            parameters.put("customerName", customerName);
+            parameters.put("customerPassport", customerPassport);
+            parameters.put("tableNumber", tableNumber);
             parameters.put("roomCharges", invoice.getOrderSubtotal()); // Map roomCharges param to orderSubtotal for matching layout
             parameters.put("taxAmount", invoice.getTaxAmount());
             parameters.put("discountAmount", invoice.getDiscountAmount());
             parameters.put("totalAmount", invoice.getTotalAmount());
             parameters.put("paymentStatus", invoice.getPaymentStatus());
-            parameters.put("stayDates", invoice.getOrder().getOrderTime().toString());
+            parameters.put("stayDates", stayDates);
 
             // Compile dynamic JRXML
             String jrxml = getInvoiceJrxmlTemplate();

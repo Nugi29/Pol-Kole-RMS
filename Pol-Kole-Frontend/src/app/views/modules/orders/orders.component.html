@@ -199,7 +199,7 @@
         <tbody class="divide-y divide-slate-50">
           <tr *ngFor="let ord of orders" class="hover:bg-slate-50/50 transition-all">
             <td class="px-4 py-3.5 font-bold text-slate-900">#{{ ord.id }}</td>
-            <td class="px-4 py-3.5 font-semibold text-slate-700">{{ ord.customerName }}</td>
+            <td class="px-4 py-3.5 font-semibold text-slate-700">{{ ord.customerName || 'Walk-in Guest' }}</td>
             <td class="px-4 py-3.5">
               <span *ngIf="ord.tableNumber">Table {{ ord.tableNumber }}</span>
               <span *ngIf="ord.roomNumber">Room {{ ord.roomNumber }}</span>
@@ -218,8 +218,11 @@
               </span>
             </td>
             <td class="px-4 py-3.5">
-              <button *ngIf="ord.statusName !== 'COMPLETED'" (click)="cancelOrder(ord.id!)" class="text-rose-600 hover:text-rose-800 font-bold transition-all cursor-pointer">Cancel</button>
-              <span *ngIf="ord.statusName === 'COMPLETED'" class="text-slate-400">Settled</span>
+              <div class="flex items-center gap-3">
+                <button (click)="printToken(ord)" class="text-indigo-600 hover:text-indigo-800 font-bold transition-all cursor-pointer">Print Token</button>
+                <button *ngIf="ord.statusName !== 'COMPLETED'" (click)="cancelOrder(ord.id!)" class="text-rose-600 hover:text-rose-800 font-bold transition-all cursor-pointer">Cancel</button>
+                <span *ngIf="ord.statusName === 'COMPLETED'" class="text-slate-400 font-semibold">Settled</span>
+              </div>
             </td>
           </tr>
         </tbody>
