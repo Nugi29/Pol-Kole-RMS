@@ -46,9 +46,76 @@
       </button>
     </div>
 
-    <!-- Active filtered stays -->
-    <div *ngIf="activeTickets.length > 0; else noStays" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <div *ngFor="let res of activeTickets" class="kitchen-card relative bg-white hover:shadow-xl rounded-2xl border border-slate-100 hover:border-indigo-150 transition-all duration-350 flex flex-col justify-between overflow-hidden group">
+    <!-- Active Chef Queue Tab Layout (Received & Preparing side-by-side) -->
+    <div *ngIf="activeTab === 'active'">
+      <div *ngIf="receivedTickets.length > 0 || preparingTickets.length > 0; else noActiveStays" class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+        <!-- Received Side / Column -->
+        <div class="space-y-4 bg-slate-50/50 p-4 rounded-2xl border border-slate-100/80">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+            <h3 class="text-xs font-bold text-amber-600 flex items-center gap-1.5 uppercase tracking-wider">
+              <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping-slow"></span>
+              Received Tickets ({{ receivedTickets.length }})
+            </h3>
+          </div>
+          
+          <div *ngIf="receivedTickets.length > 0; else noReceived" class="space-y-4">
+            <div *ngFor="let res of receivedTickets">
+              <ng-container *ngTemplateOutlet="ticketCard; context: { res: res }"></ng-container>
+            </div>
+          </div>
+          <ng-template #noReceived>
+            <div class="text-center py-8 text-slate-400 text-xs font-semibold">
+              No received tickets
+            </div>
+          </ng-template>
+        </div>
+
+        <!-- Preparing Side / Column -->
+        <div class="space-y-4 bg-slate-50/50 p-4 rounded-2xl border border-slate-100/80">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+            <h3 class="text-xs font-bold text-blue-600 flex items-center gap-1.5 uppercase tracking-wider">
+              <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+              Preparing Tickets ({{ preparingTickets.length }})
+            </h3>
+          </div>
+
+          <div *ngIf="preparingTickets.length > 0; else noPreparing" class="space-y-4">
+            <div *ngFor="let res of preparingTickets">
+              <ng-container *ngTemplateOutlet="ticketCard; context: { res: res }"></ng-container>
+            </div>
+          </div>
+          <ng-template #noPreparing>
+            <div class="text-center py-8 text-slate-400 text-xs font-semibold">
+              No tickets in preparation
+            </div>
+          </ng-template>
+        </div>
+      </div>
+
+      <ng-template #noActiveStays>
+        <div class="text-center py-16 text-slate-400">
+          <p class="font-bold text-[14px]">No Chef Tickets Found</p>
+        </div>
+      </ng-template>
+    </div>
+
+    <!-- Served Ledger Tab Layout -->
+    <div *ngIf="activeTab === 'served'">
+      <div *ngIf="servedOrders.length > 0; else noServedStays" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div *ngFor="let res of servedOrders">
+          <ng-container *ngTemplateOutlet="ticketCard; context: { res: res }"></ng-container>
+        </div>
+      </div>
+      <ng-template #noServedStays>
+        <div class="text-center py-16 text-slate-400">
+          <p class="font-bold text-[14px]">No Served & Delivered Tickets Found</p>
+        </div>
+      </ng-template>
+    </div>
+
+    <!-- Reusable Ticket Card Template -->
+    <ng-template #ticketCard let-res="res">
+      <div class="kitchen-card relative bg-white hover:shadow-xl rounded-2xl border border-slate-100 hover:border-indigo-150 transition-all duration-350 flex flex-col justify-between overflow-hidden group">
         <!-- Glowing top line depending on ticket status -->
         <div class="absolute top-0 left-0 right-0 h-1.5 transition-all duration-300"
              [ngClass]="{
@@ -179,13 +246,6 @@
             </div>
           </div>
         </div>
-      </div>
-    </div>
-
-    <!-- Empty stay state -->
-    <ng-template #noStays>
-      <div class="text-center py-16 text-slate-400">
-        <p class="font-bold text-[14px]">No Chef Tickets Found</p>
       </div>
     </ng-template>
   </div>

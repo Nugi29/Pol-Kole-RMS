@@ -119,4 +119,26 @@ export class KitchenComponent implements OnInit {
       return this.servedOrders;
     }
   }
+
+  get receivedTickets(): KitchenOrder[] {
+    return this.kitchenOrders
+      .filter(t => t.preparationStatus === 'RECEIVED')
+      .sort((a, b) => {
+        const timeA = a.startTime ? new Date(a.startTime).getTime() : 0;
+        const timeB = b.startTime ? new Date(b.startTime).getTime() : 0;
+        if (timeA !== timeB) return timeA - timeB;
+        return (a.id || 0) - (b.id || 0);
+      });
+  }
+
+  get preparingTickets(): KitchenOrder[] {
+    return this.kitchenOrders
+      .filter(t => t.preparationStatus === 'PREPARING')
+      .sort((a, b) => {
+        const timeA = a.startTime ? new Date(a.startTime).getTime() : 0;
+        const timeB = b.startTime ? new Date(b.startTime).getTime() : 0;
+        if (timeA !== timeB) return timeA - timeB;
+        return (a.id || 0) - (b.id || 0);
+      });
+  }
 }

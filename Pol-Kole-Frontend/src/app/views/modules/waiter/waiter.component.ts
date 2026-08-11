@@ -45,6 +45,14 @@ export class WaiterComponent implements OnInit {
       map(res => res.data)
     ).subscribe({
       next: (orders) => {
+        if (this.activeTab === 'ready') {
+          orders.sort((a, b) => {
+            const timeA = a.startTime ? new Date(a.startTime).getTime() : 0;
+            const timeB = b.startTime ? new Date(b.startTime).getTime() : 0;
+            if (timeA !== timeB) return timeA - timeB;
+            return (a.id || 0) - (b.id || 0);
+          });
+        }
         this.kitchenOrders = orders;
         this.loading = false;
       },
