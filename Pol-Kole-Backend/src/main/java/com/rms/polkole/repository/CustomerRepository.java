@@ -19,4 +19,7 @@ public interface CustomerRepository extends JpaRepository<CustomerEntity, Intege
            "OR LOWER(c.nicPassport) LIKE LOWER(CONCAT('%', :search, '%')) " +
            "OR c.phone LIKE CONCAT('%', :search, '%'))")
     Page<CustomerEntity> searchCustomers(@Param("search") String search, Pageable pageable);
+
+    @Query("SELECT MAX(c.id) FROM CustomerEntity c")
+    Integer findMaxId();
 }

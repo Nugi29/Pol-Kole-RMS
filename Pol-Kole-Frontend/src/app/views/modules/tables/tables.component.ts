@@ -6,6 +6,7 @@ import { ActivatedRoute } from '@angular/router';
 import { BehaviorSubject, Observable, combineLatest } from 'rxjs';
 import { map, switchMap, tap } from 'rxjs/operators';
 import { RestaurantTable, TableService } from '../../../services/table.service';
+import { CodeService } from '../../../services/code.service';
 
 @Component({
   selector: 'app-tables',
@@ -32,7 +33,8 @@ export class TablesComponent implements OnInit {
   constructor(
     private readonly fb: FormBuilder,
     private readonly tableService: TableService,
-    private readonly route: ActivatedRoute
+    private readonly route: ActivatedRoute,
+    private readonly codeService: CodeService
   ) {
     this.form = this.fb.group({
       tableNumber: ['', [Validators.required, Validators.maxLength(20)]],
@@ -69,6 +71,14 @@ export class TablesComponent implements OnInit {
       }
       this.loadTables();
     });
+
+    this.form.get('location')?.valueChanges.subscribe(loc => {
+      if (loc && !this.editingId) {
+        this.suggestNextTableNumber(loc);
+      }
+    });
+
+    this.suggestNextTableNumber('Main Dining Hall');
 
     // Activate the reactive stream subscription
     this.tables$.subscribe();
@@ -164,9 +174,46 @@ export class TablesComponent implements OnInit {
       location: 'Main Dining Hall',
       status: 'AVAILABLE'
     });
+    this.suggestNextTableNumber('Main Dining Hall');
   }
 
   getTablesCountByStatus(status: string): number {
     return this.tables.filter(t => t.status?.toUpperCase() === status.toUpperCase()).length;
+  }
+
+  getShortLocation(location: string): string {
+    if (!location) return 'Loc';
+    const lower = location.toLowerCase();
+    if (lower.includes('main')) return 'Main';
+    if (lower.includes('outdoor') || lower.includes('out')) return 'Out';
+    if (lower.includes('rooftop') || lower.includes('roof')) return 'Roof';
+    if (lower.includes('vip')) return 'VIP';
+    if (lower.includes('garden') || lower.includes('pool')) return 'Pool';
+    return 'Loc';
+  }
+
+  suggestNextTableNumber(location: string): void {
+    this.codeService.getNextTableNumber(location).subscribe({
+      next: (val) => {
+        this.form.patchValue({ tableNumber: val });
+      },
+      error: () => {
+        const shortLoc = this.getShortLocation(location);
+        const prefix = `T-${shortLoc}-`;
+        const matching = this.tables
+          .map(t => t.tableNumber)
+          .filter(num => num && num.startsWith(prefix));
+        let maxNum = 0;
+        matching.forEach(num => {
+          const suffix = num.substring(prefix.length);
+          const parsed = parseInt(suffix, 10);
+          if (!isNaN(parsed) && parsed > maxNum) {
+            maxNum = parsed;
+          }
+        });
+        const nextNum = maxNum + 1;
+        this.form.patchValue({ tableNumber: `${prefix}${String(nextNum).padStart(2, '0')}` });
+      }
+    });
   }
 }

@@ -4,6 +4,7 @@ import { MatPaginator } from '@angular/material/paginator';
 import { MatTableDataSource } from '@angular/material/table';
 import { ActivatedRoute } from '@angular/router';
 import { Room, RoomService, RoomType } from '../../../services/room.service';
+import { CodeService } from '../../../services/code.service';
 
 @Component({
   selector: 'app-room',
@@ -30,12 +31,16 @@ export class RoomComponent implements OnInit {
   activeTab = 'directory';
   viewMode: 'grid' | 'table' = 'table';
 
+  floors = [1, 2, 3, 4, 5];
+
   constructor(
     private readonly fb: FormBuilder,
     private readonly roomService: RoomService,
-    private readonly route: ActivatedRoute
+    private readonly route: ActivatedRoute,
+    private readonly codeService: CodeService
   ) {
     this.form = this.fb.group({
+      floor: [1, Validators.required],
       roomNumber: ['', [Validators.required, Validators.maxLength(20)]],
       roomTypeId: ['', Validators.required],
       capacity: [2, [Validators.required, Validators.min(1)]],
@@ -59,6 +64,14 @@ export class RoomComponent implements OnInit {
         this.activeTab = params['tab'];
       }
     });
+
+    this.form.get('floor')?.valueChanges.subscribe(f => {
+      if (f && !this.editingId) {
+        this.suggestRoomNumber(f);
+      }
+    });
+
+    this.suggestRoomNumber(1);
   }
 
   loadRoomTypes(): void {
@@ -142,7 +155,10 @@ export class RoomComponent implements OnInit {
 
   editRoom(room: Room): void {
     this.editingId = room.id || null;
+    const firstChar = room.roomNumber ? parseInt(room.roomNumber.charAt(0), 10) : 1;
+    const floorVal = isNaN(firstChar) ? 1 : firstChar;
     this.form.patchValue({
+      floor: floorVal,
       roomNumber: room.roomNumber,
       roomTypeId: room.roomTypeId,
       capacity: room.capacity,
@@ -184,11 +200,13 @@ export class RoomComponent implements OnInit {
   clearForm(): void {
     this.editingId = null;
     this.form.reset({
+      floor: 1,
       roomNumber: '',
       roomTypeId: '',
       capacity: 2,
       status: 'AVAILABLE'
     });
+    this.suggestRoomNumber(1);
   }
 
   getRoomsCountByStatus(status: string): number {
@@ -277,5 +295,28 @@ export class RoomComponent implements OnInit {
       available: typeRooms.filter(r => r.status?.toUpperCase() === 'AVAILABLE').length,
       total: typeRooms.length
     };
+  }
+
+  suggestRoomNumber(floor: number): void {
+    this.codeService.getNextRoomNumber(floor).subscribe({
+      next: (val) => {
+        this.form.patchValue({ roomNumber: val });
+      },
+      error: () => {
+        const prefix = String(floor);
+        const matching = this.rooms
+          .map(r => r.roomNumber)
+          .filter(num => num && num.startsWith(prefix));
+        let maxVal = 0;
+        matching.forEach(num => {
+          const parsed = parseInt(num, 10);
+          if (!isNaN(parsed) && parsed > maxVal) {
+            maxVal = parsed;
+          }
+        });
+        const nextNum = maxVal > 0 ? maxVal + 1 : Number(prefix + '01');
+        this.form.patchValue({ roomNumber: String(nextNum) });
+      }
+    });
   }
 }

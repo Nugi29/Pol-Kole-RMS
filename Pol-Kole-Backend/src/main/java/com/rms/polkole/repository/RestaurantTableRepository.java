@@ -24,4 +24,7 @@ public interface RestaurantTableRepository extends JpaRepository<RestaurantTable
             @Param("capacity") Integer capacity,
             @Param("search") String search,
             Pageable pageable);
+
+    @Query("SELECT MAX(t.tableNumber) FROM RestaurantTableEntity t WHERE t.tableNumber LIKE :prefix AND t.isDeleted = false")
+    String findMaxTableNumberByPrefix(@Param("prefix") String prefix);
 }

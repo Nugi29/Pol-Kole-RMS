@@ -7,6 +7,7 @@ import com.rms.polkole.entity.*;
 import com.rms.polkole.repository.*;
 import com.rms.polkole.service.BillingService;
 import com.rms.polkole.service.OrderService;
+import com.rms.polkole.service.CodeGeneratorService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
@@ -42,6 +43,7 @@ public class BillingServiceImpl implements BillingService {
     private final RestaurantTableRepository tableRepository;
     private final ReservationStatusRepository tableStatusRepository;
     private final ModelMapper mapper;
+    private final CodeGeneratorService codeGeneratorService;
 
     @Override
     @Transactional
@@ -122,7 +124,7 @@ public class BillingServiceImpl implements BillingService {
 
         InvoiceEntity invoice = InvoiceEntity.builder()
                 .order(order)
-                .invoiceNumber("INV-" + System.currentTimeMillis() / 1000)
+                .invoiceNumber(codeGeneratorService.generateNextInvoiceNumber("TAKEAWAY"))
                 .orderSubtotal(orderSubtotal)
                 .discountAmount(discountAmount)
                 .taxAmount(taxAmount)
@@ -409,7 +411,7 @@ public class BillingServiceImpl implements BillingService {
 
         InvoiceEntity invoice = InvoiceEntity.builder()
                 .hotelReservation(reservation)
-                .invoiceNumber("INV-STAY-" + System.currentTimeMillis() / 1000)
+                .invoiceNumber(codeGeneratorService.generateNextInvoiceNumber("ROOM"))
                 .orderSubtotal(orderSubtotal)
                 .discountAmount(discountAmount)
                 .taxAmount(taxAmount)
@@ -565,7 +567,7 @@ public class BillingServiceImpl implements BillingService {
 
         InvoiceEntity invoice = InvoiceEntity.builder()
                 .tableReservation(reservation)
-                .invoiceNumber("INV-TABLE-" + System.currentTimeMillis() / 1000)
+                .invoiceNumber(codeGeneratorService.generateNextInvoiceNumber("TABLE"))
                 .orderSubtotal(orderSubtotal)
                 .discountAmount(discountAmount)
                 .taxAmount(taxAmount)

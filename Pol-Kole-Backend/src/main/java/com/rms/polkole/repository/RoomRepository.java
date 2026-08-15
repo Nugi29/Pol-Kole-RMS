@@ -18,4 +18,7 @@ public interface RoomRepository extends JpaRepository<RoomEntity, Integer> {
         @Param("capacity") Integer capacity,
         Pageable pageable
     );
+
+    @Query("SELECT MAX(r.roomNumber) FROM RoomEntity r WHERE r.roomNumber LIKE :prefix AND r.isDeleted = false")
+    String findMaxRoomNumberByPrefix(@Param("prefix") String prefix);
 }
