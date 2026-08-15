@@ -8,6 +8,7 @@ import { RestaurantTable, TableService } from '../../../services/table.service';
 import { CustomerDto, CustomerService } from '../../../services/customer.service';
 import { MenuItem, MenuService } from '../../../services/menu.service';
 import { HotelReservationService } from '../../../services/hotel-reservation.service';
+import { Reservation, ReservationService } from '../../../services/reservation.service';
 
 @Component({
   selector: 'app-orders',
@@ -37,6 +38,7 @@ export class OrdersComponent implements OnInit {
   selectedRoomId: number | null = null;
   selectedReservationId: number | null = null;
   checkedInReservations: any[] = [];
+  checkedInTableReservations: Reservation[] = [];
   cart: { item: MenuItem; quantity: number; notes: string }[] = [];
 
   constructor(
@@ -45,6 +47,7 @@ export class OrdersComponent implements OnInit {
     private readonly customerService: CustomerService,
     private readonly menuService: MenuService,
     private readonly reservationService: HotelReservationService,
+    private readonly tableReservationService: ReservationService,
     private readonly route: ActivatedRoute
   ) {}
 
@@ -54,6 +57,7 @@ export class OrdersComponent implements OnInit {
     this.loadMenuItems();
     this.loadOrders();
     this.loadCheckedInReservations();
+    this.loadCheckedInTableReservations();
     this.route.queryParams.subscribe(params => {
       if (params['tab']) {
         this.activeTab = params['tab'];
@@ -85,6 +89,12 @@ export class OrdersComponent implements OnInit {
     });
   }
 
+  loadCheckedInTableReservations(): void {
+    this.tableReservationService.filterReservations(undefined, undefined, 3, undefined, undefined, 0, 100).subscribe(page => {
+      this.checkedInTableReservations = page.content;
+    });
+  }
+
   onReservationChange(): void {
     const res = this.checkedInReservations.find(r => r.id == this.selectedReservationId);
     if (res) {
@@ -92,6 +102,15 @@ export class OrdersComponent implements OnInit {
       this.selectedCustomerId = res.customerId;
     } else {
       this.selectedRoomId = null;
+      this.selectedCustomerId = null;
+    }
+  }
+
+  onTableChange(): void {
+    const res = this.checkedInTableReservations.find(r => r.tableId == this.selectedTableId);
+    if (res) {
+      this.selectedCustomerId = res.customerId;
+    } else {
       this.selectedCustomerId = null;
     }
   }
@@ -182,6 +201,7 @@ export class OrdersComponent implements OnInit {
         this.serviceType = 'TABLE';
         this.loadOrders();
         this.loadCheckedInReservations();
+        this.loadCheckedInTableReservations();
         this.loading = false;
         this.activeTab = 'list';
       },

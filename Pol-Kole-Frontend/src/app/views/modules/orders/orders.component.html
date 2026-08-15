@@ -109,7 +109,7 @@
         <!-- Table Selector if Table Service -->
         <div *ngIf="serviceType === 'TABLE'">
           <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Dining Table</label>
-          <select [(ngModel)]="selectedTableId" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all">
+          <select [(ngModel)]="selectedTableId" (change)="onTableChange()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all">
             <option [value]="null">Select table...</option>
             <option *ngFor="let tb of tables" [value]="tb.id">Table {{ tb.tableNumber }} (Seats: {{ tb.capacity }})</option>
           </select>
@@ -118,7 +118,7 @@
         <!-- Guest / Customer Selector -->
         <div>
           <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Selected Guest / Customer</label>
-          <select [(ngModel)]="selectedCustomerId" [disabled]="serviceType === 'ROOM'" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all disabled:opacity-75 disabled:cursor-not-allowed">
+          <select [(ngModel)]="selectedCustomerId" [disabled]="serviceType === 'ROOM' || serviceType === 'TABLE'" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all disabled:opacity-75 disabled:cursor-not-allowed">
             <option [value]="null">Select customer...</option>
             <option *ngFor="let cust of customers" [value]="cust.id">{{ cust.name }} (NIC: {{ cust.nicPassport }})</option>
           </select>
