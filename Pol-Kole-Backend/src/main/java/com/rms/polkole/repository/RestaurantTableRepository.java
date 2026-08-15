@@ -13,9 +13,9 @@ import java.util.Optional;
 public interface RestaurantTableRepository extends JpaRepository<RestaurantTableEntity, Integer> {
     Optional<RestaurantTableEntity> findByTableNumber(String tableNumber);
 
-    @Query("SELECT t FROM RestaurantTableEntity t WHERE t.isDeleted = false " +
+    @Query("SELECT t FROM RestaurantTableEntity t LEFT JOIN t.location loc WHERE t.isDeleted = false " +
            "AND (:status IS NULL OR t.status = :status) " +
-           "AND (:location IS NULL OR t.location = :location) " +
+           "AND (:location IS NULL OR loc.name = :location OR loc.code = :location) " +
            "AND (:capacity IS NULL OR t.capacity >= :capacity) " +
            "AND (:search IS NULL OR LOWER(t.tableNumber) LIKE LOWER(CONCAT('%', :search, '%')))")
     Page<RestaurantTableEntity> filterTables(
@@ -27,4 +27,10 @@ public interface RestaurantTableRepository extends JpaRepository<RestaurantTable
 
     @Query("SELECT MAX(t.tableNumber) FROM RestaurantTableEntity t WHERE t.tableNumber LIKE :prefix AND t.isDeleted = false")
     String findMaxTableNumberByPrefix(@Param("prefix") String prefix);
+
+    @Query(value = "SELECT MAX(table_number) FROM restaurant_tables WHERE table_number LIKE :prefix", nativeQuery = true)
+    String findMaxTableNumberByPrefixIncludingDeleted(@Param("prefix") String prefix);
+
+    @Query(value = "SELECT COUNT(*) FROM restaurant_tables WHERE table_number = :tableNumber", nativeQuery = true)
+    int countByTableNumberIncludingDeleted(@Param("tableNumber") String tableNumber);
 }

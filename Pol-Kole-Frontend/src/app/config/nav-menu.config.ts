@@ -35,6 +35,7 @@ export const NAV_MENU = [
     children: [
       { name: 'Floor Grid', route: '/main/tables?tab=grid', roles: ['ADMIN', 'MANAGER', 'WAITER'] },
       { name: 'Live Occupancy', route: '/main/tables?tab=occupancy', roles: ['ADMIN', 'MANAGER'] },
+      { name: 'Table Locations', route: '/main/tables?tab=locations', roles: ['ADMIN', 'MANAGER'] },
     ],
   },
   {

@@ -3,9 +3,9 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatTableDataSource } from '@angular/material/table';
 import { ActivatedRoute } from '@angular/router';
-import { BehaviorSubject, Observable, combineLatest } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { map, switchMap, tap } from 'rxjs/operators';
-import { RestaurantTable, TableService } from '../../../services/table.service';
+import { RestaurantTable, TableLocation, TableService } from '../../../services/table.service';
 import { CodeService } from '../../../services/code.service';
 
 @Component({
@@ -30,6 +30,14 @@ export class TablesComponent implements OnInit {
   errorMessage = '';
   activeTab = 'grid';
 
+  // Table Location Management
+  locations: TableLocation[] = [];
+  activeLocations: TableLocation[] = [];
+  locationForm: FormGroup;
+  editingLocationId: number | null = null;
+  locationLoading = false;
+  locationErrorMessage = '';
+
   constructor(
     private readonly fb: FormBuilder,
     private readonly tableService: TableService,
@@ -37,10 +45,16 @@ export class TablesComponent implements OnInit {
     private readonly codeService: CodeService
   ) {
     this.form = this.fb.group({
-      tableNumber: ['', [Validators.required, Validators.maxLength(20)]],
+      tableNumber: [''],
       capacity: [4, [Validators.required, Validators.min(1)]],
-      location: ['Main Dining Hall', [Validators.required, Validators.maxLength(50)]],
+      locationId: [null, Validators.required],
       status: ['AVAILABLE', Validators.required]
+    });
+
+    this.locationForm = this.fb.group({
+      name: ['', [Validators.required, Validators.maxLength(100)]],
+      code: ['', [Validators.required, Validators.maxLength(20), Validators.pattern('^[a-zA-Z0-9-]+$')]],
+      isActive: [true]
     });
 
     this.tables$ = this.refresh$.pipe(
@@ -65,6 +79,7 @@ export class TablesComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.loadLocations();
     this.route.queryParams.subscribe(params => {
       if (params['tab']) {
         this.activeTab = params['tab'];
@@ -72,20 +87,27 @@ export class TablesComponent implements OnInit {
       this.loadTables();
     });
 
-    this.form.get('location')?.valueChanges.subscribe(loc => {
-      if (loc && !this.editingId) {
-        this.suggestNextTableNumber(loc);
-      }
-    });
-
-    this.suggestNextTableNumber('Main Dining Hall');
-
     // Activate the reactive stream subscription
     this.tables$.subscribe();
   }
 
   loadTables(): void {
     this.refresh$.next();
+  }
+
+  loadLocations(): void {
+    this.locationLoading = true;
+    this.tableService.getTableLocations().subscribe({
+      next: (data) => {
+        this.locations = data;
+        this.activeLocations = data.filter(loc => loc.isActive);
+        this.locationLoading = false;
+      },
+      error: () => {
+        this.locationErrorMessage = 'Failed to load table locations.';
+        this.locationLoading = false;
+      }
+    });
   }
 
   saveTable(): void {
@@ -130,14 +152,19 @@ export class TablesComponent implements OnInit {
     this.form.patchValue({
       tableNumber: table.tableNumber,
       capacity: table.capacity,
-      location: table.location,
+      locationId: table.locationId,
       status: table.status
     });
   }
 
   quickStatusUpdate(table: RestaurantTable, newStatus: string): void {
     this.loading = true;
-    const payload = { ...table, status: newStatus };
+    const payload = {
+      tableNumber: table.tableNumber,
+      capacity: table.capacity,
+      locationId: table.locationId,
+      status: newStatus
+    };
     this.tableService.updateTable(table.id!, payload).subscribe({
       next: () => {
         this.loadTables();
@@ -171,49 +198,99 @@ export class TablesComponent implements OnInit {
     this.form.reset({
       tableNumber: '',
       capacity: 4,
-      location: 'Main Dining Hall',
+      locationId: this.activeLocations.length > 0 ? this.activeLocations[0].id : null,
       status: 'AVAILABLE'
     });
-    this.suggestNextTableNumber('Main Dining Hall');
   }
 
   getTablesCountByStatus(status: string): number {
     return this.tables.filter(t => t.status?.toUpperCase() === status.toUpperCase()).length;
   }
 
-  getShortLocation(location: string): string {
-    if (!location) return 'Loc';
-    const lower = location.toLowerCase();
-    if (lower.includes('main')) return 'Main';
-    if (lower.includes('outdoor') || lower.includes('out')) return 'Out';
-    if (lower.includes('rooftop') || lower.includes('roof')) return 'Roof';
-    if (lower.includes('vip')) return 'VIP';
-    if (lower.includes('garden') || lower.includes('pool')) return 'Pool';
-    return 'Loc';
+  getTablesCountByLocationId(locationId: number): number {
+    return this.tables.filter(t => t.locationId === locationId).length;
   }
 
-  suggestNextTableNumber(location: string): void {
-    this.codeService.getNextTableNumber(location).subscribe({
-      next: (val) => {
-        this.form.patchValue({ tableNumber: val });
+  // Location management actions
+  saveLocation(): void {
+    if (this.locationForm.invalid) {
+      this.locationForm.markAllAsTouched();
+      return;
+    }
+    const payload = this.locationForm.value;
+    this.locationLoading = true;
+    this.locationErrorMessage = '';
+
+    if (this.editingLocationId) {
+      this.tableService.updateTableLocation(this.editingLocationId, payload).subscribe({
+        next: () => {
+          this.loadLocations();
+          this.clearLocationForm();
+          this.locationLoading = false;
+        },
+        error: (err) => {
+          this.locationErrorMessage = err.error?.message || 'Failed to update location.';
+          this.locationLoading = false;
+        }
+      });
+    } else {
+      this.tableService.createTableLocation(payload).subscribe({
+        next: () => {
+          this.loadLocations();
+          this.clearLocationForm();
+          this.locationLoading = false;
+        },
+        error: (err) => {
+          this.locationErrorMessage = err.error?.message || 'Failed to create location.';
+          this.locationLoading = false;
+        }
+      });
+    }
+  }
+
+  editLocation(location: TableLocation): void {
+    this.editingLocationId = location.id || null;
+    this.locationForm.patchValue({
+      name: location.name,
+      code: location.code,
+      isActive: location.isActive
+    });
+  }
+
+  toggleLocationStatus(location: TableLocation): void {
+    const payload = { ...location, isActive: !location.isActive };
+    this.tableService.updateTableLocation(location.id!, payload).subscribe({
+      next: () => {
+        this.loadLocations();
       },
       error: () => {
-        const shortLoc = this.getShortLocation(location);
-        const prefix = `T-${shortLoc}-`;
-        const matching = this.tables
-          .map(t => t.tableNumber)
-          .filter(num => num && num.startsWith(prefix));
-        let maxNum = 0;
-        matching.forEach(num => {
-          const suffix = num.substring(prefix.length);
-          const parsed = parseInt(suffix, 10);
-          if (!isNaN(parsed) && parsed > maxNum) {
-            maxNum = parsed;
-          }
-        });
-        const nextNum = maxNum + 1;
-        this.form.patchValue({ tableNumber: `${prefix}${String(nextNum).padStart(2, '0')}` });
+        this.locationErrorMessage = 'Failed to update location status.';
       }
+    });
+  }
+
+  deleteLocation(id: number): void {
+    if (confirm('Are you sure you want to soft delete this location? It will be marked as inactive.')) {
+      this.locationLoading = true;
+      this.tableService.deleteTableLocation(id).subscribe({
+        next: () => {
+          this.loadLocations();
+          this.locationLoading = false;
+        },
+        error: (err) => {
+          this.locationErrorMessage = err.error?.message || 'Failed to delete location.';
+          this.locationLoading = false;
+        }
+      });
+    }
+  }
+
+  clearLocationForm(): void {
+    this.editingLocationId = null;
+    this.locationForm.reset({
+      name: '',
+      code: '',
+      isActive: true
     });
   }
 }

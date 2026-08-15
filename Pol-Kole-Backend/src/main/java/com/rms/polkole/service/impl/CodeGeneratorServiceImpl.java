@@ -16,6 +16,7 @@ public class CodeGeneratorServiceImpl implements CodeGeneratorService {
     private final RestaurantTableRepository tableRepository;
     private final InvoiceRepository invoiceRepository;
     private final CustomerRepository customerRepository;
+    private final TableLocationRepository tableLocationRepository;
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyMMdd");
 
@@ -42,10 +43,31 @@ public class CodeGeneratorServiceImpl implements CodeGeneratorService {
     }
 
     @Override
-    public String generateNextTableNumber(String location) {
-        String shortLoc = getShortLocation(location);
-        String prefix = "T-" + shortLoc + "-";
-        String maxTable = tableRepository.findMaxTableNumberByPrefix(prefix + "%");
+    public String generateNextTableNumber(String locationParam) {
+        String locationCode = "LOC";
+        if (locationParam != null && !locationParam.trim().isEmpty()) {
+            com.rms.polkole.entity.TableLocationEntity location = null;
+            try {
+                Integer id = Integer.parseInt(locationParam);
+                location = tableLocationRepository.findById(id).orElse(null);
+            } catch (NumberFormatException e) {
+                // Ignore
+            }
+            if (location == null) {
+                location = tableLocationRepository.findByName(locationParam).orElse(null);
+            }
+            if (location == null) {
+                location = tableLocationRepository.findByCode(locationParam).orElse(null);
+            }
+            if (location != null) {
+                locationCode = location.getCode();
+            } else {
+                locationCode = getShortLocation(locationParam).toUpperCase();
+            }
+        }
+        
+        String prefix = "T-" + locationCode + "-";
+        String maxTable = tableRepository.findMaxTableNumberByPrefixIncludingDeleted(prefix + "%");
         if (maxTable == null || maxTable.trim().isEmpty()) {
             return prefix + "01";
         }
@@ -89,11 +111,9 @@ public class CodeGeneratorServiceImpl implements CodeGeneratorService {
                 return prefix + "001";
             }
         } else {
-            // Take Away / general restaurant order
             String prefix = "INV-" + dateStr;
             String maxInv = invoiceRepository.findMaxInvoiceNumberByPrefix(prefix + "%");
             
-            // Clean maxInv from "ROOM" or "TABLE" values if we accidentally retrieve them
             if (maxInv != null && (maxInv.contains("ROOM") || maxInv.contains("TABLE"))) {
                 maxInv = null;
             }

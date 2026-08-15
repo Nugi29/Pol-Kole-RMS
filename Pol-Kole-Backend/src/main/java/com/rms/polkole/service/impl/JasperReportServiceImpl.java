@@ -150,7 +150,7 @@ public class JasperReportServiceImpl implements JasperReportService {
                 "                <text><![CDATA[Pol-Kole Royal Restaurant]]></text>\n" +
                 "            </staticText>\n" +
                 "            <textField>\n" +
-                "                <reportElement x=\"400\" y=\"0\" width=\"155\" height=\"20\"/>\n" +
+                "                <reportElement x=\"300\" y=\"0\" width=\"255\" height=\"20\"/>\n" +
                 "                <textElement textAlignment=\"Right\">\n" +
                 "                    <font size=\"12\" isBold=\"true\"/>\n" +
                 "                </textElement>\n" +

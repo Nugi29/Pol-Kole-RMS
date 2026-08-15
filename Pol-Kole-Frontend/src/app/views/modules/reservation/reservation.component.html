@@ -85,7 +85,7 @@
                     [ngClass]="form.get('tableId')?.invalid && form.get('tableId')?.touched ? 'border-rose-500 bg-rose-50/10' : 'border-slate-200'"
                     class="w-full bg-slate-50 border rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all">
               <option [ngValue]="null">Select available table...</option>
-              <option *ngFor="let rm of rooms" [ngValue]="rm.id">{{ rm.tableNumber }} - {{ rm.location }} (Cap: {{ rm.capacity }} Pax)</option>
+              <option *ngFor="let rm of rooms" [ngValue]="rm.id">{{ rm.tableNumber }} - {{ rm.locationName }} (Cap: {{ rm.capacity }} Pax)</option>
             </select>
             <p *ngIf="form.get('tableId')?.invalid && form.get('tableId')?.touched" class="text-rose-600 text-[11px] mt-1 font-bold animate-fade-in">
               Please select a dining table.

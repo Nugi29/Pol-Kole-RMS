@@ -4,12 +4,21 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ApiResponse, Page } from './room.service';
 
+export interface TableLocation {
+  id?: number;
+  name: string;
+  code: string;
+  isActive: boolean;
+}
+
 export interface RestaurantTable {
   id?: number;
-  tableNumber: string;
+  tableNumber?: string;
   capacity: number;
   status: string; // AVAILABLE, RESERVED, OCCUPIED, CLEANING
-  location: string;
+  locationId: number;
+  locationName?: string;
+  locationCode?: string;
   isAvailableForReservation?: boolean;
 }
 
@@ -18,6 +27,7 @@ export interface RestaurantTable {
 })
 export class TableService {
   private readonly baseUrl = 'http://localhost:8080/api/tables';
+  private readonly locationUrl = 'http://localhost:8080/api/table-locations';
 
   constructor(private readonly http: HttpClient) {}
 
@@ -46,6 +56,31 @@ export class TableService {
 
   deleteTable(id: number): Observable<void> {
     return this.http.delete<ApiResponse<void>>(`${this.baseUrl}/${id}`).pipe(
+      map(() => undefined)
+    );
+  }
+
+  // Location APIs
+  getTableLocations(): Observable<TableLocation[]> {
+    return this.http.get<ApiResponse<TableLocation[]>>(this.locationUrl).pipe(
+      map(res => res.data)
+    );
+  }
+
+  createTableLocation(location: TableLocation): Observable<TableLocation> {
+    return this.http.post<ApiResponse<TableLocation>>(this.locationUrl, location).pipe(
+      map(res => res.data)
+    );
+  }
+
+  updateTableLocation(id: number, location: TableLocation): Observable<TableLocation> {
+    return this.http.put<ApiResponse<TableLocation>>(`${this.locationUrl}/${id}`, location).pipe(
+      map(res => res.data)
+    );
+  }
+
+  deleteTableLocation(id: number): Observable<void> {
+    return this.http.delete<ApiResponse<void>>(`${this.locationUrl}/${id}`).pipe(
       map(() => undefined)
     );
   }

@@ -29,8 +29,9 @@ public class RestaurantTableEntity {
     @Column(name = "status", nullable = false, length = 30)
     private String status; // AVAILABLE, RESERVED, OCCUPIED, CLEANING
 
-    @Column(name = "location", length = 100)
-    private String location; // e.g. Main Hall, Terrace, Balcony
+    @ManyToOne
+    @JoinColumn(name = "location_id")
+    private TableLocationEntity location;
 
     @Column(name = "is_available_for_reservation", nullable = false)
     private boolean isAvailableForReservation = true;
