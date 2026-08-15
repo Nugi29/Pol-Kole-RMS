@@ -20,9 +20,13 @@ export class RoomComponent implements OnInit {
   dataSource = new MatTableDataSource<Room>([]);
 
   form: FormGroup;
+  typeForm: FormGroup;
   editingId: number | null = null;
+  editingTypeId: number | null = null;
   loading = false;
+  typeLoading = false;
   errorMessage = '';
+  typeErrorMessage = '';
   activeTab = 'directory';
   viewMode: 'grid' | 'table' = 'table';
 
@@ -36,6 +40,14 @@ export class RoomComponent implements OnInit {
       roomTypeId: ['', Validators.required],
       capacity: [2, [Validators.required, Validators.min(1)]],
       status: ['AVAILABLE', Validators.required]
+    });
+
+    this.typeForm = this.fb.group({
+      name: ['', [Validators.required, Validators.maxLength(50)]],
+      description: ['', Validators.maxLength(500)],
+      maxCapacity: [0, [Validators.required, Validators.min(1)]],
+      defaultPrice: [0.00, [Validators.required, Validators.min(0)]],
+      amenities: ['', Validators.maxLength(500)]
     });
   }
 
@@ -75,7 +87,7 @@ export class RoomComponent implements OnInit {
 
   loadRooms(): void {
     this.loading = true;
-    this.roomService.filterRooms().subscribe({
+    this.roomService.filterRooms(undefined, undefined, 0, 1000).subscribe({
       next: (page) => {
         this.rooms = page.content;
         this.dataSource.data = page.content;
@@ -181,5 +193,89 @@ export class RoomComponent implements OnInit {
 
   getRoomsCountByStatus(status: string): number {
     return this.rooms.filter(r => r.status?.toUpperCase() === status.toUpperCase()).length;
+  }
+
+  saveRoomType(): void {
+    if (this.typeForm.invalid) {
+      this.typeForm.markAllAsTouched();
+      return;
+    }
+
+    const payload = this.typeForm.value;
+    this.typeLoading = true;
+    this.typeErrorMessage = '';
+
+    if (this.editingTypeId) {
+      this.roomService.updateRoomType(this.editingTypeId, payload).subscribe({
+        next: () => {
+          this.loadRoomTypes();
+          this.clearTypeForm();
+          this.typeLoading = false;
+        },
+        error: (err) => {
+          this.typeErrorMessage = err.error?.message || 'Failed to update category.';
+          this.typeLoading = false;
+        }
+      });
+    } else {
+      this.roomService.createRoomType(payload).subscribe({
+        next: () => {
+          this.loadRoomTypes();
+          this.clearTypeForm();
+          this.typeLoading = false;
+        },
+        error: (err) => {
+          this.typeErrorMessage = err.error?.message || 'Failed to create category.';
+          this.typeLoading = false;
+        }
+      });
+    }
+  }
+
+  editRoomType(type: RoomType): void {
+    this.editingTypeId = type.id || null;
+    this.typeForm.patchValue({
+      name: type.name,
+      description: type.description,
+      maxCapacity: type.maxCapacity,
+      defaultPrice: type.defaultPrice,
+      amenities: type.amenities
+    });
+  }
+
+  deleteRoomType(id: number): void {
+    if (confirm('Are you sure you want to delete this room category?')) {
+      this.typeLoading = true;
+      this.typeErrorMessage = '';
+      this.roomService.deleteRoomType(id).subscribe({
+        next: () => {
+          this.loadRoomTypes();
+          this.typeLoading = false;
+        },
+        error: (err) => {
+          this.typeErrorMessage = err.error?.message || 'Failed to delete room category.';
+          this.typeLoading = false;
+        }
+      });
+    }
+  }
+
+  clearTypeForm(): void {
+    this.editingTypeId = null;
+    this.typeForm.reset({
+      name: '',
+      description: '',
+      maxCapacity: 2,
+      defaultPrice: 0.00,
+      amenities: ''
+    });
+  }
+
+  getRoomsCountForType(typeId: number): { available: number; total: number } {
+    const typeRooms = this.rooms.filter(r => r.roomTypeId == typeId);
+    return {
+      available: typeRooms.filter(r => r.status?.toUpperCase() === 'AVAILABLE').length,
+      total: typeRooms.length
+    };
   }
 }

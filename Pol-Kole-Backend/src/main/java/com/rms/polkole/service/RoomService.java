@@ -15,4 +15,6 @@ public interface RoomService {
     // Room Types
     RoomTypeDto createRoomType(RoomTypeDto dto);
     List<RoomTypeDto> getAllRoomTypes();
+    RoomTypeDto updateRoomType(Integer id, RoomTypeDto dto);
+    void deleteRoomType(Integer id);
 }

@@ -56,6 +56,18 @@ export class RoomService {
     );
   }
 
+  updateRoomType(id: number, type: any): Observable<RoomType> {
+    return this.http.put<ApiResponse<RoomType>>(`${this.baseUrl}/types/${id}`, type).pipe(
+      map(res => res.data)
+    );
+  }
+
+  deleteRoomType(id: number): Observable<void> {
+    return this.http.delete<ApiResponse<void>>(`${this.baseUrl}/types/${id}`).pipe(
+      map(() => undefined)
+    );
+  }
+
   filterRooms(status?: string, capacity?: number, page: number = 0, size: number = 10): Observable<Page<Room>> {
     let params: any = { page: String(page), size: String(size) };
     if (status) params.status = status;

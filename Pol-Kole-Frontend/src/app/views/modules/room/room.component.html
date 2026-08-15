@@ -281,21 +281,126 @@
   </div>
 
   <!-- TAB 2: ROOM TYPES -->
-  <div *ngIf="activeTab === 'types'" class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm space-y-6">
-    <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
-      <span class="w-2 h-4 bg-indigo-600 rounded-full"></span>
-      Room Categories & Pricing
-    </h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <div *ngFor="let t of roomTypes" class="bg-gradient-to-br from-slate-50 to-slate-100 p-5 rounded-2xl border border-slate-200/60">
-        <h3 class="text-sm font-bold text-slate-800">{{ t.name }}</h3>
-        <p class="text-2xl font-extrabold text-indigo-600 mt-2">
-          Rs. {{ t.defaultPrice }} <span class="text-xs font-semibold text-slate-400">/ night</span>
-        </p>
-        <p class="text-xs text-slate-500 mt-2">{{ t.description }}</p>
-        <div class="mt-3 text-xs text-slate-400">
-          <strong>Amenities:</strong> {{ t.amenities }}
+  <div *ngIf="activeTab === 'types'" class="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-6 items-start">
+    
+    <!-- Room Category Registry Card Form -->
+    <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-50 pb-3">
+        <h2 class="text-[14px] font-bold text-slate-900 flex items-center gap-2">
+          <span class="w-1.5 h-3.5 bg-indigo-600 rounded-full"></span>
+          {{ editingTypeId ? 'Update Room Category' : 'Register New Category' }}
+        </h2>
+      </div>
+
+      <div *ngIf="typeErrorMessage" class="bg-red-50 border border-red-100 text-red-600 text-[12px] p-3.5 rounded-xl font-semibold">
+        {{ typeErrorMessage }}
+      </div>
+
+      <form [formGroup]="typeForm" (ngSubmit)="saveRoomType()" class="space-y-4">
+        <div>
+          <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Category Name</label>
+          <input type="text" formControlName="name" placeholder="e.g. Single Room, Deluxe Suite" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all"/>
         </div>
+
+        <div class="grid grid-cols-2 gap-3.5">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Max Capacity</label>
+            <input type="number" formControlName="maxCapacity" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all"/>
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Default Price (Rs.)</label>
+            <input type="number" step="0.01" formControlName="defaultPrice" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all"/>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Amenities (Comma Separated)</label>
+          <input type="text" formControlName="amenities" placeholder="e.g. Wifi, AC, MiniBar" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all"/>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Description</label>
+          <textarea formControlName="description" placeholder="Short description of the category..." rows="3" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all resize-none"></textarea>
+        </div>
+
+        <div class="flex items-center gap-3 pt-2">
+          <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white text-[13px] font-bold py-2.5 rounded-xl cursor-pointer shadow-sm transition-all">
+            {{ editingTypeId ? 'Apply Update' : 'Register Category' }}
+          </button>
+          <button type="button" (click)="clearTypeForm()" class="bg-slate-50 hover:bg-slate-100 text-slate-650 text-[13px] font-bold px-4 py-2.5 rounded-xl cursor-pointer border border-slate-200 transition-all">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Active Categories List Map -->
+    <div class="space-y-6">
+      <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-50 pb-3">
+          <h2 class="text-[14px] font-bold text-slate-900 flex items-center gap-2">
+            <span class="w-1.5 h-3.5 bg-indigo-600 rounded-full"></span>
+            Room Categories & Pricing
+          </h2>
+          <button (click)="loadRoomTypes()" class="text-[12px] font-bold text-indigo-600 hover:text-indigo-850 flex items-center gap-1 transition-all cursor-pointer">
+            Sync List
+          </button>
+        </div>
+
+        <div *ngIf="roomTypes.length > 0; else emptyStateTypes" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-4">
+          <div *ngFor="let t of roomTypes" class="bg-slate-50 hover:bg-white rounded-2xl p-4 border border-slate-150/60 hover:border-slate-300 hover:shadow-lg transition-all duration-200 flex flex-col justify-between gap-3 group relative">
+            <div>
+              <div class="flex items-start justify-between">
+                <div>
+                  <h3 class="text-base font-extrabold text-slate-900">{{ t.name }}</h3>
+                  <p class="text-2xl font-extrabold text-indigo-600 mt-2">
+                    Rs. {{ t.defaultPrice }} <span class="text-xs font-semibold text-slate-400">/ night</span>
+                  </p>
+                </div>
+                
+                <!-- Rooms Availability Count Badge -->
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm"
+                      [ngClass]="{
+                        'bg-emerald-50 border border-emerald-200 text-emerald-600': getRoomsCountForType(t.id).available > 0,
+                        'bg-rose-50 border border-rose-200 text-rose-600': getRoomsCountForType(t.id).available === 0 && getRoomsCountForType(t.id).total > 0,
+                        'bg-slate-50 border border-slate-200 text-slate-500': getRoomsCountForType(t.id).total === 0
+                      }">
+                  <span *ngIf="getRoomsCountForType(t.id).total > 0">
+                    Available: {{ getRoomsCountForType(t.id).available }} / {{ getRoomsCountForType(t.id).total }} Rooms
+                  </span>
+                  <span *ngIf="getRoomsCountForType(t.id).total === 0">
+                    No Rooms
+                  </span>
+                </span>
+              </div>
+
+              <div class="grid grid-cols-1 gap-2 mt-3 text-[12px] text-slate-500 border-t border-slate-100 pt-2">
+                <p class="text-xs text-slate-500 font-medium">{{ t.description }}</p>
+                <div class="text-[11px] text-slate-400 mt-1">
+                  <strong class="text-slate-700">Capacity:</strong> {{ t.maxCapacity }} Guests max
+                </div>
+                <div class="text-[11px] text-slate-400" *ngIf="t.amenities">
+                  <strong class="text-slate-700">Amenities:</strong> {{ t.amenities }}
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-end border-t border-slate-100 pt-3 mt-1 gap-2">
+              <button (click)="editRoomType(t)" class="text-[11px] font-bold text-indigo-600 bg-indigo-50/50 hover:bg-indigo-600 hover:text-white px-2.5 py-1 rounded-lg transition-all cursor-pointer">
+                Edit
+              </button>
+              <button (click)="deleteRoomType(t.id)" class="text-[11px] font-bold text-rose-600 bg-rose-50/50 hover:bg-rose-600 hover:text-white px-2 py-1.5 rounded-lg transition-all cursor-pointer">
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <ng-template #emptyStateTypes>
+          <div class="text-center py-12 text-slate-400">
+            <p class="font-bold text-[14px]">No Room Categories Registered</p>
+          </div>
+        </ng-template>
       </div>
     </div>
   </div>

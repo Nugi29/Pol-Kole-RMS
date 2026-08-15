@@ -109,6 +109,38 @@ public class RoomServiceImpl implements RoomService {
                 .toList();
     }
 
+    @Override
+    @Transactional
+    public RoomTypeDto updateRoomType(Integer id, RoomTypeDto dto) {
+        RoomTypeEntity type = roomTypeRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Room type not found"));
+
+        type.setName(dto.getName());
+        type.setDescription(dto.getDescription());
+        type.setMaxCapacity(dto.getMaxCapacity());
+        type.setDefaultPrice(dto.getDefaultPrice());
+        type.setAmenities(dto.getAmenities());
+
+        type = roomTypeRepository.save(type);
+        return mapper.map(type, RoomTypeDto.class);
+    }
+
+    @Override
+    @Transactional
+    public void deleteRoomType(Integer id) {
+        RoomTypeEntity type = roomTypeRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Room type not found"));
+        
+        long activeRoomsCount = roomRepository.findAll().stream()
+                .filter(r -> !r.isDeleted() && r.getRoomType().getId().equals(id))
+                .count();
+        if (activeRoomsCount > 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot delete room category because it is assigned to " + activeRoomsCount + " room(s).");
+        }
+
+        roomTypeRepository.delete(type);
+    }
+
     private RoomDto convertToDto(RoomEntity room) {
         RoomDto dto = mapper.map(room, RoomDto.class);
         dto.setRoomTypeId(room.getRoomType().getId());

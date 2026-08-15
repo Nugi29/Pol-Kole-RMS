@@ -72,4 +72,18 @@ public class RoomController {
         List<RoomTypeDto> types = roomService.getAllRoomTypes();
         return ResponseEntity.ok(ApiResponse.success(types));
     }
+
+    @PutMapping("/types/{id}")
+    public ResponseEntity<ApiResponse<RoomTypeDto>> updateRoomType(@PathVariable Integer id, @Valid @RequestBody RoomTypeDto dto) {
+        RoomTypeDto updated = roomService.updateRoomType(id, dto);
+        auditLogService.log("UPDATE ROOM TYPE", "Updated room type: " + updated.getName());
+        return ResponseEntity.ok(ApiResponse.success(updated, "Room type updated successfully"));
+    }
+
+    @DeleteMapping("/types/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteRoomType(@PathVariable Integer id) {
+        roomService.deleteRoomType(id);
+        auditLogService.log("DELETE ROOM TYPE", "Deleted room type ID: " + id);
+        return ResponseEntity.ok(ApiResponse.success(null, "Room type deleted successfully"));
+    }
 }
