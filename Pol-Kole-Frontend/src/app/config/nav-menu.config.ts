@@ -86,6 +86,7 @@ export const NAV_MENU = [
     children: [
       { name: 'Ready to Serve', route: '/main/waiter?tab=ready', roles: ['ADMIN', 'MANAGER', 'WAITER'] },
       { name: 'Served History', route: '/main/waiter?tab=history', roles: ['ADMIN', 'MANAGER', 'WAITER'] },
+      { name: 'Cleaning Tasks', route: '/main/waiter?tab=cleaning', roles: ['ADMIN', 'MANAGER', 'WAITER'] },
     ],
   },
   {

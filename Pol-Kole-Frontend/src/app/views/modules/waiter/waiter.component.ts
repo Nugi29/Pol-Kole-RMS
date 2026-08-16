@@ -1,9 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
-import { ApiResponse } from '../../../services/room.service';
+import { ApiResponse, RoomService, Room } from '../../../services/room.service';
+import { TableService, RestaurantTable } from '../../../services/table.service';
 import { KitchenOrder } from '../kitchen/kitchen.component';
 import { map } from 'rxjs/operators';
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-waiter',
@@ -13,6 +15,8 @@ import { map } from 'rxjs/operators';
 })
 export class WaiterComponent implements OnInit {
   kitchenOrders: KitchenOrder[] = [];
+  cleaningRooms: Room[] = [];
+  cleaningTables: RestaurantTable[] = [];
   loading = false;
   successMessage = '';
   errorMessage = '';
@@ -22,7 +26,9 @@ export class WaiterComponent implements OnInit {
 
   constructor(
     private readonly http: HttpClient,
-    private readonly route: ActivatedRoute
+    private readonly route: ActivatedRoute,
+    private readonly roomService: RoomService,
+    private readonly tableService: TableService
   ) {}
 
   ngOnInit(): void {
@@ -30,7 +36,81 @@ export class WaiterComponent implements OnInit {
       if (params['tab']) {
         this.activeTab = params['tab'];
       }
+      this.syncBoard();
+    });
+  }
+
+  syncBoard(): void {
+    if (this.activeTab === 'cleaning') {
+      this.loadCleaningTasks();
+    } else {
       this.loadOrders();
+    }
+  }
+
+  loadCleaningTasks(): void {
+    this.loading = true;
+    this.errorMessage = '';
+    
+    forkJoin({
+      rooms: this.roomService.filterRooms('CLEANING', undefined, 0, 100),
+      tables: this.tableService.filterTables('CLEANING', undefined, undefined, 0, 100)
+    }).subscribe({
+      next: (res) => {
+        this.cleaningRooms = res.rooms.content;
+        this.cleaningTables = res.tables.content;
+        this.loading = false;
+      },
+      error: () => {
+        this.errorMessage = 'Failed to load cleaning tasks.';
+        this.loading = false;
+      }
+    });
+  }
+
+  cleanRoom(room: Room): void {
+    if (!room.id) return;
+    this.loading = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    const updatedRoom: Room = {
+      ...room,
+      status: 'AVAILABLE'
+    };
+
+    this.roomService.updateRoom(room.id, updatedRoom).subscribe({
+      next: () => {
+        this.successMessage = `Room ${room.roomNumber} has been cleaned and is now available.`;
+        this.loadCleaningTasks();
+      },
+      error: () => {
+        this.errorMessage = `Failed to update Room ${room.roomNumber}.`;
+        this.loading = false;
+      }
+    });
+  }
+
+  cleanTable(table: RestaurantTable): void {
+    if (!table.id) return;
+    this.loading = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    const updatedTable: RestaurantTable = {
+      ...table,
+      status: 'AVAILABLE'
+    };
+
+    this.tableService.updateTable(table.id, updatedTable).subscribe({
+      next: () => {
+        this.successMessage = `Table ${table.tableNumber} has been cleaned and is now available.`;
+        this.loadCleaningTasks();
+      },
+      error: () => {
+        this.errorMessage = `Failed to update Table ${table.tableNumber}.`;
+        this.loading = false;
+      }
     });
   }
 
