@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, HostListener, OnInit, ViewChild } from '@angular/core';
+import { Component, HostListener, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { MatPaginator } from '@angular/material/paginator';
@@ -23,8 +23,13 @@ import {
   templateUrl: './user.component.html',
   styleUrl: './user.component.css',
 })
-export class UserComponent implements OnInit, AfterViewInit {
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
+export class UserComponent implements OnInit {
+  private paginator: MatPaginator | null = null;
+
+  @ViewChild(MatPaginator) set matPaginator(mp: MatPaginator) {
+    this.paginator = mp;
+    this.data.paginator = mp;
+  }
 
   gridCols = 12;
   formColSpan = 5;
@@ -88,10 +93,6 @@ export class UserComponent implements OnInit, AfterViewInit {
     this.syncLayout(window.innerWidth);
     this.loadLookups();
     this.loadTable();
-  }
-
-  ngAfterViewInit(): void {
-    this.data.paginator = this.paginator;
   }
 
   @HostListener('window:resize', ['$event'])

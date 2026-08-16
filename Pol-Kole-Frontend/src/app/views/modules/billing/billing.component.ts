@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { MatPaginator } from '@angular/material/paginator';
 import { MatTableDataSource } from '@angular/material/table';
 import { forkJoin } from 'rxjs';
 import { Order, OrderService } from '../../../services/order.service';
@@ -22,6 +23,13 @@ export interface UnifiedStayItem {
   styleUrl: './billing.component.css'
 })
 export class BillingComponent implements OnInit {
+  @ViewChild('invoicePaginator') set invoicePaginator(mp: MatPaginator) {
+    this.invoiceDataSource.paginator = mp;
+  }
+
+  @ViewChild('paymentPaginator') set paymentPaginator(mp: MatPaginator) {
+    this.paymentDataSource.paginator = mp;
+  }
   invoices: Invoice[] = [];
   takeAwayOrders: Order[] = [];
   loading = false;
@@ -97,9 +105,10 @@ export class BillingComponent implements OnInit {
     this.loading = true;
     this.billingService.getAllInvoices().subscribe({
       next: (data) => {
-        this.invoices = data;
-        this.invoiceDataSource.data = data;
-        this.paymentDataSource.data = data.filter(inv => inv.paymentStatus === 'PAID');
+        const sortedData = [...data].sort((a, b) => (b.id ?? 0) - (a.id ?? 0));
+        this.invoices = sortedData;
+        this.invoiceDataSource.data = sortedData;
+        this.paymentDataSource.data = sortedData.filter(inv => inv.paymentStatus === 'PAID');
         this.loading = false;
         
         this.filterUnpaidInvoices();

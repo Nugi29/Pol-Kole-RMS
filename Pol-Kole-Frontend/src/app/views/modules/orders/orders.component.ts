@@ -17,13 +17,17 @@ import { Reservation, ReservationService } from '../../../services/reservation.s
   styleUrl: './orders.component.css'
 })
 export class OrdersComponent implements OnInit {
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
+  private paginator: MatPaginator | null = null;
+  @ViewChild(MatPaginator) set matPaginator(mp: MatPaginator) {
+    this.paginator = mp;
+    this.dataSource.paginator = mp;
+  }
 
   orders: Order[] = [];
   tables: RestaurantTable[] = [];
   customers: CustomerDto[] = [];
   menuItems: MenuItem[] = [];
-  displayedColumns = ['id', 'customer', 'table', 'totalAmount', 'status', 'time', 'actions'];
+  displayedColumns = ['id', 'customer', 'table', 'totalAmount', 'status', 'actions'];
   dataSource = new MatTableDataSource<Order>([]);
 
   activeTab = 'pos';
@@ -121,9 +125,6 @@ export class OrdersComponent implements OnInit {
       next: (page) => {
         this.orders = page.content;
         this.dataSource.data = page.content;
-        if (this.paginator) {
-          this.dataSource.paginator = this.paginator;
-        }
         this.loading = false;
       },
       error: () => {

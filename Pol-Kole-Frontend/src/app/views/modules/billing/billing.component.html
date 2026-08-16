@@ -282,6 +282,7 @@
           <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="border-b border-slate-50 hover:bg-slate-50 transition-all duration-150"></tr>
         </table>
       </div>
+      <mat-paginator #invoicePaginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons class="mt-4 border-t border-slate-50 pt-2"></mat-paginator>
     </div>
   </div>
 
@@ -362,6 +363,7 @@
         <tr mat-header-row *matHeaderRowDef="paymentDisplayedColumns" class="border-b border-slate-100 text-slate-400"></tr>
         <tr mat-row *matRowDef="let row; columns: paymentDisplayedColumns;" class="border-b border-slate-50 hover:bg-slate-50 transition-all duration-150"></tr>
       </table>
+      <mat-paginator #paymentPaginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons class="mt-4 border-t border-slate-50 pt-2"></mat-paginator>
     </div>
 
     <!-- Empty Ledger -->

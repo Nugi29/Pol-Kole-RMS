@@ -11,7 +11,11 @@ import { CustomerDto, CustomerService } from '../../../services/customer.service
   styleUrl: './customer.component.css'
 })
 export class CustomerComponent implements OnInit {
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
+  private paginator: MatPaginator | null = null;
+  @ViewChild(MatPaginator) set matPaginator(mp: MatPaginator) {
+    this.paginator = mp;
+    this.dataSource.paginator = mp;
+  }
 
   customers: CustomerDto[] = [];
   displayedColumns = ['name', 'passport', 'phone', 'email', 'loyalty', 'actions'];
@@ -44,9 +48,6 @@ export class CustomerComponent implements OnInit {
       next: (page) => {
         this.customers = page.content;
         this.dataSource.data = page.content;
-        if (this.paginator) {
-          this.dataSource.paginator = this.paginator;
-        }
         this.loading = false;
       },
       error: () => {

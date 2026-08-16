@@ -259,7 +259,7 @@
         <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
       </table>
     </div>
-    <mat-paginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons class="border-t border-slate-100 pt-2"></mat-paginator>
+    <mat-paginator #diningPaginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons class="border-t border-slate-100 pt-2"></mat-paginator>
   </div>
 
   <!-- TAB 3: NEW HOTEL ROOM RESERVATION DESK -->
@@ -371,60 +371,84 @@
         Refresh
       </button>
     </div>
-
     <!-- Booking stay ledger list -->
     <div class="overflow-x-auto">
-      <table class="w-full text-left text-[13px] text-slate-700 border-collapse">
-        <thead>
-          <tr class="bg-slate-50 text-slate-400 font-bold border-b border-slate-100">
-            <th class="p-3 uppercase text-[10px] tracking-wider">Booking ID</th>
-            <th class="p-3 uppercase text-[10px] tracking-wider">Guest Profile</th>
-            <th class="p-3 uppercase text-[10px] tracking-wider">Room Number</th>
-            <th class="p-3 uppercase text-[10px] tracking-wider">Check In</th>
-            <th class="p-3 uppercase text-[10px] tracking-wider">Check Out</th>
-            <th class="p-3 uppercase text-[10px] tracking-wider">Guests</th>
-            <th class="p-3 uppercase text-[10px] tracking-wider">Status</th>
-            <th class="p-3 uppercase text-[10px] tracking-wider text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let res of hotelReservations" class="border-b border-slate-50 hover:bg-slate-50/50 transition-all text-slate-700">
-            <td class="p-3 font-mono text-slate-400">#{{ res.id }}</td>
-            <td class="p-3">
-              <span class="font-bold text-slate-900 block">{{ res.customerName }}</span>
-              <span class="text-[11px] text-slate-400 block mt-0.5">Passport/NIC: {{ res.customerPassport || 'N/A' }}</span>
-            </td>
-            <td class="p-3 font-extrabold text-indigo-650">Room {{ res.roomNumber }}</td>
-            <td class="p-3 text-slate-600">{{ res.checkInDate }}</td>
-            <td class="p-3 text-slate-600">{{ res.checkOutDate }}</td>
-            <td class="p-3 font-bold text-slate-900">{{ res.guestsCount }} Pax</td>
-            <td class="p-3">
-              <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full inline-block border shadow-sm animate-fade-in"
-                    [ngClass]="{
-                      'bg-indigo-50 border-indigo-200 text-indigo-650': res.status.toUpperCase() === 'CONFIRMED',
-                      'bg-emerald-50 border-emerald-200 text-emerald-650': res.status.toUpperCase() === 'COMPLETED' || res.status.toUpperCase() === 'CHECKED OUT' || res.status.toUpperCase() === 'CHECKED_OUT',
-                      'bg-rose-50 border-rose-200 text-rose-650': res.status.toUpperCase() === 'CANCELLED',
-                      'bg-amber-50 border-amber-200 text-amber-650': res.status.toUpperCase() === 'PENDING',
-                      'bg-purple-50 border-purple-200 text-purple-650': res.status.toUpperCase() === 'OCCUPIED' || res.status.toUpperCase() === 'CHECKED IN' || res.status.toUpperCase() === 'CHECKED_IN'
-                    }">
-                {{ res.status }}
-              </span>
-            </td>
-            <td class="p-3 text-right">
-              <button *ngIf="res.status.toUpperCase() === 'CONFIRMED' || res.status.toUpperCase() === 'PENDING'"
-                      (click)="cancelHotelBooking(res.id!)" class="text-[12px] bg-rose-550 text-rose-600 hover:bg-rose-100 hover:text-rose-700 border border-rose-200 px-3 py-1.5 rounded-lg cursor-pointer font-bold transition-all">
-                Cancel
-              </button>
-              <span *ngIf="res.status.toUpperCase() === 'CANCELLED'" class="text-[12px] text-slate-400 font-semibold animate-fade-in">Cancelled</span>
-              <span *ngIf="res.status.toUpperCase() === 'CHECKED_OUT'" class="text-[12px] text-slate-400 font-semibold animate-fade-in">Checked Out</span>
-              <span *ngIf="res.status.toUpperCase() === 'CHECKED_IN'" class="text-[12px] text-indigo-600 font-semibold animate-fade-in">Checked In / In Stay</span>
-            </td>
-          </tr>
-          <tr *ngIf="hotelReservations.length === 0">
-            <td colspan="8" class="text-center py-8 text-slate-400">No room bookings registered yet.</td>
-          </tr>
-        </tbody>
+      <table mat-table [dataSource]="hotelDataSource" class="w-full text-left text-[13px] text-slate-700 border-collapse">
+        
+        <!-- Booking ID Column -->
+        <ng-container matColumnDef="id">
+          <th mat-header-cell *matHeaderCellDef class="p-3 font-bold text-slate-900 border-b border-slate-100 pb-3">Booking ID</th>
+          <td mat-cell *matCellDef="let res" class="p-3 border-b border-slate-50 font-mono text-slate-400">#{{ res.id }}</td>
+        </ng-container>
+
+        <!-- Guest Profile Column -->
+        <ng-container matColumnDef="customer">
+          <th mat-header-cell *matHeaderCellDef class="p-3 font-bold text-slate-900 border-b border-slate-100 pb-3">Guest Profile</th>
+          <td mat-cell *matCellDef="let res" class="p-3 border-b border-slate-50">
+            <span class="font-bold text-slate-900 block">{{ res.customerName }}</span>
+            <span class="text-[11px] text-slate-400 block mt-0.5">Passport/NIC: {{ res.customerPassport || 'N/A' }}</span>
+          </td>
+        </ng-container>
+
+        <!-- Room Number Column -->
+        <ng-container matColumnDef="room">
+          <th mat-header-cell *matHeaderCellDef class="p-3 font-bold text-slate-900 border-b border-slate-100 pb-3">Room Number</th>
+          <td mat-cell *matCellDef="let res" class="p-3 border-b border-slate-50 font-extrabold text-indigo-650">Room {{ res.roomNumber }}</td>
+        </ng-container>
+
+        <!-- Check In Column -->
+        <ng-container matColumnDef="checkInDate">
+          <th mat-header-cell *matHeaderCellDef class="p-3 font-bold text-slate-900 border-b border-slate-100 pb-3">Check In</th>
+          <td mat-cell *matCellDef="let res" class="p-3 border-b border-slate-50 text-slate-600">{{ res.checkInDate }}</td>
+        </ng-container>
+
+        <!-- Check Out Column -->
+        <ng-container matColumnDef="checkOutDate">
+          <th mat-header-cell *matHeaderCellDef class="p-3 font-bold text-slate-900 border-b border-slate-100 pb-3">Check Out</th>
+          <td mat-cell *matCellDef="let res" class="p-3 border-b border-slate-50 text-slate-600">{{ res.checkOutDate }}</td>
+        </ng-container>
+
+        <!-- Guests Column -->
+        <ng-container matColumnDef="guestsCount">
+          <th mat-header-cell *matHeaderCellDef class="p-3 font-bold text-slate-900 border-b border-slate-100 pb-3">Guests</th>
+          <td mat-cell *matCellDef="let res" class="p-3 border-b border-slate-50 font-bold text-slate-900">{{ res.guestsCount }} Pax</td>
+        </ng-container>
+
+        <!-- Status Column -->
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef class="p-3 font-bold text-slate-900 border-b border-slate-100 pb-3">Status</th>
+          <td mat-cell *matCellDef="let res" class="p-3 border-b border-slate-50">
+            <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full inline-block border shadow-sm"
+                  [ngClass]="{
+                    'bg-indigo-50 border-indigo-200 text-indigo-650': res.status.toUpperCase() === 'CONFIRMED',
+                    'bg-emerald-50 border-emerald-200 text-emerald-655': res.status.toUpperCase() === 'COMPLETED' || res.status.toUpperCase() === 'CHECKED OUT' || res.status.toUpperCase() === 'CHECKED_OUT',
+                    'bg-rose-50 border-rose-200 text-rose-655': res.status.toUpperCase() === 'CANCELLED',
+                    'bg-amber-50 border-amber-200 text-amber-655': res.status.toUpperCase() === 'PENDING',
+                    'bg-purple-50 border-purple-200 text-purple-655': res.status.toUpperCase() === 'OCCUPIED' || res.status.toUpperCase() === 'CHECKED IN' || res.status.toUpperCase() === 'CHECKED_IN'
+                  }">
+              {{ res.status }}
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- Actions Column -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="p-3 font-bold text-slate-900 border-b border-slate-100 pb-3 text-right">Actions</th>
+          <td mat-cell *matCellDef="let res" class="p-3 border-b border-slate-50 text-right">
+            <button *ngIf="res.status.toUpperCase() === 'CONFIRMED' || res.status.toUpperCase() === 'PENDING'"
+                    (click)="cancelHotelBooking(res.id!)" class="text-[12px] bg-rose-550 text-rose-600 hover:bg-rose-100 hover:text-rose-700 border border-rose-200 px-3 py-1.5 rounded-lg cursor-pointer font-bold transition-all">
+              Cancel
+            </button>
+            <span *ngIf="res.status.toUpperCase() === 'CANCELLED'" class="text-[12px] text-slate-400 font-semibold">Cancelled</span>
+            <span *ngIf="res.status.toUpperCase() === 'CHECKED_OUT'" class="text-[12px] text-slate-400 font-semibold">Checked Out</span>
+            <span *ngIf="res.status.toUpperCase() === 'CHECKED_IN'" class="text-[12px] text-indigo-600 font-semibold">Checked In / In Stay</span>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="hotelDisplayedColumns" class="bg-slate-50 text-slate-400 font-bold border-b border-slate-100"></tr>
+        <tr mat-row *matRowDef="let row; columns: hotelDisplayedColumns;" class="border-b border-slate-50 hover:bg-slate-50/50 transition-all text-slate-700"></tr>
       </table>
     </div>
+    <mat-paginator #hotelPaginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons class="mt-4 border-t border-slate-50 pt-2"></mat-paginator>
   </div>
 </div>

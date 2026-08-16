@@ -16,7 +16,13 @@ import { HotelReservation, HotelReservationService } from '../../../services/hot
   styleUrl: './reservation.component.css'
 })
 export class ReservationComponent implements OnInit {
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
+  @ViewChild('diningPaginator') set diningPaginator(mp: MatPaginator) {
+    this.dataSource.paginator = mp;
+  }
+
+  @ViewChild('hotelPaginator') set hotelPaginator(mp: MatPaginator) {
+    this.hotelDataSource.paginator = mp;
+  }
 
   reservations: Reservation[] = [];
   rooms: RestaurantTable[] = [];
@@ -83,9 +89,6 @@ export class ReservationComponent implements OnInit {
       next: (page) => {
         this.reservations = page.content;
         this.dataSource.data = page.content;
-        if (this.paginator) {
-          this.dataSource.paginator = this.paginator;
-        }
         this.loading = false;
       },
       error: () => {

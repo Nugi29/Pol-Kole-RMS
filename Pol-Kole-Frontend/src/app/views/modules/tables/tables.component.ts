@@ -17,6 +17,13 @@ import { CodeService } from '../../../services/code.service';
 export class TablesComponent implements OnInit {
   @ViewChild(MatPaginator) paginator!: MatPaginator;
 
+  locationDisplayedColumns = ['name', 'code', 'status', 'actions'];
+  locationDataSource = new MatTableDataSource<TableLocation>([]);
+
+  @ViewChild('locationPaginator') set locationPaginator(mp: MatPaginator) {
+    this.locationDataSource.paginator = mp;
+  }
+
   private readonly refresh$ = new BehaviorSubject<void>(undefined);
   tables$: Observable<RestaurantTable[]>;
 
@@ -100,6 +107,7 @@ export class TablesComponent implements OnInit {
     this.tableService.getTableLocations().subscribe({
       next: (data) => {
         this.locations = data;
+        this.locationDataSource.data = data;
         this.activeLocations = data.filter(loc => loc.isActive);
         this.locationLoading = false;
       },

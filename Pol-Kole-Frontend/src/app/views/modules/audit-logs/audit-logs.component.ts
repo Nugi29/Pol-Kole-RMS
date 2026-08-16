@@ -10,7 +10,11 @@ import { AuditLog, AuditLogService } from '../../../services/audit-log.service';
   styleUrl: './audit-logs.component.css'
 })
 export class AuditLogsComponent implements OnInit {
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
+  private paginator: MatPaginator | null = null;
+  @ViewChild(MatPaginator) set matPaginator(mp: MatPaginator) {
+    this.paginator = mp;
+    this.dataSource.paginator = mp;
+  }
 
   displayedColumns = ['timestamp', 'action', 'details', 'performedBy'];
   dataSource = new MatTableDataSource<AuditLog>([]);
@@ -28,9 +32,6 @@ export class AuditLogsComponent implements OnInit {
     this.auditLogService.getAuditLogs(0, 100).subscribe({
       next: (page) => {
         this.dataSource.data = page.content;
-        if (this.paginator) {
-          this.dataSource.paginator = this.paginator;
-        }
         this.loading = false;
       },
       error: () => {

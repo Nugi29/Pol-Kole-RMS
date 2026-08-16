@@ -13,7 +13,11 @@ import { CodeService } from '../../../services/code.service';
   styleUrl: './room.component.css'
 })
 export class RoomComponent implements OnInit {
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
+  private paginator: MatPaginator | null = null;
+  @ViewChild(MatPaginator) set matPaginator(mp: MatPaginator) {
+    this.paginator = mp;
+    this.dataSource.paginator = mp;
+  }
 
   rooms: Room[] = [];
   roomTypes: RoomType[] = [];
@@ -104,9 +108,6 @@ export class RoomComponent implements OnInit {
       next: (page) => {
         this.rooms = page.content;
         this.dataSource.data = page.content;
-        if (this.paginator) {
-          this.dataSource.paginator = this.paginator;
-        }
         this.loading = false;
       },
       error: () => {
