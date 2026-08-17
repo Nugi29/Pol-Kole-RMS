@@ -4,6 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { ApiResponse, RoomService, Room } from '../../../services/room.service';
 import { TableService, RestaurantTable } from '../../../services/table.service';
 import { KitchenOrder } from '../kitchen/kitchen.component';
+import { DialogService } from '../../../services/dialog.service';
 import { map, catchError } from 'rxjs/operators';
 import { forkJoin, of } from 'rxjs';
 
@@ -29,7 +30,8 @@ export class WaiterComponent implements OnInit {
     private readonly route: ActivatedRoute,
     private readonly roomService: RoomService,
     private readonly tableService: TableService,
-    private readonly cdr: ChangeDetectorRef
+    private readonly cdr: ChangeDetectorRef,
+    private readonly dialogService: DialogService
   ) {}
 
   ngOnInit(): void {
@@ -80,48 +82,58 @@ export class WaiterComponent implements OnInit {
 
   cleanRoom(room: Room): void {
     if (!room.id) return;
-    this.loading = true;
-    this.errorMessage = '';
-    this.successMessage = '';
 
-    const updatedRoom: Room = {
-      ...room,
-      status: 'AVAILABLE'
-    };
+    this.dialogService.confirmAction('Confirm Cleaning', `Mark Room ${room.roomNumber} as Clean & Available?`).subscribe((confirmed) => {
+      if (confirmed) {
+        this.loading = true;
+        this.errorMessage = '';
 
-    this.roomService.updateRoom(room.id, updatedRoom).subscribe({
-      next: () => {
-        this.successMessage = `Room ${room.roomNumber} has been cleaned and is now available.`;
-        this.loadCleaningTasks();
-      },
-      error: () => {
-        this.errorMessage = `Failed to update Room ${room.roomNumber}.`;
-        this.loading = false;
-        this.cdr.markForCheck();
+        const updatedRoom: Room = {
+          ...room,
+          status: 'AVAILABLE'
+        };
+
+        this.roomService.updateRoom(room.id!, updatedRoom).subscribe({
+          next: () => {
+            this.loadCleaningTasks();
+            this.dialogService.showSuccess('Room Cleaned', `Room ${room.roomNumber} has been cleaned and is now available.`);
+          },
+          error: () => {
+            this.errorMessage = `Failed to update Room ${room.roomNumber}.`;
+            this.loading = false;
+            this.cdr.markForCheck();
+            this.dialogService.showError('Update Failed', this.errorMessage);
+          }
+        });
       }
     });
   }
 
   cleanTable(table: RestaurantTable): void {
     if (!table.id) return;
-    this.loading = true;
-    this.errorMessage = '';
-    this.successMessage = '';
 
-    const updatedTable: RestaurantTable = {
-      ...table,
-      status: 'AVAILABLE'
-    };
+    this.dialogService.confirmAction('Confirm Cleaning', `Mark Table ${table.tableNumber} as Clean & Available?`).subscribe((confirmed) => {
+      if (confirmed) {
+        this.loading = true;
+        this.errorMessage = '';
 
-    this.tableService.updateTable(table.id, updatedTable).subscribe({
-      next: () => {
-        this.successMessage = `Table ${table.tableNumber} is now clean and available.`;
-        this.loadCleaningTasks();
-      },
-      error: () => {
-        this.errorMessage = `Failed to update Table ${table.tableNumber}.`;
-        this.loading = false;
-        this.cdr.markForCheck();
+        const updatedTable: RestaurantTable = {
+          ...table,
+          status: 'AVAILABLE'
+        };
+
+        this.tableService.updateTable(table.id!, updatedTable).subscribe({
+          next: () => {
+            this.loadCleaningTasks();
+            this.dialogService.showSuccess('Table Cleaned', `Table ${table.tableNumber} is now clean and available.`);
+          },
+          error: () => {
+            this.errorMessage = `Failed to update Table ${table.tableNumber}.`;
+            this.loading = false;
+            this.cdr.markForCheck();
+            this.dialogService.showError('Update Failed', this.errorMessage);
+          }
+        });
       }
     });
   }
@@ -159,20 +171,24 @@ export class WaiterComponent implements OnInit {
   }
 
   deliverOrder(id: number): void {
-    this.loading = true;
-    this.errorMessage = '';
-    this.successMessage = '';
+    this.dialogService.confirmAction('Confirm Delivery', `Mark Order #${id} as Delivered & Served to guest?`).subscribe((confirmed) => {
+      if (confirmed) {
+        this.loading = true;
+        this.errorMessage = '';
 
-    this.http.put<ApiResponse<KitchenOrder>>(`${this.baseUrl}/orders/${id}/status?status=DELIVERED`, {}).pipe(
-      map(res => res.data)
-    ).subscribe({
-      next: () => {
-        this.successMessage = `Order #${id} marked as delivered & served successfully.`;
-        this.loadOrders();
-      },
-      error: () => {
-        this.errorMessage = 'Failed to deliver order.';
-        this.loading = false;
+        this.http.put<ApiResponse<KitchenOrder>>(`${this.baseUrl}/orders/${id}/status?status=DELIVERED`, {}).pipe(
+          map(res => res.data)
+        ).subscribe({
+          next: () => {
+            this.loadOrders();
+            this.dialogService.showSuccess('Order Delivered', `Order #${id} marked as delivered & served successfully.`);
+          },
+          error: () => {
+            this.errorMessage = 'Failed to deliver order.';
+            this.loading = false;
+            this.dialogService.showError('Delivery Failed', this.errorMessage);
+          }
+        });
       }
     });
   }

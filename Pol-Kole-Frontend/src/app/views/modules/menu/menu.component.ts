@@ -4,6 +4,7 @@ import { MatPaginator } from '@angular/material/paginator';
 import { MatTableDataSource } from '@angular/material/table';
 import { ActivatedRoute } from '@angular/router';
 import { MenuItem, MenuCategory, MenuService } from '../../../services/menu.service';
+import { DialogService } from '../../../services/dialog.service';
 
 @Component({
   selector: 'app-menu',
@@ -32,7 +33,8 @@ export class MenuComponent implements OnInit {
     private readonly fb: FormBuilder,
     private readonly menuService: MenuService,
     private readonly route: ActivatedRoute,
-    private readonly cdr: ChangeDetectorRef
+    private readonly cdr: ChangeDetectorRef,
+    private readonly dialogService: DialogService
   ) {
     this.itemForm = this.fb.group({
       name: ['', [Validators.required, Validators.maxLength(100)]],
@@ -112,27 +114,29 @@ export class MenuComponent implements OnInit {
     if (this.editingItemId) {
       this.menuService.updateMenuItem(this.editingItemId, payload).subscribe({
         next: () => {
-          this.successMessage = 'Menu item updated successfully.';
           this.loadMenuItems();
           this.clearItemForm();
           this.loading = false;
+          this.dialogService.showSuccess('Item Updated', 'Menu item updated successfully.');
         },
         error: (err) => {
           this.errorMessage = err.error?.message || 'Failed to update menu item.';
           this.loading = false;
+          this.dialogService.showError('Update Failed', this.errorMessage);
         }
       });
     } else {
       this.menuService.createMenuItem(payload).subscribe({
         next: () => {
-          this.successMessage = 'Menu item created successfully.';
           this.loadMenuItems();
           this.clearItemForm();
           this.loading = false;
+          this.dialogService.showSuccess('Item Registered', 'New menu item created successfully.');
         },
         error: (err) => {
           this.errorMessage = err.error?.message || 'Failed to create menu item.';
           this.loading = false;
+          this.dialogService.showError('Registration Failed', this.errorMessage);
         }
       });
     }
@@ -151,19 +155,37 @@ export class MenuComponent implements OnInit {
   }
 
   deleteMenuItem(id: number): void {
-    if (confirm('Are you sure you want to delete this menu item?')) {
-      this.loading = true;
-      this.menuService.deleteMenuItem(id).subscribe({
-        next: () => {
-          this.successMessage = 'Menu item deleted successfully.';
-          this.loadMenuItems();
-          this.loading = false;
-        },
-        error: () => {
-          this.errorMessage = 'Failed to delete menu item.';
-          this.loading = false;
+    const item = this.menuItems.find(m => m.id === id);
+    const itemLabel = item ? `"${item.name}"` : 'this menu item';
+    this.dialogService.confirmDelete(itemLabel).subscribe((confirmed) => {
+      if (confirmed) {
+        this.loading = true;
+        this.menuService.deleteMenuItem(id).subscribe({
+          next: () => {
+            this.loadMenuItems();
+            this.loading = false;
+            this.dialogService.showSuccess('Deleted', `${itemLabel} deleted successfully.`);
+          },
+          error: () => {
+            this.errorMessage = 'Failed to delete menu item.';
+            this.loading = false;
+            this.dialogService.showError('Delete Failed', this.errorMessage);
+          }
+        });
+      }
+    });
+  }
+
+  requestClearItemForm(): void {
+    if (this.itemForm.dirty || this.editingItemId) {
+      this.dialogService.confirmClear().subscribe((confirmed) => {
+        if (confirmed) {
+          this.clearItemForm();
+          this.dialogService.showSuccess('Cleared', 'Menu item form cleared successfully.');
         }
       });
+    } else {
+      this.clearItemForm();
     }
   }
 
@@ -194,27 +216,29 @@ export class MenuComponent implements OnInit {
     if (this.editingCatId) {
       this.menuService.updateCategory(this.editingCatId, payload).subscribe({
         next: () => {
-          this.successMessage = 'Category updated successfully.';
           this.loadCategories();
           this.clearCatForm();
           this.loading = false;
+          this.dialogService.showSuccess('Category Updated', 'Category updated successfully.');
         },
         error: (err) => {
           this.errorMessage = err.error?.message || 'Failed to update category.';
           this.loading = false;
+          this.dialogService.showError('Update Failed', this.errorMessage);
         }
       });
     } else {
       this.menuService.createCategory(payload).subscribe({
         next: () => {
-          this.successMessage = 'Category created successfully.';
           this.loadCategories();
           this.clearCatForm();
           this.loading = false;
+          this.dialogService.showSuccess('Category Registered', 'New category created successfully.');
         },
         error: (err) => {
           this.errorMessage = err.error?.message || 'Failed to create category.';
           this.loading = false;
+          this.dialogService.showError('Registration Failed', this.errorMessage);
         }
       });
     }
@@ -229,20 +253,38 @@ export class MenuComponent implements OnInit {
   }
 
   deleteCategory(id: number): void {
-    if (confirm('Are you sure you want to delete this category? All its items will be unlinked.')) {
-      this.loading = true;
-      this.menuService.deleteCategory(id).subscribe({
-        next: () => {
-          this.successMessage = 'Category deleted successfully.';
-          this.loadCategories();
-          this.loadMenuItems();
-          this.loading = false;
-        },
-        error: () => {
-          this.errorMessage = 'Failed to delete category.';
-          this.loading = false;
+    const cat = this.categories.find(c => c.id === id);
+    const catLabel = cat ? `category "${cat.name}"` : 'this category';
+    this.dialogService.confirmDelete(catLabel, `Are you sure you want to delete ${catLabel}?<br>All its associated menu items will be unlinked.`).subscribe((confirmed) => {
+      if (confirmed) {
+        this.loading = true;
+        this.menuService.deleteCategory(id).subscribe({
+          next: () => {
+            this.loadCategories();
+            this.loadMenuItems();
+            this.loading = false;
+            this.dialogService.showSuccess('Deleted', `${catLabel} deleted successfully.`);
+          },
+          error: () => {
+            this.errorMessage = 'Failed to delete category.';
+            this.loading = false;
+            this.dialogService.showError('Delete Failed', this.errorMessage);
+          }
+        });
+      }
+    });
+  }
+
+  requestClearCatForm(): void {
+    if (this.catForm.dirty || this.editingCatId) {
+      this.dialogService.confirmClear().subscribe((confirmed) => {
+        if (confirmed) {
+          this.clearCatForm();
+          this.dialogService.showSuccess('Cleared', 'Category form cleared successfully.');
         }
       });
+    } else {
+      this.clearCatForm();
     }
   }
 

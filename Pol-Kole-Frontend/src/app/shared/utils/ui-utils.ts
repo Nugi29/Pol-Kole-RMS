@@ -5,6 +5,7 @@ export interface Identifiable {
 export interface DialogMessageData {
   heading: string;
   message: string;
+  duration?: number;
 }
 
 export interface SearchFilter {

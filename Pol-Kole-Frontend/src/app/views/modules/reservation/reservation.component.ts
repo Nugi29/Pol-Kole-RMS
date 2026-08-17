@@ -8,6 +8,7 @@ import { RestaurantTable, TableService } from '../../../services/table.service';
 import { CustomerDto, CustomerService } from '../../../services/customer.service';
 import { Room, RoomService } from '../../../services/room.service';
 import { HotelReservation, HotelReservationService } from '../../../services/hotel-reservation.service';
+import { DialogService } from '../../../services/dialog.service';
 
 @Component({
   selector: 'app-reservation',
@@ -51,7 +52,8 @@ export class ReservationComponent implements OnInit {
     private readonly hotelRoomService: RoomService,
     private readonly hotelReservationService: HotelReservationService,
     private readonly route: ActivatedRoute,
-    private readonly cdr: ChangeDetectorRef
+    private readonly cdr: ChangeDetectorRef,
+    private readonly dialogService: DialogService
   ) {
     this.form = this.fb.group({
       customerId: [null, Validators.required],
@@ -174,50 +176,57 @@ export class ReservationComponent implements OnInit {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       this.errorMessage = 'Please fill out all required fields with valid values.';
-      console.warn('Form validation failed:', this.form.controls);
+      this.dialogService.showError('Validation Error', this.errorMessage);
       return;
     }
 
     const payload = this.form.value;
     this.loading = true;
     this.errorMessage = '';
-    this.successMessage = '';
 
     this.reservationService.createReservation(payload).subscribe({
       next: () => {
-        this.successMessage = 'Table Reservation booked successfully.';
         this.loadReservations();
         this.form.reset({ guestsCount: 2 });
         this.loading = false;
         this.activeTab = 'list';
+        this.dialogService.showSuccess('Booking Confirmed', 'Table reservation booked successfully.');
       },
       error: (err) => {
         this.errorMessage = err.error?.message || 'Failed to place reservation. Verify table availability and slot.';
         this.loading = false;
+        this.dialogService.showError('Booking Failed', this.errorMessage);
       }
     });
   }
 
   cancelBooking(id: number): void {
-    if (confirm('Are you sure you want to cancel this booking?')) {
-      this.loading = true;
-      this.reservationService.cancelReservation(id).subscribe({
-        next: () => {
-          this.successMessage = 'Booking cancelled successfully.';
-          this.loadReservations();
-        },
-        error: (err) => {
-          this.errorMessage = err.error?.message || 'Failed to cancel reservation.';
-          this.loading = false;
-        }
-      });
-    }
+    const res = this.reservations.find(r => r.id === id);
+    const label = res ? `table booking #${id} for "${res.customerName}"` : `booking #${id}`;
+    this.dialogService.confirmAction('Confirm Cancellation', `Are you sure you want to cancel ${label}?`).subscribe((confirmed) => {
+      if (confirmed) {
+        this.loading = true;
+        this.reservationService.cancelReservation(id).subscribe({
+          next: () => {
+            this.loadReservations();
+            this.loading = false;
+            this.dialogService.showSuccess('Cancelled', `${label} has been cancelled.`);
+          },
+          error: (err) => {
+            this.errorMessage = err.error?.message || 'Failed to cancel reservation.';
+            this.loading = false;
+            this.dialogService.showError('Cancellation Failed', this.errorMessage);
+          }
+        });
+      }
+    });
   }
 
   createHotelBooking(): void {
     if (this.hotelReservationForm.invalid) {
       this.hotelReservationForm.markAllAsTouched();
       this.errorMessage = 'Please fill out all required fields with valid values.';
+      this.dialogService.showError('Validation Error', this.errorMessage);
       return;
     }
 
@@ -225,38 +234,44 @@ export class ReservationComponent implements OnInit {
     payload.status = 'CONFIRMED';
     this.loading = true;
     this.errorMessage = '';
-    this.successMessage = '';
 
     this.hotelReservationService.createReservation(payload).subscribe({
       next: () => {
-        this.successMessage = 'Hotel Room Reservation booked successfully.';
         this.loadHotelReservations();
         this.loadHotelRooms();
         this.hotelReservationForm.reset({ guestsCount: 1 });
         this.loading = false;
         this.activeTab = 'listRooms';
+        this.dialogService.showSuccess('Room Booking Confirmed', 'Hotel room reservation booked successfully.');
       },
       error: (err) => {
         this.errorMessage = err.error?.message || 'Failed to place room reservation. Verify room availability.';
         this.loading = false;
+        this.dialogService.showError('Booking Failed', this.errorMessage);
       }
     });
   }
 
   cancelHotelBooking(id: number): void {
-    if (confirm('Are you sure you want to cancel this room reservation?')) {
-      this.loading = true;
-      this.hotelReservationService.cancelReservation(id).subscribe({
-        next: () => {
-          this.successMessage = 'Hotel Room reservation cancelled successfully.';
-          this.loadHotelReservations();
-          this.loadHotelRooms();
-        },
-        error: (err) => {
-          this.errorMessage = err.error?.message || 'Failed to cancel room reservation.';
-          this.loading = false;
-        }
-      });
-    }
+    const res = this.hotelReservations.find(r => r.id === id);
+    const label = res ? `room reservation #${id} for "${res.customerName}" (Room ${res.roomNumber})` : `room reservation #${id}`;
+    this.dialogService.confirmAction('Confirm Cancellation', `Are you sure you want to cancel ${label}?`).subscribe((confirmed) => {
+      if (confirmed) {
+        this.loading = true;
+        this.hotelReservationService.cancelReservation(id).subscribe({
+          next: () => {
+            this.loadHotelReservations();
+            this.loadHotelRooms();
+            this.loading = false;
+            this.dialogService.showSuccess('Cancelled', `${label} has been cancelled.`);
+          },
+          error: (err) => {
+            this.errorMessage = err.error?.message || 'Failed to cancel room reservation.';
+            this.loading = false;
+            this.dialogService.showError('Cancellation Failed', this.errorMessage);
+          }
+        });
+      }
+    });
   }
 }

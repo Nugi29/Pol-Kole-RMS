@@ -5,6 +5,7 @@ import { catchError } from 'rxjs/operators';
 import { CheckInOutService, CheckIn, CheckOut } from '../../../services/check-in-out.service';
 import { HotelReservation, HotelReservationService } from '../../../services/hotel-reservation.service';
 import { ReservationService } from '../../../services/reservation.service';
+import { DialogService } from '../../../services/dialog.service';
 
 export interface FrontDeskItem {
   id: number;
@@ -38,7 +39,8 @@ export class CheckInOutComponent implements OnInit {
     private readonly roomReservationService: HotelReservationService,
     private readonly tableReservationService: ReservationService,
     private readonly route: ActivatedRoute,
-    private readonly cdr: ChangeDetectorRef
+    private readonly cdr: ChangeDetectorRef,
+    private readonly dialogService: DialogService
   ) {}
 
   ngOnInit(): void {
@@ -108,74 +110,86 @@ export class CheckInOutComponent implements OnInit {
   }
 
   performCheckIn(item: FrontDeskItem): void {
-    this.loading = true;
-    this.errorMessage = '';
-    this.successMessage = '';
+    const locationType = item.type === 'ROOM' ? 'Room' : 'Table';
+    this.dialogService.confirmAction('Confirm Check-In', `Check in ${item.customerName || 'guest'} to ${locationType} ${item.itemNumber}?`).subscribe((confirmed) => {
+      if (confirmed) {
+        this.loading = true;
+        this.errorMessage = '';
 
-    if (item.type === 'ROOM') {
-      const payload: CheckIn = {
-        reservationId: item.id,
-        actualGuestsCount: item.guestsCount,
-        notes: 'Check-in completed at front desk'
-      };
+        if (item.type === 'ROOM') {
+          const payload: CheckIn = {
+            reservationId: item.id,
+            actualGuestsCount: item.guestsCount,
+            notes: 'Check-in completed at front desk'
+          };
 
-      this.checkInOutService.checkIn(payload).subscribe({
-        next: () => {
-          this.successMessage = `Guest checked into Room ${item.itemNumber} successfully!`;
-          this.loadReservations();
-        },
-        error: (err) => {
-          this.errorMessage = err.error?.message || 'Failed to complete check-in.';
-          this.loading = false;
+          this.checkInOutService.checkIn(payload).subscribe({
+            next: () => {
+              this.loadReservations();
+              this.dialogService.showSuccess('Check-In Complete', `Guest checked into Room ${item.itemNumber} successfully!`);
+            },
+            error: (err) => {
+              this.errorMessage = err.error?.message || 'Failed to complete check-in.';
+              this.loading = false;
+              this.dialogService.showError('Check-In Failed', this.errorMessage);
+            }
+          });
+        } else {
+          this.checkInOutService.tableCheckIn(item.id).subscribe({
+            next: () => {
+              this.loadReservations();
+              this.dialogService.showSuccess('Check-In Complete', `Guest checked into Table ${item.itemNumber} successfully!`);
+            },
+            error: (err) => {
+              this.errorMessage = err.error?.message || 'Failed to complete check-in.';
+              this.loading = false;
+              this.dialogService.showError('Check-In Failed', this.errorMessage);
+            }
+          });
         }
-      });
-    } else {
-      this.checkInOutService.tableCheckIn(item.id).subscribe({
-        next: () => {
-          this.successMessage = `Guest checked into Table ${item.itemNumber} successfully!`;
-          this.loadReservations();
-        },
-        error: (err) => {
-          this.errorMessage = err.error?.message || 'Failed to complete check-in.';
-          this.loading = false;
-        }
-      });
-    }
+      }
+    });
   }
 
   performCheckOut(item: FrontDeskItem): void {
-    this.loading = true;
-    this.errorMessage = '';
-    this.successMessage = '';
+    const locationType = item.type === 'ROOM' ? 'Room' : 'Table';
+    this.dialogService.confirmAction('Confirm Check-Out', `Check out ${item.customerName || 'guest'} from ${locationType} ${item.itemNumber}?`).subscribe((confirmed) => {
+      if (confirmed) {
+        this.loading = true;
+        this.errorMessage = '';
 
-    if (item.type === 'ROOM') {
-      const payload: CheckOut = {
-        reservationId: item.id,
-        lateCheckoutFee: 0,
-        notes: 'Check-out completed'
-      };
+        if (item.type === 'ROOM') {
+          const payload: CheckOut = {
+            reservationId: item.id,
+            lateCheckoutFee: 0,
+            notes: 'Check-out completed'
+          };
 
-      this.checkInOutService.checkOut(payload).subscribe({
-        next: () => {
-          this.successMessage = `Guest checked out from Room ${item.itemNumber} successfully!`;
-          this.loadReservations();
-        },
-        error: (err) => {
-          this.errorMessage = err.error?.message || 'Failed to complete check-out.';
-          this.loading = false;
+          this.checkInOutService.checkOut(payload).subscribe({
+            next: () => {
+              this.loadReservations();
+              this.dialogService.showSuccess('Check-Out Complete', `Guest checked out from Room ${item.itemNumber} successfully!`);
+            },
+            error: (err) => {
+              this.errorMessage = err.error?.message || 'Failed to complete check-out.';
+              this.loading = false;
+              this.dialogService.showError('Check-Out Failed', this.errorMessage);
+            }
+          });
+        } else {
+          this.checkInOutService.tableCheckOut(item.id).subscribe({
+            next: () => {
+              this.loadReservations();
+              this.dialogService.showSuccess('Check-Out Complete', `Guest checked out from Table ${item.itemNumber} successfully!`);
+            },
+            error: (err) => {
+              this.errorMessage = err.error?.message || 'Failed to complete check-out.';
+              this.loading = false;
+              this.dialogService.showError('Check-Out Failed', this.errorMessage);
+            }
+          });
         }
-      });
-    } else {
-      this.checkInOutService.tableCheckOut(item.id).subscribe({
-        next: () => {
-          this.successMessage = `Guest checked out from Table ${item.itemNumber} successfully!`;
-          this.loadReservations();
-        },
-        error: (err) => {
-          this.errorMessage = err.error?.message || 'Failed to complete check-out.';
-          this.loading = false;
-        }
-      });
-    }
+      }
+    });
   }
 }

@@ -1,14 +1,18 @@
-<mat-card class="dialog-card" role="dialog" aria-modal="true" aria-label="Message dialog">
+<mat-card class="dialog-card toast-card" role="alert" aria-live="assertive" (click)="dismiss()" title="Click to dismiss">
   <mat-card-header class="dialog-header">
-    <mat-card-title>{{ data.heading }}</mat-card-title>
-    <mat-card-subtitle>System message</mat-card-subtitle>
+    <div class="toast-header-inner">
+      <mat-card-title class="toast-title">{{ data.heading }}</mat-card-title>
+      <button type="button" class="toast-close-btn" aria-label="Close" (click)="dismiss(); $event.stopPropagation()">
+        &times;
+      </button>
+    </div>
   </mat-card-header>
 
   <mat-card-content class="dialog-content">
     <p *ngFor="let line of lines" class="dialog-line">{{ line }}</p>
   </mat-card-content>
 
-  <mat-dialog-actions class="dialog-actions" align="end">
-    <button mat-raised-button color="primary" [mat-dialog-close]="true">OK</button>
-  </mat-dialog-actions>
+  <div class="toast-progress-track">
+    <div class="toast-progress-bar" [style.animation-duration.ms]="duration"></div>
+  </div>
 </mat-card>

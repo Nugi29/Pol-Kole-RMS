@@ -9,6 +9,7 @@ import { CustomerDto, CustomerService } from '../../../services/customer.service
 import { MenuItem, MenuService } from '../../../services/menu.service';
 import { HotelReservationService } from '../../../services/hotel-reservation.service';
 import { Reservation, ReservationService } from '../../../services/reservation.service';
+import { DialogService } from '../../../services/dialog.service';
 
 @Component({
   selector: 'app-orders',
@@ -53,7 +54,8 @@ export class OrdersComponent implements OnInit {
     private readonly reservationService: HotelReservationService,
     private readonly tableReservationService: ReservationService,
     private readonly route: ActivatedRoute,
-    private readonly cdr: ChangeDetectorRef
+    private readonly cdr: ChangeDetectorRef,
+    private readonly dialogService: DialogService
   ) {}
 
   ngOnInit(): void {
@@ -206,56 +208,71 @@ export class OrdersComponent implements OnInit {
     return this.cart.reduce((sum, c) => sum + (c.item.price * c.quantity), 0);
   }
 
+  requestClearCart(): void {
+    if (this.cart.length === 0) return;
+    this.dialogService.confirmClear('Do you want to clear all items in the order cart?').subscribe((confirmed) => {
+      if (confirmed) {
+        this.cart = [];
+        this.dialogService.showSuccess('Cart Cleared', 'Order cart has been cleared.');
+      }
+    });
+  }
+
   submitOrder(): void {
     const isCustomerValid = this.serviceType === 'TAKEAWAY' ? true : (this.selectedCustomerId && String(this.selectedCustomerId) !== 'null');
     const isLocationValid = this.serviceType === 'TAKEAWAY' ? true : (this.serviceType === 'TABLE' ? this.selectedTableId : this.selectedRoomId);
     if (!isCustomerValid || !isLocationValid || this.cart.length === 0) {
       this.errorMessage = this.serviceType === 'TAKEAWAY' ? 'Please add items to cart.' : 'Please select a customer, service location, and add items to cart.';
+      this.dialogService.showError('Validation Error', this.errorMessage);
       return;
     }
 
-    this.loading = true;
-    this.errorMessage = '';
-    this.successMessage = '';
+    const total = this.cartTotal;
+    this.dialogService.confirmAction('Confirm Place Order', `Place this order for Rs. ${total.toFixed(2)} to the kitchen queue?`).subscribe((confirmed) => {
+      if (confirmed) {
+        this.loading = true;
+        this.errorMessage = '';
 
-    const items: OrderItemInput[] = this.cart.map(c => ({
-      menuItemId: c.item.id!,
-      quantity: c.quantity,
-      price: c.item.price,
-      notes: c.notes || undefined
-    }));
+        const items: OrderItemInput[] = this.cart.map(c => ({
+          menuItemId: c.item.id!,
+          quantity: c.quantity,
+          price: c.item.price,
+          notes: c.notes || undefined
+        }));
 
-    const payload = {
-      customerId: this.selectedCustomerId && String(this.selectedCustomerId) !== 'null' ? Number(this.selectedCustomerId) : null,
-      tableId: this.serviceType === 'TABLE' ? this.selectedTableId : null,
-      roomId: this.serviceType === 'ROOM' ? this.selectedRoomId : null,
-      items: items
-    };
+        const payload = {
+          customerId: this.selectedCustomerId && String(this.selectedCustomerId) !== 'null' ? Number(this.selectedCustomerId) : null,
+          tableId: this.serviceType === 'TABLE' ? this.selectedTableId : null,
+          roomId: this.serviceType === 'ROOM' ? this.selectedRoomId : null,
+          items: items
+        };
 
-    this.orderService.createOrder(payload).subscribe({
-      next: (createdOrder) => {
-        this.successMessage = 'Order placed successfully to Chef Kitchen Hub!';
-        
-        // Auto-print token for takeaway orders
-        if (this.serviceType === 'TAKEAWAY') {
-          this.printToken(createdOrder);
-        }
+        this.orderService.createOrder(payload).subscribe({
+          next: (createdOrder) => {
+            // Auto-print token for takeaway orders
+            if (this.serviceType === 'TAKEAWAY') {
+              this.printToken(createdOrder);
+            }
 
-        this.cart = [];
-        this.selectedTableId = null;
-        this.selectedRoomId = null;
-        this.selectedReservationId = null;
-        this.selectedCustomerId = null;
-        this.serviceType = 'TABLE';
-        this.loadOrders();
-        this.loadCheckedInReservations();
-        this.loadCheckedInTableReservations();
-        this.loading = false;
-        this.activeTab = 'list';
-      },
-      error: (err) => {
-        this.errorMessage = err.error?.message || 'Failed to place order.';
-        this.loading = false;
+            this.cart = [];
+            this.selectedTableId = null;
+            this.selectedRoomId = null;
+            this.selectedReservationId = null;
+            this.selectedCustomerId = null;
+            this.serviceType = 'TABLE';
+            this.loadOrders();
+            this.loadCheckedInReservations();
+            this.loadCheckedInTableReservations();
+            this.loading = false;
+            this.activeTab = 'list';
+            this.dialogService.showSuccess('Order Placed', 'Order placed successfully to Chef Kitchen Hub!');
+          },
+          error: (err) => {
+            this.errorMessage = err.error?.message || 'Failed to place order.';
+            this.loading = false;
+            this.dialogService.showError('Order Failed', this.errorMessage);
+          }
+        });
       }
     });
   }
@@ -263,7 +280,7 @@ export class OrdersComponent implements OnInit {
   printToken(order: Order): void {
     const printWindow = window.open('', '_blank', 'width=350,height=600');
     if (!printWindow) {
-      alert('Please allow popups to print tokens.');
+      this.dialogService.showError('Popup Blocked', 'Please allow popups in your browser to print tokens.');
       return;
     }
 
@@ -410,19 +427,22 @@ export class OrdersComponent implements OnInit {
   }
 
   cancelOrder(id: number): void {
-    if (confirm('Are you sure you want to cancel this order?')) {
-      this.loading = true;
-      this.orderService.cancelOrder(id).subscribe({
-        next: () => {
-          this.successMessage = 'Order cancelled successfully.';
-          this.loadOrders();
-          this.loading = false;
-        },
-        error: () => {
-          this.errorMessage = 'Failed to cancel order.';
-          this.loading = false;
-        }
-      });
-    }
+    this.dialogService.confirmAction('Confirm Order Cancellation', `Are you sure you want to cancel order #${id}?`).subscribe((confirmed) => {
+      if (confirmed) {
+        this.loading = true;
+        this.orderService.cancelOrder(id).subscribe({
+          next: () => {
+            this.loadOrders();
+            this.loading = false;
+            this.dialogService.showSuccess('Order Cancelled', `Order #${id} has been cancelled.`);
+          },
+          error: (err) => {
+            this.errorMessage = err.error?.message || 'Failed to cancel order.';
+            this.loading = false;
+            this.dialogService.showError('Cancellation Failed', this.errorMessage);
+          }
+        });
+      }
+    });
   }
 }

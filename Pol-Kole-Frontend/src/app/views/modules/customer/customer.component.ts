@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatTableDataSource } from '@angular/material/table';
 import { CustomerDto, CustomerService } from '../../../services/customer.service';
+import { DialogService } from '../../../services/dialog.service';
 
 @Component({
   selector: 'app-customer',
@@ -27,7 +28,11 @@ export class CustomerComponent implements OnInit {
   errorMessage = '';
   searchQuery = '';
 
-  constructor(private readonly fb: FormBuilder, private readonly customerService: CustomerService) {
+  constructor(
+    private readonly fb: FormBuilder,
+    private readonly customerService: CustomerService,
+    private readonly dialogService: DialogService
+  ) {
     this.form = this.fb.group({
       name: ['', [Validators.required, Validators.maxLength(100)]],
       nicPassport: ['', [Validators.required, Validators.maxLength(50)]],
@@ -76,10 +81,12 @@ export class CustomerComponent implements OnInit {
           this.loadCustomers();
           this.clearForm();
           this.loading = false;
+          this.dialogService.showSuccess('Guest Updated', 'Customer profile updated successfully.');
         },
         error: (err) => {
           this.errorMessage = err.error?.message || 'Failed to update customer profile.';
           this.loading = false;
+          this.dialogService.showError('Update Failed', this.errorMessage);
         }
       });
     } else {
@@ -88,10 +95,12 @@ export class CustomerComponent implements OnInit {
           this.loadCustomers();
           this.clearForm();
           this.loading = false;
+          this.dialogService.showSuccess('Guest Registered', 'New guest profile registered successfully.');
         },
         error: (err) => {
           this.errorMessage = err.error?.message || 'Failed to create customer profile.';
           this.loading = false;
+          this.dialogService.showError('Registration Failed', this.errorMessage);
         }
       });
     }
@@ -110,18 +119,37 @@ export class CustomerComponent implements OnInit {
   }
 
   deleteCustomer(id: number): void {
-    if (confirm('Are you sure you want to delete this customer profile? Stays and billing history are archived.')) {
-      this.loading = true;
-      this.customerService.deleteCustomer(id).subscribe({
-        next: () => {
-          this.loadCustomers();
-          this.loading = false;
-        },
-        error: () => {
-          this.errorMessage = 'Failed to archive customer profile.';
-          this.loading = false;
+    const cust = this.customers.find(c => c.id === id);
+    const custLabel = cust ? `guest profile for "${cust.name}"` : 'this customer profile';
+    this.dialogService.confirmDelete(custLabel, `Are you sure you want to archive ${custLabel}?<br>Stays and billing history will be preserved in records.`).subscribe((confirmed) => {
+      if (confirmed) {
+        this.loading = true;
+        this.customerService.deleteCustomer(id).subscribe({
+          next: () => {
+            this.loadCustomers();
+            this.loading = false;
+            this.dialogService.showSuccess('Archived', `${custLabel} was archived successfully.`);
+          },
+          error: () => {
+            this.errorMessage = 'Failed to archive customer profile.';
+            this.loading = false;
+            this.dialogService.showError('Archive Failed', this.errorMessage);
+          }
+        });
+      }
+    });
+  }
+
+  requestClear(): void {
+    if (this.form.dirty || this.editingId) {
+      this.dialogService.confirmClear().subscribe((confirmed) => {
+        if (confirmed) {
+          this.clearForm();
+          this.dialogService.showSuccess('Cleared', 'Guest profile form cleared successfully.');
         }
       });
+    } else {
+      this.clearForm();
     }
   }
 

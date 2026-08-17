@@ -86,7 +86,7 @@
           <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white text-[13px] font-bold py-2.5 rounded-xl cursor-pointer shadow-sm transition-all">
             {{ editingItemId ? 'Apply Update' : 'Add Item' }}
           </button>
-          <button type="button" (click)="clearItemForm()" class="bg-slate-50 hover:bg-slate-100 text-slate-650 text-[13px] font-bold px-4 py-2.5 rounded-xl cursor-pointer border border-slate-200 transition-all">
+          <button type="button" (click)="requestClearItemForm()" class="bg-slate-50 hover:bg-slate-100 text-slate-650 text-[13px] font-bold px-4 py-2.5 rounded-xl cursor-pointer border border-slate-200 transition-all">
             Cancel
           </button>
         </div>
@@ -163,7 +163,7 @@
           <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white text-[13px] font-bold py-2.5 rounded-xl cursor-pointer shadow-sm transition-all">
             {{ editingCatId ? 'Apply Update' : 'Register Category' }}
           </button>
-          <button type="button" (click)="clearCatForm()" class="bg-slate-50 hover:bg-slate-100 text-slate-650 text-[13px] font-bold px-4 py-2.5 rounded-xl cursor-pointer border border-slate-200 transition-all">
+          <button type="button" (click)="requestClearCatForm()" class="bg-slate-50 hover:bg-slate-100 text-slate-650 text-[13px] font-bold px-4 py-2.5 rounded-xl cursor-pointer border border-slate-200 transition-all">
             Cancel
           </button>
         </div>

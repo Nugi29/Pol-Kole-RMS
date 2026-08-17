@@ -5,6 +5,7 @@ import { MatTableDataSource } from '@angular/material/table';
 import { ActivatedRoute } from '@angular/router';
 import { RestaurantTable, TableLocation, TableService } from '../../../services/table.service';
 import { CodeService } from '../../../services/code.service';
+import { DialogService } from '../../../services/dialog.service';
 
 @Component({
   selector: 'app-tables',
@@ -43,7 +44,8 @@ export class TablesComponent implements OnInit {
     private readonly tableService: TableService,
     private readonly route: ActivatedRoute,
     private readonly codeService: CodeService,
-    private readonly cdr: ChangeDetectorRef
+    private readonly cdr: ChangeDetectorRef,
+    private readonly dialogService: DialogService
   ) {
     this.form = this.fb.group({
       tableNumber: [''],
@@ -129,10 +131,12 @@ export class TablesComponent implements OnInit {
           this.loadTables();
           this.clearForm();
           this.loading = false;
+          this.dialogService.showSuccess('Table Updated', 'Table updated successfully.');
         },
         error: (err) => {
           this.errorMessage = err.error?.message || 'Failed to update table.';
           this.loading = false;
+          this.dialogService.showError('Update Failed', this.errorMessage);
         }
       });
     } else {
@@ -141,10 +145,12 @@ export class TablesComponent implements OnInit {
           this.loadTables();
           this.clearForm();
           this.loading = false;
+          this.dialogService.showSuccess('Table Registered', 'New table registered on floor map.');
         },
         error: (err) => {
           this.errorMessage = err.error?.message || 'Failed to create table.';
           this.loading = false;
+          this.dialogService.showError('Registration Failed', this.errorMessage);
         }
       });
     }
@@ -161,38 +167,63 @@ export class TablesComponent implements OnInit {
   }
 
   quickStatusUpdate(table: RestaurantTable, newStatus: string): void {
-    this.loading = true;
-    const payload = {
-      tableNumber: table.tableNumber,
-      capacity: table.capacity,
-      locationId: table.locationId,
-      status: newStatus
-    };
-    this.tableService.updateTable(table.id!, payload).subscribe({
-      next: () => {
-        this.loadTables();
-        this.loading = false;
-      },
-      error: () => {
-        this.errorMessage = 'Failed to update table status.';
-        this.loading = false;
+    this.dialogService.confirmAction('Confirm Status Change', `Change Table ${table.tableNumber} status to ${newStatus}?`).subscribe((confirmed) => {
+      if (confirmed) {
+        this.loading = true;
+        const payload = {
+          tableNumber: table.tableNumber,
+          capacity: table.capacity,
+          locationId: table.locationId,
+          status: newStatus
+        };
+        this.tableService.updateTable(table.id!, payload).subscribe({
+          next: () => {
+            this.loadTables();
+            this.loading = false;
+            this.dialogService.showSuccess('Status Updated', `Table ${table.tableNumber} status changed to ${newStatus}.`);
+          },
+          error: (err) => {
+            this.errorMessage = 'Failed to update table status.';
+            this.loading = false;
+            this.dialogService.showError('Update Failed', err.error?.message || 'Failed to update table status.');
+          }
+        });
       }
     });
   }
 
   deleteTable(id: number): void {
-    if (confirm('Are you sure you want to delete this table?')) {
-      this.loading = true;
-      this.tableService.deleteTable(id).subscribe({
-        next: () => {
-          this.loadTables();
-          this.loading = false;
-        },
-        error: () => {
-          this.errorMessage = 'Failed to delete table.';
-          this.loading = false;
+    const table = this.tables.find(t => t.id === id);
+    const tableLabel = table ? `Table ${table.tableNumber}` : 'this table';
+    this.dialogService.confirmDelete(tableLabel).subscribe((confirmed) => {
+      if (confirmed) {
+        this.loading = true;
+        this.tableService.deleteTable(id).subscribe({
+          next: () => {
+            this.loadTables();
+            this.loading = false;
+            this.dialogService.showSuccess('Deleted', `${tableLabel} was deleted successfully.`);
+          },
+          error: (err) => {
+            this.errorMessage = 'Failed to delete table.';
+            this.loading = false;
+            this.dialogService.showError('Delete Failed', err.error?.message || 'Failed to delete table.');
+          }
+        });
+      }
+    });
+  }
+
+  requestClear(): void {
+    if (this.form.dirty || this.editingId) {
+      this.dialogService.confirmClear().subscribe((confirmed) => {
+        if (confirmed) {
+          this.clearForm();
+          this.dialogService.showSuccess('Cleared', 'Form fields cleared successfully.');
         }
       });
+    } else {
+      this.clearForm();
     }
   }
 
@@ -230,10 +261,12 @@ export class TablesComponent implements OnInit {
           this.loadLocations();
           this.clearLocationForm();
           this.locationLoading = false;
+          this.dialogService.showSuccess('Location Updated', 'Location updated successfully.');
         },
         error: (err) => {
           this.locationErrorMessage = err.error?.message || 'Failed to update location.';
           this.locationLoading = false;
+          this.dialogService.showError('Update Failed', this.locationErrorMessage);
         }
       });
     } else {
@@ -242,10 +275,12 @@ export class TablesComponent implements OnInit {
           this.loadLocations();
           this.clearLocationForm();
           this.locationLoading = false;
+          this.dialogService.showSuccess('Location Registered', 'New location registered successfully.');
         },
         error: (err) => {
           this.locationErrorMessage = err.error?.message || 'Failed to create location.';
           this.locationLoading = false;
+          this.dialogService.showError('Registration Failed', this.locationErrorMessage);
         }
       });
     }
@@ -261,30 +296,56 @@ export class TablesComponent implements OnInit {
   }
 
   toggleLocationStatus(location: TableLocation): void {
-    const payload = { ...location, isActive: !location.isActive };
-    this.tableService.updateTableLocation(location.id!, payload).subscribe({
-      next: () => {
-        this.loadLocations();
-      },
-      error: () => {
-        this.locationErrorMessage = 'Failed to update location status.';
+    const action = location.isActive ? 'deactivate' : 'activate';
+    this.dialogService.confirmAction('Confirm Status Change', `Are you sure you want to ${action} location "${location.name}"?`).subscribe((confirmed) => {
+      if (confirmed) {
+        const payload = { ...location, isActive: !location.isActive };
+        this.tableService.updateTableLocation(location.id!, payload).subscribe({
+          next: () => {
+            this.loadLocations();
+            this.dialogService.showSuccess('Status Updated', `Location "${location.name}" is now ${!location.isActive ? 'active' : 'inactive'}.`);
+          },
+          error: (err) => {
+            this.locationErrorMessage = 'Failed to update location status.';
+            this.dialogService.showError('Update Failed', err.error?.message || 'Failed to update location status.');
+          }
+        });
       }
     });
   }
 
   deleteLocation(id: number): void {
-    if (confirm('Are you sure you want to soft delete this location? It will be marked as inactive.')) {
-      this.locationLoading = true;
-      this.tableService.deleteTableLocation(id).subscribe({
-        next: () => {
-          this.loadLocations();
-          this.locationLoading = false;
-        },
-        error: (err) => {
-          this.locationErrorMessage = err.error?.message || 'Failed to delete location.';
-          this.locationLoading = false;
+    const loc = this.locations.find(l => l.id === id);
+    const locLabel = loc ? `Location "${loc.name}"` : 'this location';
+    this.dialogService.confirmAction('Confirm Deactivation', `Are you sure you want to deactivate ${locLabel}?<br>It will be marked as inactive.`).subscribe((confirmed) => {
+      if (confirmed) {
+        this.locationLoading = true;
+        this.tableService.deleteTableLocation(id).subscribe({
+          next: () => {
+            this.loadLocations();
+            this.locationLoading = false;
+            this.dialogService.showSuccess('Deactivated', `${locLabel} has been deactivated.`);
+          },
+          error: (err) => {
+            this.locationErrorMessage = err.error?.message || 'Failed to delete location.';
+            this.locationLoading = false;
+            this.dialogService.showError('Action Failed', this.locationErrorMessage);
+          }
+        });
+      }
+    });
+  }
+
+  requestClearLocationForm(): void {
+    if (this.locationForm.dirty || this.editingLocationId) {
+      this.dialogService.confirmClear().subscribe((confirmed) => {
+        if (confirmed) {
+          this.clearLocationForm();
+          this.dialogService.showSuccess('Cleared', 'Location form cleared successfully.');
         }
       });
+    } else {
+      this.clearLocationForm();
     }
   }
 

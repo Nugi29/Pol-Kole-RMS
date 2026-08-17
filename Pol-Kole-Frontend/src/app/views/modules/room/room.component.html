@@ -132,7 +132,7 @@
           <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white text-[13px] font-bold py-2.5 rounded-xl cursor-pointer shadow-sm transition-all">
             {{ editingId ? 'Apply Update' : 'Register Room' }}
           </button>
-          <button type="button" (click)="clearForm()" class="bg-slate-50 hover:bg-slate-100 text-slate-650 text-[13px] font-bold px-4 py-2.5 rounded-xl cursor-pointer border border-slate-200 transition-all">
+          <button type="button" (click)="requestClear()" class="bg-slate-50 hover:bg-slate-100 text-slate-650 text-[13px] font-bold px-4 py-2.5 rounded-xl cursor-pointer border border-slate-200 transition-all">
             Cancel
           </button>
         </div>
@@ -332,7 +332,7 @@
           <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white text-[13px] font-bold py-2.5 rounded-xl cursor-pointer shadow-sm transition-all">
             {{ editingTypeId ? 'Apply Update' : 'Register Category' }}
           </button>
-          <button type="button" (click)="clearTypeForm()" class="bg-slate-50 hover:bg-slate-100 text-slate-650 text-[13px] font-bold px-4 py-2.5 rounded-xl cursor-pointer border border-slate-200 transition-all">
+          <button type="button" (click)="requestClearTypeForm()" class="bg-slate-50 hover:bg-slate-100 text-slate-650 text-[13px] font-bold px-4 py-2.5 rounded-xl cursor-pointer border border-slate-200 transition-all">
             Cancel
           </button>
         </div>

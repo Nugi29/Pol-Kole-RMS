@@ -4,6 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ApiResponse } from '../../../services/room.service';
+import { DialogService } from '../../../services/dialog.service';
 
 export interface KitchenOrderItem {
   id?: number;
@@ -45,7 +46,8 @@ export class KitchenComponent implements OnInit {
   constructor(
     private readonly http: HttpClient,
     private readonly route: ActivatedRoute,
-    private readonly cdr: ChangeDetectorRef
+    private readonly cdr: ChangeDetectorRef,
+    private readonly dialogService: DialogService
   ) {}
 
   ngOnInit(): void {
@@ -101,21 +103,25 @@ export class KitchenComponent implements OnInit {
   }
 
   updateTicketStatus(id: number, status: string): void {
-    this.loading = true;
-    this.errorMessage = '';
-    this.successMessage = '';
+    this.dialogService.confirmAction('Update Ticket Status', `Mark Ticket #${id} status as ${status}?`).subscribe((confirmed) => {
+      if (confirmed) {
+        this.loading = true;
+        this.errorMessage = '';
 
-    this.http.put<ApiResponse<KitchenOrder>>(`${this.baseUrl}/orders/${id}/status?status=${status}`, {}).pipe(
-      map(res => res.data)
-    ).subscribe({
-      next: () => {
-        this.successMessage = `Ticket #${id} status updated to ${status}.`;
-        this.loadAll();
-      },
-      error: () => {
-        this.errorMessage = 'Failed to update ticket status.';
-        this.loading = false;
-        this.cdr.markForCheck();
+        this.http.put<ApiResponse<KitchenOrder>>(`${this.baseUrl}/orders/${id}/status?status=${status}`, {}).pipe(
+          map(res => res.data)
+        ).subscribe({
+          next: () => {
+            this.loadAll();
+            this.dialogService.showSuccess('Status Updated', `Ticket #${id} status updated to ${status}.`);
+          },
+          error: () => {
+            this.errorMessage = 'Failed to update ticket status.';
+            this.loading = false;
+            this.cdr.markForCheck();
+            this.dialogService.showError('Update Failed', this.errorMessage);
+          }
+        });
       }
     });
   }

@@ -8,6 +8,7 @@ import { Order, OrderService } from '../../../services/order.service';
 import { BillingService, Invoice, PaymentPayload } from '../../../services/billing.service';
 import { HotelReservation, HotelReservationService } from '../../../services/hotel-reservation.service';
 import { Reservation, ReservationService } from '../../../services/reservation.service';
+import { DialogService } from '../../../services/dialog.service';
 
 export interface UnifiedStayItem {
   id: number;
@@ -74,7 +75,8 @@ export class BillingComponent implements OnInit {
     private readonly reservationService: HotelReservationService,
     private readonly tableReservationService: ReservationService,
     private readonly route: ActivatedRoute,
-    private readonly cdr: ChangeDetectorRef
+    private readonly cdr: ChangeDetectorRef,
+    private readonly dialogService: DialogService
   ) {}
 
   ngOnInit(): void {
@@ -196,68 +198,73 @@ export class BillingComponent implements OnInit {
   }
 
   triggerGenerateInvoice(): void {
-    this.loading = true;
-    this.errorMessage = '';
-    this.successMessage = '';
-
     if (this.compilerType === 'TAKEAWAY') {
-      if (!this.selectedTakeAwayOrderId) {
-        this.loading = false;
-        return;
-      }
-
-      this.billingService.generateInvoice(this.selectedTakeAwayOrderId, this.discountCode, this.redeemPoints).subscribe({
-        next: (invoice) => {
-          this.successMessage = `Take Away invoice generated successfully: ${invoice.invoiceNumber}`;
-          this.activeInvoice = invoice;
-          this.selectedTakeAwayOrderId = null;
-          this.discountCode = '';
-          this.redeemPoints = 0;
-          this.loadInvoices();
-        },
-        error: (err) => {
-          this.errorMessage = err.error?.message || 'Failed to generate takeaway invoice.';
-          this.loading = false;
+      if (!this.selectedTakeAwayOrderId) return;
+      this.dialogService.confirmAction('Generate Invoice', 'Generate invoice for Take Away Order #' + this.selectedTakeAwayOrderId + '?').subscribe((confirmed) => {
+        if (confirmed) {
+          this.loading = true;
+          this.errorMessage = '';
+          this.billingService.generateInvoice(this.selectedTakeAwayOrderId!, this.discountCode, this.redeemPoints).subscribe({
+            next: (invoice) => {
+              this.activeInvoice = invoice;
+              this.selectedTakeAwayOrderId = null;
+              this.discountCode = '';
+              this.redeemPoints = 0;
+              this.loadInvoices();
+              this.dialogService.showSuccess('Invoice Generated', `Take Away invoice generated: ${invoice.invoiceNumber}`);
+            },
+            error: (err) => {
+              this.errorMessage = err.error?.message || 'Failed to generate takeaway invoice.';
+              this.loading = false;
+              this.dialogService.showError('Invoice Failed', this.errorMessage);
+            }
+          });
         }
       });
     } else if (this.compilerType === 'TABLE') {
-      if (!this.selectedTableReservationId) {
-        this.loading = false;
-        return;
-      }
-
-      this.billingService.generateTableInvoice(this.selectedTableReservationId, this.discountCode, this.redeemPoints).subscribe({
-        next: (invoice) => {
-          this.successMessage = `Table checkout invoice generated successfully: ${invoice.invoiceNumber}`;
-          this.activeInvoice = invoice;
-          this.selectedTableReservationId = null;
-          this.discountCode = '';
-          this.redeemPoints = 0;
-          this.loadInvoices();
-        },
-        error: (err) => {
-          this.errorMessage = err.error?.message || 'Failed to generate table checkout invoice.';
-          this.loading = false;
+      if (!this.selectedTableReservationId) return;
+      this.dialogService.confirmAction('Generate Invoice', 'Generate table checkout invoice for Booking #' + this.selectedTableReservationId + '?').subscribe((confirmed) => {
+        if (confirmed) {
+          this.loading = true;
+          this.errorMessage = '';
+          this.billingService.generateTableInvoice(this.selectedTableReservationId!, this.discountCode, this.redeemPoints).subscribe({
+            next: (invoice) => {
+              this.activeInvoice = invoice;
+              this.selectedTableReservationId = null;
+              this.discountCode = '';
+              this.redeemPoints = 0;
+              this.loadInvoices();
+              this.dialogService.showSuccess('Invoice Generated', `Table checkout invoice generated: ${invoice.invoiceNumber}`);
+            },
+            error: (err) => {
+              this.errorMessage = err.error?.message || 'Failed to generate table checkout invoice.';
+              this.loading = false;
+              this.dialogService.showError('Invoice Failed', this.errorMessage);
+            }
+          });
         }
       });
     } else if (this.compilerType === 'ROOM') {
-      if (!this.selectedRoomReservationId) {
-        this.loading = false;
-        return;
-      }
-
-      this.billingService.generateStayInvoice(this.selectedRoomReservationId, this.discountCode, this.redeemPoints).subscribe({
-        next: (invoice) => {
-          this.successMessage = `Room checkout invoice generated successfully: ${invoice.invoiceNumber}`;
-          this.activeInvoice = invoice;
-          this.selectedRoomReservationId = null;
-          this.discountCode = '';
-          this.redeemPoints = 0;
-          this.loadInvoices();
-        },
-        error: (err) => {
-          this.errorMessage = err.error?.message || 'Failed to generate room checkout invoice.';
-          this.loading = false;
+      if (!this.selectedRoomReservationId) return;
+      this.dialogService.confirmAction('Generate Invoice', 'Generate room checkout invoice for Stay #' + this.selectedRoomReservationId + '?').subscribe((confirmed) => {
+        if (confirmed) {
+          this.loading = true;
+          this.errorMessage = '';
+          this.billingService.generateStayInvoice(this.selectedRoomReservationId!, this.discountCode, this.redeemPoints).subscribe({
+            next: (invoice) => {
+              this.activeInvoice = invoice;
+              this.selectedRoomReservationId = null;
+              this.discountCode = '';
+              this.redeemPoints = 0;
+              this.loadInvoices();
+              this.dialogService.showSuccess('Invoice Generated', `Room checkout invoice generated: ${invoice.invoiceNumber}`);
+            },
+            error: (err) => {
+              this.errorMessage = err.error?.message || 'Failed to generate room checkout invoice.';
+              this.loading = false;
+              this.dialogService.showError('Invoice Failed', this.errorMessage);
+            }
+          });
         }
       });
     }
@@ -313,34 +320,41 @@ export class BillingComponent implements OnInit {
   submitPayment(): void {
     if (!this.activeInvoice) return;
 
-    const payload: PaymentPayload = {
-      invoiceId: this.activeInvoice.id!,
-      amount: this.activeInvoice.totalAmount,
-      paymentMethodName: this.paymentMethod,
-      transactionReference: this.paymentRef,
-      notes: this.paymentNotes
-    };
+    this.dialogService.confirmAction(
+      'Confirm Payment Settlement',
+      `Settle invoice ${this.activeInvoice.invoiceNumber} for Rs. ${this.activeInvoice.totalAmount.toFixed(2)} using ${this.paymentMethod}?`
+    ).subscribe((confirmed) => {
+      if (confirmed) {
+        const payload: PaymentPayload = {
+          invoiceId: this.activeInvoice!.id!,
+          amount: this.activeInvoice!.totalAmount,
+          paymentMethodName: this.paymentMethod,
+          transactionReference: this.paymentRef,
+          notes: this.paymentNotes
+        };
 
-    this.loading = true;
-    this.errorMessage = '';
-    this.successMessage = '';
+        this.loading = true;
+        this.errorMessage = '';
 
-    this.billingService.processPayment(payload).subscribe({
-      next: () => {
-        this.successMessage = 'Payment processed successfully. Checkout complete!';
-        this.paymentRef = '';
-        this.paymentNotes = '';
-        this.paymentMethod = 'CASH';
-        
-        this.loadInvoices();
-        
-        if (this.activeTab !== 'settle') {
-          this.closeInvoice();
-        }
-      },
-      error: (err) => {
-        this.errorMessage = err.error?.message || 'Failed to process checkout payment.';
-        this.loading = false;
+        this.billingService.processPayment(payload).subscribe({
+          next: () => {
+            this.paymentRef = '';
+            this.paymentNotes = '';
+            this.paymentMethod = 'CASH';
+            
+            this.loadInvoices();
+            
+            if (this.activeTab !== 'settle') {
+              this.closeInvoice();
+            }
+            this.dialogService.showSuccess('Settlement Completed', 'Payment processed successfully. Checkout complete!');
+          },
+          error: (err) => {
+            this.errorMessage = err.error?.message || 'Failed to process checkout payment.';
+            this.loading = false;
+            this.dialogService.showError('Payment Failed', this.errorMessage);
+          }
+        });
       }
     });
   }
@@ -356,7 +370,7 @@ export class BillingComponent implements OnInit {
         window.URL.revokeObjectURL(url);
       },
       error: () => {
-        alert('Failed to download invoice PDF.');
+        this.dialogService.showError('Download Failed', 'Failed to download invoice PDF.');
       }
     });
   }

@@ -5,6 +5,7 @@ import { MatTableDataSource } from '@angular/material/table';
 import { ActivatedRoute } from '@angular/router';
 import { Room, RoomService, RoomType } from '../../../services/room.service';
 import { CodeService } from '../../../services/code.service';
+import { DialogService } from '../../../services/dialog.service';
 
 @Component({
   selector: 'app-room',
@@ -42,7 +43,8 @@ export class RoomComponent implements OnInit {
     private readonly roomService: RoomService,
     private readonly route: ActivatedRoute,
     private readonly codeService: CodeService,
-    private readonly cdr: ChangeDetectorRef
+    private readonly cdr: ChangeDetectorRef,
+    private readonly dialogService: DialogService
   ) {
     this.form = this.fb.group({
       floor: [1, Validators.required],
@@ -112,6 +114,7 @@ export class RoomComponent implements OnInit {
 
   loadRooms(): void {
     this.loading = true;
+    this.errorMessage = '';
     this.roomService.filterRooms(undefined, undefined, 0, 1000).subscribe({
       next: (page) => {
         this.rooms = page.content;
@@ -143,10 +146,12 @@ export class RoomComponent implements OnInit {
           this.loadRooms();
           this.clearForm();
           this.loading = false;
+          this.dialogService.showSuccess('Room Updated', 'Room details updated successfully.');
         },
         error: (err) => {
           this.errorMessage = err.error?.message || 'Failed to update room.';
           this.loading = false;
+          this.dialogService.showError('Update Failed', this.errorMessage);
         }
       });
     } else {
@@ -155,10 +160,12 @@ export class RoomComponent implements OnInit {
           this.loadRooms();
           this.clearForm();
           this.loading = false;
+          this.dialogService.showSuccess('Room Registered', 'New room registered successfully.');
         },
         error: (err) => {
           this.errorMessage = err.error?.message || 'Failed to create room.';
           this.loading = false;
+          this.dialogService.showError('Registration Failed', this.errorMessage);
         }
       });
     }
@@ -178,33 +185,58 @@ export class RoomComponent implements OnInit {
   }
 
   quickStatusUpdate(room: Room, newStatus: string): void {
-    this.loading = true;
-    const payload = { ...room, status: newStatus };
-    this.roomService.updateRoom(room.id!, payload).subscribe({
-      next: () => {
-        this.loadRooms();
-        this.loading = false;
-      },
-      error: () => {
-        this.errorMessage = 'Failed to update room status.';
-        this.loading = false;
+    this.dialogService.confirmAction('Confirm Status Change', `Change Room ${room.roomNumber} status to ${newStatus}?`).subscribe((confirmed) => {
+      if (confirmed) {
+        this.loading = true;
+        const payload = { ...room, status: newStatus };
+        this.roomService.updateRoom(room.id!, payload).subscribe({
+          next: () => {
+            this.loadRooms();
+            this.loading = false;
+            this.dialogService.showSuccess('Status Updated', `Room ${room.roomNumber} status changed to ${newStatus}.`);
+          },
+          error: (err) => {
+            this.errorMessage = 'Failed to update room status.';
+            this.loading = false;
+            this.dialogService.showError('Update Failed', err.error?.message || 'Failed to update room status.');
+          }
+        });
       }
     });
   }
 
   deleteRoom(id: number): void {
-    if (confirm('Are you sure you want to delete this room?')) {
-      this.loading = true;
-      this.roomService.deleteRoom(id).subscribe({
-        next: () => {
-          this.loadRooms();
-          this.loading = false;
-        },
-        error: () => {
-          this.errorMessage = 'Failed to delete room.';
-          this.loading = false;
+    const room = this.rooms.find(r => r.id === id);
+    const roomLabel = room ? `Room ${room.roomNumber}` : 'this room';
+    this.dialogService.confirmDelete(roomLabel).subscribe((confirmed) => {
+      if (confirmed) {
+        this.loading = true;
+        this.roomService.deleteRoom(id).subscribe({
+          next: () => {
+            this.loadRooms();
+            this.loading = false;
+            this.dialogService.showSuccess('Deleted', `${roomLabel} was deleted successfully.`);
+          },
+          error: (err) => {
+            this.errorMessage = 'Failed to delete room.';
+            this.loading = false;
+            this.dialogService.showError('Delete Failed', err.error?.message || 'Failed to delete room.');
+          }
+        });
+      }
+    });
+  }
+
+  requestClear(): void {
+    if (this.form.dirty || this.editingId) {
+      this.dialogService.confirmClear().subscribe((confirmed) => {
+        if (confirmed) {
+          this.clearForm();
+          this.dialogService.showSuccess('Cleared', 'Form fields cleared successfully.');
         }
       });
+    } else {
+      this.clearForm();
     }
   }
 
@@ -240,10 +272,12 @@ export class RoomComponent implements OnInit {
           this.loadRoomTypes();
           this.clearTypeForm();
           this.typeLoading = false;
+          this.dialogService.showSuccess('Category Updated', 'Room category updated successfully.');
         },
         error: (err) => {
           this.typeErrorMessage = err.error?.message || 'Failed to update category.';
           this.typeLoading = false;
+          this.dialogService.showError('Update Failed', this.typeErrorMessage);
         }
       });
     } else {
@@ -252,10 +286,12 @@ export class RoomComponent implements OnInit {
           this.loadRoomTypes();
           this.clearTypeForm();
           this.typeLoading = false;
+          this.dialogService.showSuccess('Category Registered', 'New room category registered successfully.');
         },
         error: (err) => {
           this.typeErrorMessage = err.error?.message || 'Failed to create category.';
           this.typeLoading = false;
+          this.dialogService.showError('Registration Failed', this.typeErrorMessage);
         }
       });
     }
@@ -273,19 +309,38 @@ export class RoomComponent implements OnInit {
   }
 
   deleteRoomType(id: number): void {
-    if (confirm('Are you sure you want to delete this room category?')) {
-      this.typeLoading = true;
-      this.typeErrorMessage = '';
-      this.roomService.deleteRoomType(id).subscribe({
-        next: () => {
-          this.loadRoomTypes();
-          this.typeLoading = false;
-        },
-        error: (err) => {
-          this.typeErrorMessage = err.error?.message || 'Failed to delete room category.';
-          this.typeLoading = false;
+    const type = this.roomTypes.find(t => t.id === id);
+    const typeLabel = type ? `Category "${type.name}"` : 'this room category';
+    this.dialogService.confirmDelete(typeLabel).subscribe((confirmed) => {
+      if (confirmed) {
+        this.typeLoading = true;
+        this.typeErrorMessage = '';
+        this.roomService.deleteRoomType(id).subscribe({
+          next: () => {
+            this.loadRoomTypes();
+            this.typeLoading = false;
+            this.dialogService.showSuccess('Deleted', `${typeLabel} was deleted successfully.`);
+          },
+          error: (err) => {
+            this.typeErrorMessage = err.error?.message || 'Failed to delete room category.';
+            this.typeLoading = false;
+            this.dialogService.showError('Delete Failed', this.typeErrorMessage);
+          }
+        });
+      }
+    });
+  }
+
+  requestClearTypeForm(): void {
+    if (this.typeForm.dirty || this.editingTypeId) {
+      this.dialogService.confirmClear().subscribe((confirmed) => {
+        if (confirmed) {
+          this.clearTypeForm();
+          this.dialogService.showSuccess('Cleared', 'Category form cleared successfully.');
         }
       });
+    } else {
+      this.clearTypeForm();
     }
   }
 
