@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { DashboardService, DashboardStats } from '../../services/dashboard.service';
 
 @Component({
@@ -26,7 +26,10 @@ export class HomeComponent implements OnInit {
   revenueValues: number[] = [];
   maxRevenue = 1000;
 
-  constructor(private readonly dashboardService: DashboardService) {}
+  constructor(
+    private readonly dashboardService: DashboardService,
+    private readonly cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
     this.loadStats();
@@ -48,10 +51,12 @@ export class HomeComponent implements OnInit {
         this.maxRevenue = max * 1.1; // Add padding
 
         this.loading = false;
+        this.cdr.markForCheck();
       },
       error: (err) => {
         console.error('Failed to load dashboard statistics', err);
         this.loading = false;
+        this.cdr.markForCheck();
       }
     });
   }

@@ -1,8 +1,9 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatTableDataSource } from '@angular/material/table';
-import { forkJoin } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { Order, OrderService } from '../../../services/order.service';
 import { BillingService, Invoice, PaymentPayload } from '../../../services/billing.service';
 import { HotelReservation, HotelReservationService } from '../../../services/hotel-reservation.service';
@@ -72,7 +73,8 @@ export class BillingComponent implements OnInit {
     private readonly orderService: OrderService,
     private readonly reservationService: HotelReservationService,
     private readonly tableReservationService: ReservationService,
-    private readonly route: ActivatedRoute
+    private readonly route: ActivatedRoute,
+    private readonly cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -80,24 +82,9 @@ export class BillingComponent implements OnInit {
     this.route.queryParams.subscribe(params => {
       if (params['tab']) {
         this.activeTab = params['tab'];
-        this.filterUnpaidInvoices();
-        
-        if (this.activeTab === 'settle') {
-          const unpaid = this.unpaidInvoices;
-          if (unpaid.length > 0) {
-            if (!this.activeInvoice || this.activeInvoice.paymentStatus === 'PAID') {
-              this.viewInvoice(unpaid[0]);
-            }
-          } else {
-            this.activeInvoice = null;
-            this.activeInvoiceOrder = null;
-            this.activeInvoiceReservation = null;
-            this.activeInvoiceTableReservation = null;
-          }
-        } else {
-          this.closeInvoice();
-        }
       }
+      this.loadInvoices();
+      this.cdr.markForCheck();
     });
   }
 
@@ -105,7 +92,7 @@ export class BillingComponent implements OnInit {
     this.loading = true;
     this.billingService.getAllInvoices().subscribe({
       next: (data) => {
-        const sortedData = [...data].sort((a, b) => (b.id ?? 0) - (a.id ?? 0));
+        const sortedData = [...(data || [])].sort((a, b) => (b.id ?? 0) - (a.id ?? 0));
         this.invoices = sortedData;
         this.invoiceDataSource.data = sortedData;
         this.paymentDataSource.data = sortedData.filter(inv => inv.paymentStatus === 'PAID');
@@ -133,39 +120,56 @@ export class BillingComponent implements OnInit {
         }
 
         this.loadOrders();
+        this.cdr.markForCheck();
       },
-      error: () => {
+      error: (err) => {
+        console.error('Failed to load invoices', err);
         this.errorMessage = 'Failed to load invoices.';
         this.loading = false;
+        this.cdr.markForCheck();
       }
     });
   }
 
   loadOrders(): void {
-    this.orderService.filterOrders(undefined, undefined, undefined, 0, 100).subscribe(page => {
-      const invoiceOrderIds = this.invoices.map(inv => inv.orderId || inv.reservationId || inv.tableReservationId);
-      this.takeAwayOrders = page.content.filter(o => 
-        o.statusName !== 'COMPLETED' && 
-        o.statusName !== 'CANCELLED' &&
-        !o.tableId &&
-        !o.roomId &&
-        !invoiceOrderIds.includes(o.id)
-      );
+    this.orderService.filterOrders(undefined, undefined, undefined, 0, 1000).subscribe({
+      next: (page) => {
+        const content = page?.content || [];
+        const invoiceOrderIds = this.invoices.map(inv => inv.orderId || inv.reservationId || inv.tableReservationId);
+        this.takeAwayOrders = content.filter(o => 
+          o.statusName !== 'COMPLETED' && 
+          o.statusName !== 'CANCELLED' &&
+          !o.tableId &&
+          !o.roomId &&
+          !invoiceOrderIds.includes(o.id)
+        );
+      },
+      error: (err) => {
+        console.warn('Failed to load orders for billing', err);
+        this.takeAwayOrders = [];
+      }
     });
   }
 
   loadCheckedOutReservations(): void {
     forkJoin({
-      rooms: this.reservationService.filterReservations(undefined, undefined, 'CHECKED_OUT'),
-      tables: this.tableReservationService.filterReservations(undefined, undefined, 4) // 4 = Checked Out
+      rooms: this.reservationService.filterReservations(undefined, undefined, 'CHECKED_OUT', undefined, undefined, 0, 1000).pipe(
+        catchError(() => of({ content: [] } as any))
+      ),
+      tables: this.tableReservationService.filterReservations(undefined, undefined, 4, undefined, undefined, 0, 1000).pipe( // 4 = Checked Out
+        catchError(() => of({ content: [] } as any))
+      )
     }).subscribe({
       next: (results) => {
         const invoiceReservationIds = this.invoices.map(inv => inv.reservationId);
         const invoiceTableReservationIds = this.invoices.map(inv => inv.tableReservationId);
 
-        this.checkedOutRooms = results.rooms.content
-          .filter(res => !invoiceReservationIds.includes(res.id))
-          .map(res => ({
+        const roomContent = results.rooms?.content || [];
+        const tableContent = results.tables?.content || [];
+
+        this.checkedOutRooms = roomContent
+          .filter((res: any) => !invoiceReservationIds.includes(res.id))
+          .map((res: any) => ({
             id: res.id!,
             type: 'ROOM',
             customerName: res.customerName || '',
@@ -173,15 +177,20 @@ export class BillingComponent implements OnInit {
             roomOrTableNumber: res.roomNumber || ''
           }));
 
-        this.checkedOutTables = results.tables.content
-          .filter(res => !invoiceTableReservationIds.includes(res.id))
-          .map(res => ({
+        this.checkedOutTables = tableContent
+          .filter((res: any) => !invoiceTableReservationIds.includes(res.id))
+          .map((res: any) => ({
             id: res.id!,
             type: 'TABLE',
             customerName: res.customerName || '',
             customerPassport: res.customerPassport || '',
             roomOrTableNumber: res.tableNumber || ''
           }));
+      },
+      error: (err) => {
+        console.warn('Failed to load checked out stays', err);
+        this.checkedOutRooms = [];
+        this.checkedOutTables = [];
       }
     });
   }

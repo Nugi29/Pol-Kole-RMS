@@ -29,12 +29,14 @@ export class AuditLogsComponent implements OnInit {
 
   loadLogs(): void {
     this.loading = true;
-    this.auditLogService.getAuditLogs(0, 100).subscribe({
+    this.errorMessage = '';
+    this.auditLogService.getAuditLogs(0, 1000).subscribe({
       next: (page) => {
-        this.dataSource.data = page.content;
+        this.dataSource.data = page?.content || [];
         this.loading = false;
       },
-      error: () => {
+      error: (err) => {
+        console.error('Failed to load audit logs', err);
         this.errorMessage = 'Failed to retrieve system audit logs.';
         this.loading = false;
       }

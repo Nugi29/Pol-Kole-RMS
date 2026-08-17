@@ -44,13 +44,16 @@ export class CustomerComponent implements OnInit {
 
   loadCustomers(): void {
     this.loading = true;
-    this.customerService.searchCustomers(this.searchQuery || undefined, 0, 100).subscribe({
+    this.errorMessage = '';
+    this.customerService.searchCustomers(this.searchQuery ? this.searchQuery.trim() : undefined, 0, 1000).subscribe({
       next: (page) => {
-        this.customers = page.content;
-        this.dataSource.data = page.content;
+        const data = page?.content || [];
+        this.customers = data;
+        this.dataSource.data = data;
         this.loading = false;
       },
-      error: () => {
+      error: (err) => {
+        console.error('Failed to load customers', err);
         this.errorMessage = 'Failed to load guest directory.';
         this.loading = false;
       }

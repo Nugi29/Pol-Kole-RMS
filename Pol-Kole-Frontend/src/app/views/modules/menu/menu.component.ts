@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatTableDataSource } from '@angular/material/table';
@@ -31,7 +31,8 @@ export class MenuComponent implements OnInit {
   constructor(
     private readonly fb: FormBuilder,
     private readonly menuService: MenuService,
-    private readonly route: ActivatedRoute
+    private readonly route: ActivatedRoute,
+    private readonly cdr: ChangeDetectorRef
   ) {
     this.itemForm = this.fb.group({
       name: ['', [Validators.required, Validators.maxLength(100)]],
@@ -49,35 +50,50 @@ export class MenuComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.loadCategories();
-    this.loadMenuItems();
+    this.loadAll();
     this.route.queryParams.subscribe(params => {
       if (params['tab']) {
         this.activeTab = params['tab'];
       }
+      this.loadAll();
+      this.cdr.markForCheck();
     });
   }
 
+  loadAll(): void {
+    this.loadCategories();
+    this.loadMenuItems();
+  }
+
   loadCategories(): void {
-    this.menuService.getCategories().subscribe(res => {
-      this.categories = res;
+    this.menuService.getCategories().subscribe({
+      next: (res) => {
+        this.categories = res || [];
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.categories = [];
+        this.cdr.markForCheck();
+      }
     });
   }
 
   loadMenuItems(): void {
     this.loading = true;
-    this.menuService.filterMenuItems().subscribe({
+    this.errorMessage = '';
+    this.menuService.filterMenuItems(undefined, undefined, undefined, 0, 1000).subscribe({
       next: (page) => {
-        this.menuItems = page.content;
-        this.dataSource.data = page.content;
-        if (this.paginator) {
-          this.dataSource.paginator = this.paginator;
-        }
+        const data = page?.content || [];
+        this.menuItems = data;
+        this.dataSource.data = data;
         this.loading = false;
+        this.cdr.markForCheck();
       },
-      error: () => {
+      error: (err) => {
+        console.error('Failed to load menu items', err);
         this.errorMessage = 'Failed to load menu items.';
         this.loading = false;
+        this.cdr.markForCheck();
       }
     });
   }

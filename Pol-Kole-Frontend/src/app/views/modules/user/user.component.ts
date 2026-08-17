@@ -102,19 +102,39 @@ export class UserComponent implements OnInit {
   }
 
   private loadLookups(): void {
-    this.ls.getAllUserRoles().subscribe((roles: LookupRes[]) => {
-      this.roles = roles;
+    this.ls.getAllUserRoles().subscribe({
+      next: (roles: LookupRes[]) => {
+        this.roles = roles || [];
+      },
+      error: (err) => {
+        console.error('Failed to load user roles', err);
+        this.roles = [];
+      }
     });
 
-    this.ls.getAllUserStatuses().subscribe((status: LookupRes[]) => {
-      this.statuses = status;
+    this.ls.getAllUserStatuses().subscribe({
+      next: (status: LookupRes[]) => {
+        this.statuses = status || [];
+      },
+      error: (err) => {
+        console.error('Failed to load user statuses', err);
+        this.statuses = [];
+      }
     });
   }
 
   loadTable(): void {
-    this.us.getAllUsers().subscribe((users: FullUserRes[]) => {
-      this.users = users;
-      this.data.data = users;
+    this.us.getAllUsers().subscribe({
+      next: (users: FullUserRes[]) => {
+        const list = users || [];
+        this.users = list;
+        this.data.data = list;
+      },
+      error: (err) => {
+        console.error('Failed to load users', err);
+        this.users = [];
+        this.data.data = [];
+      }
     });
   }
 

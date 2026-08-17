@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { Observable } from 'rxjs';
@@ -44,15 +44,18 @@ export class KitchenComponent implements OnInit {
 
   constructor(
     private readonly http: HttpClient,
-    private readonly route: ActivatedRoute
+    private readonly route: ActivatedRoute,
+    private readonly cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
+    this.loadAll();
     this.route.queryParams.subscribe(params => {
       if (params['tab']) {
         this.activeTab = params['tab'];
       }
       this.loadAll();
+      this.cdr.markForCheck();
     });
   }
 
@@ -67,12 +70,14 @@ export class KitchenComponent implements OnInit {
       map(res => res.data)
     ).subscribe({
       next: (orders) => {
-        this.kitchenOrders = orders;
+        this.kitchenOrders = orders || [];
         this.loading = false;
+        this.cdr.markForCheck();
       },
       error: () => {
         this.errorMessage = 'Failed to load kitchen queue.';
         this.loading = false;
+        this.cdr.markForCheck();
       }
     });
   }
@@ -83,12 +88,14 @@ export class KitchenComponent implements OnInit {
       map(res => res.data)
     ).subscribe({
       next: (orders) => {
-        this.servedOrders = orders;
+        this.servedOrders = orders || [];
         this.loading = false;
+        this.cdr.markForCheck();
       },
       error: () => {
         this.errorMessage = 'Failed to load served history.';
         this.loading = false;
+        this.cdr.markForCheck();
       }
     });
   }
@@ -108,21 +115,22 @@ export class KitchenComponent implements OnInit {
       error: () => {
         this.errorMessage = 'Failed to update ticket status.';
         this.loading = false;
+        this.cdr.markForCheck();
       }
     });
   }
 
   get activeTickets(): KitchenOrder[] {
     if (this.activeTab === 'active') {
-      return this.kitchenOrders.filter(t => t.preparationStatus === 'RECEIVED' || t.preparationStatus === 'PREPARING');
+      return (this.kitchenOrders || []).filter(t => t.preparationStatus === 'RECEIVED' || t.preparationStatus === 'PREPARING');
     } else {
-      return this.servedOrders;
+      return this.servedOrders || [];
     }
   }
 
   get receivedTickets(): KitchenOrder[] {
-    return this.kitchenOrders
-      .filter(t => t.preparationStatus === 'RECEIVED')
+    return (this.kitchenOrders || [])
+      .filter(t => t && t.preparationStatus === 'RECEIVED')
       .sort((a, b) => {
         const timeA = a.startTime ? new Date(a.startTime).getTime() : 0;
         const timeB = b.startTime ? new Date(b.startTime).getTime() : 0;
@@ -132,8 +140,8 @@ export class KitchenComponent implements OnInit {
   }
 
   get preparingTickets(): KitchenOrder[] {
-    return this.kitchenOrders
-      .filter(t => t.preparationStatus === 'PREPARING')
+    return (this.kitchenOrders || [])
+      .filter(t => t && t.preparationStatus === 'PREPARING')
       .sort((a, b) => {
         const timeA = a.startTime ? new Date(a.startTime).getTime() : 0;
         const timeB = b.startTime ? new Date(b.startTime).getTime() : 0;

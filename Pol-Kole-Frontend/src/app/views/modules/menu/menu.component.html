@@ -100,9 +100,6 @@
           <span class="w-1.5 h-3.5 bg-indigo-600 rounded-full"></span>
           Menu Directory
         </h2>
-        <button (click)="loadMenuItems()" class="text-[12px] font-bold text-indigo-600 hover:text-indigo-850 flex items-center gap-1 transition-all cursor-pointer">
-          Sync Menu
-        </button>
       </div>
 
       <div *ngIf="menuItems.length > 0; else emptyItems" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">

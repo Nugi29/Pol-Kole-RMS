@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatTableDataSource } from '@angular/material/table';
@@ -50,7 +50,8 @@ export class ReservationComponent implements OnInit {
     private readonly customerService: CustomerService,
     private readonly hotelRoomService: RoomService,
     private readonly hotelReservationService: HotelReservationService,
-    private readonly route: ActivatedRoute
+    private readonly route: ActivatedRoute,
+    private readonly cdr: ChangeDetectorRef
   ) {
     this.form = this.fb.group({
       customerId: [null, Validators.required],
@@ -71,63 +72,101 @@ export class ReservationComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.loadAll();
+    this.route.queryParams.subscribe(params => {
+      if (params['tab']) {
+        this.activeTab = params['tab'];
+      }
+      this.loadAll();
+      this.cdr.markForCheck();
+    });
+  }
+
+  loadAll(): void {
     this.loadReservations();
     this.loadRooms();
     this.loadCustomers();
     this.loadHotelReservations();
     this.loadHotelRooms();
-    this.route.queryParams.subscribe(params => {
-      if (params['tab']) {
-        this.activeTab = params['tab'];
-      }
-    });
   }
 
   loadReservations(): void {
     this.loading = true;
-    this.reservationService.filterReservations().subscribe({
+    this.errorMessage = '';
+    this.reservationService.filterReservations(undefined, undefined, undefined, undefined, undefined, 0, 1000).subscribe({
       next: (page) => {
-        this.reservations = page.content;
-        this.dataSource.data = page.content;
+        const data = page?.content || [];
+        this.reservations = data;
+        this.dataSource.data = data;
         this.loading = false;
+        this.cdr.markForCheck();
       },
-      error: () => {
+      error: (err) => {
+        console.error('Failed to load reservations', err);
         this.errorMessage = 'Failed to load table reservations ledger.';
         this.loading = false;
+        this.cdr.markForCheck();
       }
     });
   }
 
   loadRooms(): void {
-    this.roomService.filterTables().subscribe(page => {
-      this.rooms = page.content;
+    this.roomService.filterTables(undefined, undefined, undefined, 0, 1000).subscribe({
+      next: (page) => {
+        this.rooms = page?.content || [];
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.rooms = [];
+        this.cdr.markForCheck();
+      }
     });
   }
 
   loadCustomers(): void {
-    this.customerService.searchCustomers(undefined, 0, 100).subscribe(page => {
-      this.customers = page.content;
+    this.customerService.searchCustomers(undefined, 0, 1000).subscribe({
+      next: (page) => {
+        this.customers = page?.content || [];
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.customers = [];
+        this.cdr.markForCheck();
+      }
     });
   }
 
   loadHotelReservations(): void {
     this.loading = true;
-    this.hotelReservationService.filterReservations(undefined, undefined, undefined, undefined, undefined, 0, 100).subscribe({
+    this.errorMessage = '';
+    this.hotelReservationService.filterReservations(undefined, undefined, undefined, undefined, undefined, 0, 1000).subscribe({
       next: (page) => {
-        this.hotelReservations = page.content;
-        this.hotelDataSource.data = page.content;
+        const data = page?.content || [];
+        this.hotelReservations = data;
+        this.hotelDataSource.data = data;
         this.loading = false;
+        this.cdr.markForCheck();
       },
-      error: () => {
+      error: (err) => {
+        console.error('Failed to load hotel reservations', err);
         this.errorMessage = 'Failed to load hotel room reservations ledger.';
         this.loading = false;
+        this.cdr.markForCheck();
       }
     });
   }
 
   loadHotelRooms(): void {
-    this.hotelRoomService.filterRooms(undefined, undefined, 0, 100).subscribe(page => {
-      this.hotelRooms = page.content.filter(r => r.status?.toUpperCase() === 'AVAILABLE');
+    this.hotelRoomService.filterRooms(undefined, undefined, 0, 1000).subscribe({
+      next: (page) => {
+        const data = page?.content || [];
+        this.hotelRooms = data.filter(r => r.status?.toUpperCase() === 'AVAILABLE');
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.hotelRooms = [];
+        this.cdr.markForCheck();
+      }
     });
   }
 

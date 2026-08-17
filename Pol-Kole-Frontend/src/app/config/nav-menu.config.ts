@@ -102,6 +102,7 @@ export const NAV_MENU = [
   {
     name: 'Customers & Loyalty',
     icon: 'people',
+    route: '/main/customers',
     roles: ['ADMIN', 'MANAGER', 'WAITER', 'CASHIER'],
     children: [
       { name: 'Guests Directory', route: '/main/customers', roles: ['ADMIN', 'MANAGER', 'WAITER', 'CASHIER'] },

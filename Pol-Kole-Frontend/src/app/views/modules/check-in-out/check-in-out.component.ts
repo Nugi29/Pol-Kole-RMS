@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { CheckInOutService, CheckIn, CheckOut } from '../../../services/check-in-out.service';
 import { HotelReservation, HotelReservationService } from '../../../services/hotel-reservation.service';
 import { ReservationService } from '../../../services/reservation.service';
@@ -36,29 +37,40 @@ export class CheckInOutComponent implements OnInit {
     private readonly checkInOutService: CheckInOutService,
     private readonly roomReservationService: HotelReservationService,
     private readonly tableReservationService: ReservationService,
-    private readonly route: ActivatedRoute
+    private readonly route: ActivatedRoute,
+    private readonly cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
+    this.loadReservations();
     this.route.queryParams.subscribe(params => {
       if (params['tab']) {
         this.activeTab = params['tab'];
       }
       this.loadReservations();
+      this.cdr.markForCheck();
     });
   }
 
   loadReservations(): void {
     this.loading = true;
+    this.errorMessage = '';
     const roomStatus = this.activeTab === 'arrivals' ? 'CONFIRMED' : 'CHECKED_IN';
     const tableStatusId = this.activeTab === 'arrivals' ? 2 : 3; // 2=Confirmed, 3=Checked In
 
     forkJoin({
-      rooms: this.roomReservationService.filterReservations(undefined, undefined, roomStatus, undefined, undefined, 0, 100),
-      tables: this.tableReservationService.filterReservations(undefined, undefined, tableStatusId, undefined, undefined, 0, 100)
+      rooms: this.roomReservationService.filterReservations(undefined, undefined, roomStatus, undefined, undefined, 0, 1000).pipe(
+        catchError(() => of({ content: [] } as any))
+      ),
+      tables: this.tableReservationService.filterReservations(undefined, undefined, tableStatusId, undefined, undefined, 0, 1000).pipe(
+        catchError(() => of({ content: [] } as any))
+      )
     }).subscribe({
       next: (results) => {
-        const roomItems: FrontDeskItem[] = results.rooms.content.map(res => ({
+        const roomList = results.rooms?.content || [];
+        const tableList = results.tables?.content || [];
+
+        const roomItems: FrontDeskItem[] = roomList.map((res: any) => ({
           id: res.id!,
           type: 'ROOM',
           customerName: res.customerName || '',
@@ -70,7 +82,7 @@ export class CheckInOutComponent implements OnInit {
           status: res.status || ''
         }));
 
-        const tableItems: FrontDeskItem[] = results.tables.content.map(res => ({
+        const tableItems: FrontDeskItem[] = tableList.map((res: any) => ({
           id: res.id!,
           type: 'TABLE',
           customerName: res.customerName || '',
@@ -84,10 +96,13 @@ export class CheckInOutComponent implements OnInit {
 
         this.reservations = [...roomItems, ...tableItems];
         this.loading = false;
+        this.cdr.markForCheck();
       },
-      error: () => {
+      error: (err) => {
+        console.error('Failed to load front desk reservations', err);
         this.errorMessage = 'Failed to load reservations.';
         this.loading = false;
+        this.cdr.markForCheck();
       }
     });
   }

@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatTableDataSource } from '@angular/material/table';
@@ -52,50 +52,92 @@ export class OrdersComponent implements OnInit {
     private readonly menuService: MenuService,
     private readonly reservationService: HotelReservationService,
     private readonly tableReservationService: ReservationService,
-    private readonly route: ActivatedRoute
+    private readonly route: ActivatedRoute,
+    private readonly cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
+    this.loadAll();
+    this.route.queryParams.subscribe(params => {
+      if (params['tab']) {
+        this.activeTab = params['tab'];
+      }
+      this.loadAll();
+      this.cdr.markForCheck();
+    });
+  }
+
+  loadAll(): void {
     this.loadTables();
     this.loadCustomers();
     this.loadMenuItems();
     this.loadOrders();
     this.loadCheckedInReservations();
     this.loadCheckedInTableReservations();
-    this.route.queryParams.subscribe(params => {
-      if (params['tab']) {
-        this.activeTab = params['tab'];
+  }
+
+  loadTables(): void {
+    this.tableService.filterTables('OCCUPIED', undefined, undefined, 0, 1000).subscribe({
+      next: (page) => {
+        this.tables = page?.content || [];
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.tables = [];
+        this.cdr.markForCheck();
       }
     });
   }
 
-  loadTables(): void {
-    this.tableService.filterTables('OCCUPIED', undefined, undefined, 0, 100).subscribe(page => {
-      this.tables = page.content;
-    });
-  }
-
   loadCustomers(): void {
-    this.customerService.searchCustomers(undefined, 0, 100).subscribe(page => {
-      this.customers = page.content;
+    this.customerService.searchCustomers(undefined, 0, 1000).subscribe({
+      next: (page) => {
+        this.customers = page?.content || [];
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.customers = [];
+        this.cdr.markForCheck();
+      }
     });
   }
 
   loadMenuItems(): void {
-    this.menuService.filterMenuItems(undefined, true, undefined, 0, 100).subscribe(page => {
-      this.menuItems = page.content;
+    this.menuService.filterMenuItems(undefined, true, undefined, 0, 1000).subscribe({
+      next: (page) => {
+        this.menuItems = page?.content || [];
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.menuItems = [];
+        this.cdr.markForCheck();
+      }
     });
   }
 
   loadCheckedInReservations(): void {
-    this.reservationService.filterReservations(undefined, undefined, 'CHECKED_IN').subscribe(page => {
-      this.checkedInReservations = page.content;
+    this.reservationService.filterReservations(undefined, undefined, 'CHECKED_IN', undefined, undefined, 0, 1000).subscribe({
+      next: (page) => {
+        this.checkedInReservations = page?.content || [];
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.checkedInReservations = [];
+        this.cdr.markForCheck();
+      }
     });
   }
 
   loadCheckedInTableReservations(): void {
-    this.tableReservationService.filterReservations(undefined, undefined, 3, undefined, undefined, 0, 100).subscribe(page => {
-      this.checkedInTableReservations = page.content;
+    this.tableReservationService.filterReservations(undefined, undefined, 3, undefined, undefined, 0, 1000).subscribe({
+      next: (page) => {
+        this.checkedInTableReservations = page?.content || [];
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.checkedInTableReservations = [];
+        this.cdr.markForCheck();
+      }
     });
   }
 
@@ -121,15 +163,20 @@ export class OrdersComponent implements OnInit {
 
   loadOrders(): void {
     this.loading = true;
-    this.orderService.filterOrders().subscribe({
+    this.errorMessage = '';
+    this.orderService.filterOrders(undefined, undefined, undefined, 0, 1000).subscribe({
       next: (page) => {
-        this.orders = page.content;
-        this.dataSource.data = page.content;
+        const data = page?.content || [];
+        this.orders = data;
+        this.dataSource.data = data;
         this.loading = false;
+        this.cdr.markForCheck();
       },
-      error: () => {
+      error: (err) => {
+        console.error('Failed to load orders', err);
         this.errorMessage = 'Failed to load order history.';
         this.loading = false;
+        this.cdr.markForCheck();
       }
     });
   }

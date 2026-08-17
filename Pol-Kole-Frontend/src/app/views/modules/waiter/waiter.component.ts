@@ -1,11 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { ApiResponse, RoomService, Room } from '../../../services/room.service';
 import { TableService, RestaurantTable } from '../../../services/table.service';
 import { KitchenOrder } from '../kitchen/kitchen.component';
-import { map } from 'rxjs/operators';
-import { forkJoin } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
+import { forkJoin, of } from 'rxjs';
 
 @Component({
   selector: 'app-waiter',
@@ -28,15 +28,18 @@ export class WaiterComponent implements OnInit {
     private readonly http: HttpClient,
     private readonly route: ActivatedRoute,
     private readonly roomService: RoomService,
-    private readonly tableService: TableService
+    private readonly tableService: TableService,
+    private readonly cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
+    this.syncBoard();
     this.route.queryParams.subscribe(params => {
       if (params['tab']) {
         this.activeTab = params['tab'];
       }
       this.syncBoard();
+      this.cdr.markForCheck();
     });
   }
 
@@ -53,17 +56,24 @@ export class WaiterComponent implements OnInit {
     this.errorMessage = '';
     
     forkJoin({
-      rooms: this.roomService.filterRooms('CLEANING', undefined, 0, 100),
-      tables: this.tableService.filterTables('CLEANING', undefined, undefined, 0, 100)
+      rooms: this.roomService.filterRooms('CLEANING', undefined, 0, 1000).pipe(
+        catchError(() => of({ content: [] } as any))
+      ),
+      tables: this.tableService.filterTables('CLEANING', undefined, undefined, 0, 1000).pipe(
+        catchError(() => of({ content: [] } as any))
+      )
     }).subscribe({
       next: (res) => {
-        this.cleaningRooms = res.rooms.content;
-        this.cleaningTables = res.tables.content;
+        this.cleaningRooms = res.rooms?.content || [];
+        this.cleaningTables = res.tables?.content || [];
         this.loading = false;
+        this.cdr.markForCheck();
       },
-      error: () => {
+      error: (err) => {
+        console.error('Failed to load cleaning tasks', err);
         this.errorMessage = 'Failed to load cleaning tasks.';
         this.loading = false;
+        this.cdr.markForCheck();
       }
     });
   }
@@ -87,6 +97,7 @@ export class WaiterComponent implements OnInit {
       error: () => {
         this.errorMessage = `Failed to update Room ${room.roomNumber}.`;
         this.loading = false;
+        this.cdr.markForCheck();
       }
     });
   }
@@ -104,12 +115,13 @@ export class WaiterComponent implements OnInit {
 
     this.tableService.updateTable(table.id, updatedTable).subscribe({
       next: () => {
-        this.successMessage = `Table ${table.tableNumber} has been cleaned and is now available.`;
+        this.successMessage = `Table ${table.tableNumber} is now clean and available.`;
         this.loadCleaningTasks();
       },
       error: () => {
         this.errorMessage = `Failed to update Table ${table.tableNumber}.`;
         this.loading = false;
+        this.cdr.markForCheck();
       }
     });
   }
@@ -125,20 +137,23 @@ export class WaiterComponent implements OnInit {
       map(res => res.data)
     ).subscribe({
       next: (orders) => {
+        const orderList = orders || [];
         if (this.activeTab === 'ready') {
-          orders.sort((a, b) => {
+          orderList.sort((a, b) => {
             const timeA = a.startTime ? new Date(a.startTime).getTime() : 0;
             const timeB = b.startTime ? new Date(b.startTime).getTime() : 0;
             if (timeA !== timeB) return timeA - timeB;
             return (a.id || 0) - (b.id || 0);
           });
         }
-        this.kitchenOrders = orders;
+        this.kitchenOrders = orderList;
         this.loading = false;
+        this.cdr.markForCheck();
       },
       error: () => {
         this.errorMessage = `Failed to load ${status.toLowerCase()} orders.`;
         this.loading = false;
+        this.cdr.markForCheck();
       }
     });
   }

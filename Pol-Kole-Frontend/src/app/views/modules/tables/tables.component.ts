@@ -1,10 +1,8 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatTableDataSource } from '@angular/material/table';
 import { ActivatedRoute } from '@angular/router';
-import { BehaviorSubject, Observable } from 'rxjs';
-import { map, switchMap, tap } from 'rxjs/operators';
 import { RestaurantTable, TableLocation, TableService } from '../../../services/table.service';
 import { CodeService } from '../../../services/code.service';
 
@@ -15,17 +13,12 @@ import { CodeService } from '../../../services/code.service';
   styleUrl: './tables.component.css'
 })
 export class TablesComponent implements OnInit {
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
-
   locationDisplayedColumns = ['name', 'code', 'status', 'actions'];
   locationDataSource = new MatTableDataSource<TableLocation>([]);
 
   @ViewChild('locationPaginator') set locationPaginator(mp: MatPaginator) {
     this.locationDataSource.paginator = mp;
   }
-
-  private readonly refresh$ = new BehaviorSubject<void>(undefined);
-  tables$: Observable<RestaurantTable[]>;
 
   tables: RestaurantTable[] = [];
   displayedColumns = ['tableNumber', 'capacity', 'location', 'status', 'actions'];
@@ -49,7 +42,8 @@ export class TablesComponent implements OnInit {
     private readonly fb: FormBuilder,
     private readonly tableService: TableService,
     private readonly route: ActivatedRoute,
-    private readonly codeService: CodeService
+    private readonly codeService: CodeService,
+    private readonly cdr: ChangeDetectorRef
   ) {
     this.form = this.fb.group({
       tableNumber: [''],
@@ -63,57 +57,58 @@ export class TablesComponent implements OnInit {
       code: ['', [Validators.required, Validators.maxLength(20), Validators.pattern('^[a-zA-Z0-9-]+$')]],
       isActive: [true]
     });
-
-    this.tables$ = this.refresh$.pipe(
-      tap(() => this.loading = true),
-      switchMap(() => this.tableService.filterTables()),
-      map(page => page.content),
-      tap({
-        next: (data) => {
-          this.tables = data;
-          this.dataSource.data = data;
-          if (this.paginator) {
-            this.dataSource.paginator = this.paginator;
-          }
-          this.loading = false;
-        },
-        error: () => {
-          this.errorMessage = 'Failed to load restaurant tables.';
-          this.loading = false;
-        }
-      })
-    );
   }
 
   ngOnInit(): void {
     this.loadLocations();
+    this.loadTables();
     this.route.queryParams.subscribe(params => {
       if (params['tab']) {
         this.activeTab = params['tab'];
       }
       this.loadTables();
+      this.loadLocations();
+      this.cdr.markForCheck();
     });
-
-    // Activate the reactive stream subscription
-    this.tables$.subscribe();
   }
 
   loadTables(): void {
-    this.refresh$.next();
+    this.loading = true;
+    this.errorMessage = '';
+    this.tableService.filterTables(undefined, undefined, undefined, 0, 1000).subscribe({
+      next: (page) => {
+        const data = page?.content || [];
+        this.tables = data;
+        this.dataSource.data = data;
+        this.loading = false;
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Failed to load restaurant tables', err);
+        this.errorMessage = 'Failed to load restaurant tables.';
+        this.loading = false;
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   loadLocations(): void {
     this.locationLoading = true;
+    this.locationErrorMessage = '';
     this.tableService.getTableLocations().subscribe({
       next: (data) => {
-        this.locations = data;
-        this.locationDataSource.data = data;
-        this.activeLocations = data.filter(loc => loc.isActive);
+        const list = data || [];
+        this.locations = list;
+        this.locationDataSource.data = list;
+        this.activeLocations = list.filter(loc => loc.isActive);
         this.locationLoading = false;
+        this.cdr.markForCheck();
       },
-      error: () => {
+      error: (err) => {
+        console.error('Failed to load table locations', err);
         this.locationErrorMessage = 'Failed to load table locations.';
         this.locationLoading = false;
+        this.cdr.markForCheck();
       }
     });
   }

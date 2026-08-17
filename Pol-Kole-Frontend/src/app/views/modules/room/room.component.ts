@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatTableDataSource } from '@angular/material/table';
@@ -41,7 +41,8 @@ export class RoomComponent implements OnInit {
     private readonly fb: FormBuilder,
     private readonly roomService: RoomService,
     private readonly route: ActivatedRoute,
-    private readonly codeService: CodeService
+    private readonly codeService: CodeService,
+    private readonly cdr: ChangeDetectorRef
   ) {
     this.form = this.fb.group({
       floor: [1, Validators.required],
@@ -67,6 +68,9 @@ export class RoomComponent implements OnInit {
       if (params['tab']) {
         this.activeTab = params['tab'];
       }
+      this.loadRooms();
+      this.loadRoomTypes();
+      this.cdr.markForCheck();
     });
 
     this.form.get('floor')?.valueChanges.subscribe(f => {
@@ -82,6 +86,7 @@ export class RoomComponent implements OnInit {
     this.roomService.getRoomTypes().subscribe({
       next: (types) => {
         this.roomTypes = types;
+        this.cdr.markForCheck();
         // If there are no room types, seed a default one
         if (types.length === 0) {
           this.seedDefaultRoomTypes();
@@ -98,7 +103,10 @@ export class RoomComponent implements OnInit {
     ];
 
     defaults.forEach(t => {
-      this.roomService.createRoomType(t as any).subscribe(() => this.roomService.getRoomTypes().subscribe(res => this.roomTypes = res));
+      this.roomService.createRoomType(t as any).subscribe(() => this.roomService.getRoomTypes().subscribe(res => {
+        this.roomTypes = res;
+        this.cdr.markForCheck();
+      }));
     });
   }
 
@@ -109,10 +117,12 @@ export class RoomComponent implements OnInit {
         this.rooms = page.content;
         this.dataSource.data = page.content;
         this.loading = false;
+        this.cdr.markForCheck();
       },
       error: () => {
         this.errorMessage = 'Failed to load hotel rooms directory.';
         this.loading = false;
+        this.cdr.markForCheck();
       }
     });
   }

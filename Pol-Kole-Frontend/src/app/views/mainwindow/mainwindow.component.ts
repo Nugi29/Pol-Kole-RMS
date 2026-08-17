@@ -69,14 +69,13 @@ export class MainwindowComponent implements OnInit {
     this.expandedGroups[group] = !this.expandedGroups[group];
   }
   onGroupClick(item: NavMenuItem): void {
-    if (this.isSidebarCollapsed) {
-      const targetRoute = item.route ?? item.children?.[0]?.route;
-      if (targetRoute) {
-        this.router.navigateByUrl(targetRoute);
-        return;
-      }
+    this.expandedGroups[item.name] = true;
+    const targetRoute = item.route ?? item.children?.[0]?.route;
+    if (targetRoute) {
+      const path = this.getRoutePath(targetRoute);
+      const queryParams = this.getRouteQueryParams(targetRoute);
+      this.router.navigate([path], { queryParams });
     }
-    this.toggleGroup(item.name);
   }
   isGroupExpanded(group: string): boolean {
     return !!this.expandedGroups[group];
