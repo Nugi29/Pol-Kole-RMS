@@ -1,20 +1,18 @@
-import { Component, HostListener, OnInit, ViewChild } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
-import { MatDialog } from '@angular/material/dialog';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatTableDataSource } from '@angular/material/table';
 
+import { DialogService } from '../../../services/dialog.service';
 import { LookupRes, LookupService } from '../../../services/lookup.service';
 import { FullUserRes, UserService } from '../../../services/user.service';
-import { ConfirmComponent } from '../../../shared/dialog/confirm/confirm.component';
-import { MessageComponent } from '../../../shared/dialog/message/message.component';
 import { compareById } from '../../../shared/utils/ui-utils';
 import {
-  createUserSearchFilter,
   matchesUserSearch,
   toCreateUserPayload,
   toUpdateUserPayload,
   UserFormValue,
+  UserSearchValue,
 } from './user.helpers';
 
 @Component({
@@ -28,216 +26,264 @@ export class UserComponent implements OnInit {
 
   @ViewChild(MatPaginator) set matPaginator(mp: MatPaginator) {
     this.paginator = mp;
-    this.data.paginator = mp;
+    this.dataSource.paginator = mp;
   }
 
-  gridCols = 12;
-  formColSpan = 5;
-  formRowSpan = 6;
-  searchColSpan = 7;
-  searchRowSpan = 2;
-  tableColSpan = 7;
-  tableRowSpan = 4;
-
+  // Data
   roles: LookupRes[] = [];
   statuses: LookupRes[] = [];
   users: FullUserRes[] = [];
+  filteredUsers: FullUserRes[] = [];
 
-  readonly displayedColumns = ['name', 'email', 'status', 'type', 'createdOn'];
-  readonly data = new MatTableDataSource<FullUserRes>([]);
-  readonly compareLookupById = compareById;
+  // Table
+  displayedColumns = ['name', 'email', 'phone', 'role', 'status', 'createdOn', 'actions'];
+  dataSource = new MatTableDataSource<FullUserRes>([]);
+  compareLookupById = compareById;
 
-  canAdd = true;
-  canUpdate = false;
-  canDelete = false;
-  selectedRow: FullUserRes | null = null;
-
+  // State
   form: FormGroup;
-  searchForm: FormGroup;
+  editingId: number | null = null;
+  loading = false;
+  errorMessage = '';
+  searchQuery = '';
+  selectedRoleId: number | null = null;
+  selectedStatusId: number | null = null;
 
-  private readonly dialogWidth = '420px';
+  // Counter metrics
+  totalUsersCount = 0;
+  activeUsersCount = 0;
+  adminCount = 0;
+  managerCount = 0;
 
   constructor(
     private readonly fb: FormBuilder,
-    private readonly ls: LookupService,
-    private readonly us: UserService,
-    private readonly dialog: MatDialog,
+    private readonly lookupService: LookupService,
+    private readonly userService: UserService,
+    private readonly dialogService: DialogService,
   ) {
     this.form = this.fb.group(
       {
-        username: [''],
-        email: [''],
+        username: ['', [Validators.required, Validators.maxLength(100)]],
+        email: ['', [Validators.required, Validators.email, Validators.maxLength(100)]],
         password: [''],
         confirmpassword: [''],
-        phone: [''],
-        userroles: [null as LookupRes | null],
-        userstatuses: [null as LookupRes | null],
-        updated: [{ value: new Date().toLocaleString(), disabled: true }],
+        phone: ['', [Validators.required, Validators.maxLength(20)]],
+        userroles: [null as LookupRes | null, [Validators.required]],
+        userstatuses: [null as LookupRes | null, [Validators.required]],
       },
-      { updateOn: 'change' },
+      { validators: this.passwordMatchValidator }
     );
-
-    this.searchForm = this.fb.group({
-      ssusername: [''],
-      ssrole: [null as number | null],
-    });
-
-    this.form.get('email')?.valueChanges.subscribe(() => {
-      this.clearDuplicateEmailError();
-    });
-
-    this.data.filterPredicate = (row: FullUserRes, filter: string): boolean => matchesUserSearch(row, filter);
   }
 
   ngOnInit(): void {
-    this.syncLayout(window.innerWidth);
     this.loadLookups();
-    this.loadTable();
+    this.loadUsers();
   }
 
-  @HostListener('window:resize', ['$event'])
-  onWindowResize(event: Event): void {
-    const target = event.target as Window;
-    this.syncLayout(target.innerWidth);
+  private passwordMatchValidator(group: AbstractControl): ValidationErrors | null {
+    const password = group.get('password')?.value;
+    const confirm = group.get('confirmpassword')?.value;
+    if (password && confirm && password !== confirm) {
+      return { passwordMismatch: true };
+    }
+    return null;
   }
 
-  private loadLookups(): void {
-    this.ls.getAllUserRoles().subscribe({
-      next: (roles: LookupRes[]) => {
+  loadLookups(): void {
+    this.lookupService.getAllUserRoles().subscribe({
+      next: (roles) => {
         this.roles = roles || [];
       },
       error: (err) => {
         console.error('Failed to load user roles', err);
         this.roles = [];
-      }
+      },
     });
 
-    this.ls.getAllUserStatuses().subscribe({
-      next: (status: LookupRes[]) => {
-        this.statuses = status || [];
+    this.lookupService.getAllUserStatuses().subscribe({
+      next: (statuses) => {
+        this.statuses = statuses || [];
       },
       error: (err) => {
         console.error('Failed to load user statuses', err);
         this.statuses = [];
-      }
+      },
     });
   }
 
-  loadTable(): void {
-    this.us.getAllUsers().subscribe({
+  loadUsers(): void {
+    this.loading = true;
+    this.errorMessage = '';
+    this.userService.getAllUsers().subscribe({
       next: (users: FullUserRes[]) => {
-        const list = users || [];
-        this.users = list;
-        this.data.data = list;
+        const data = users || [];
+        this.users = data;
+        this.applyFilters();
+        this.calculateMetrics();
+        this.loading = false;
       },
       error: (err) => {
         console.error('Failed to load users', err);
+        this.errorMessage = 'Failed to load staff accounts directory.';
         this.users = [];
-        this.data.data = [];
-      }
+        this.applyFilters();
+        this.calculateMetrics();
+        this.loading = false;
+      },
     });
   }
 
-  add(): void {
+  calculateMetrics(): void {
+    this.totalUsersCount = this.users.length;
+    this.activeUsersCount = this.users.filter(
+      (u) => u.status?.name?.toLowerCase() === 'active' || u.status?.id === 1
+    ).length;
+    this.adminCount = this.users.filter(
+      (u) => u.role?.name?.toLowerCase() === 'admin' || u.role?.id === 1
+    ).length;
+    this.managerCount = this.users.filter(
+      (u) => u.role?.name?.toLowerCase() === 'manager' || u.role?.id === 2
+    ).length;
+  }
+
+  applyFilters(): void {
+    const filterState: UserSearchValue = {
+      query: this.searchQuery,
+      roleId: this.selectedRoleId,
+      statusId: this.selectedStatusId,
+    };
+
+    this.filteredUsers = this.users.filter((u) => matchesUserSearch(u, filterState));
+    this.dataSource.data = this.filteredUsers;
+    this.paginator?.firstPage();
+  }
+
+  resetFilters(): void {
+    this.searchQuery = '';
+    this.selectedRoleId = null;
+    this.selectedStatusId = null;
+    this.applyFilters();
+  }
+
+  saveUser(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
 
-    const payload = toCreateUserPayload(this.form.getRawValue() as UserFormValue);
-    this.us.create(payload).subscribe({
-      next: () => {
-        this.loadTable();
-        this.clear();
-        this.showMessage('Success', 'User created successfully.');
-      },
-      error: (error) => {
-        if (error?.status === 409) {
-          this.setDuplicateEmailError();
-          this.showMessage('Duplicate Email', 'A user with this email already exists.');
-          return;
-        }
+    const formValue = this.form.getRawValue() as UserFormValue;
+    this.loading = true;
+    this.errorMessage = '';
 
-        console.error('Failed to create user', error);
-        this.showMessage('Create Failed', 'Unable to create the user right now. Please try again.');
-      },
-    });
-  }
-
-  enableButtons(add: boolean, upd: boolean, del: boolean): void {
-    this.canAdd = add;
-    this.canUpdate = upd;
-    this.canDelete = del;
-  }
-
-  update(): void {
-    if (!this.selectedRow) {
-      return;
-    }
-
-    const selectedId = this.selectedRow.id;
-    const selectedName = this.selectedRow.name;
-    const payload = toUpdateUserPayload(this.form.getRawValue() as UserFormValue, selectedId);
-
-    this.us.update(selectedId, payload).subscribe({
-      next: () => {
-        this.loadTable();
-        this.clear();
-        this.showMessage('Success', `User "${selectedName}" updated successfully.`);
-      },
-      error: (error) => {
-        if (error?.status === 409) {
-          this.setDuplicateEmailError();
-          this.showMessage('Duplicate Email', 'A user with this email already exists.');
-          return;
-        }
-
-        console.error('Failed to update user', error);
-        this.showMessage('Update Failed', 'Unable to update the user right now. Please try again.');
-      },
-    });
-  }
-
-  delete(): void {
-    if (!this.selectedRow) {
-      return;
-    }
-
-    const selectedId = this.selectedRow.id;
-    const selectedName = this.selectedRow.name;
-
-    this.confirmAction('Confirm Delete', `Are you sure you want to delete "${selectedName}"?<br>This action cannot be undone.`)
-      .subscribe((confirmed: boolean) => {
-        if (confirmed) {
-          this.deleteConfirmed(selectedId, selectedName);
-        }
+    if (this.editingId) {
+      // Update existing employee
+      const payload = toUpdateUserPayload(formValue, this.editingId);
+      this.userService.update(this.editingId, payload).subscribe({
+        next: () => {
+          this.loadUsers();
+          this.clearForm();
+          this.loading = false;
+          this.dialogService.showSuccess('Staff Updated', 'Employee profile updated successfully.');
+        },
+        error: (err) => {
+          this.loading = false;
+          if (err?.status === 409) {
+            this.errorMessage = 'An employee with this company email already exists.';
+          } else {
+            this.errorMessage = err.error?.message || 'Failed to update employee profile.';
+          }
+          this.dialogService.showError('Update Failed', this.errorMessage);
+        },
       });
+    } else {
+      // Create new employee
+      const payload = toCreateUserPayload(formValue);
+      this.userService.create(payload).subscribe({
+        next: () => {
+          this.loadUsers();
+          this.clearForm();
+          this.loading = false;
+          this.dialogService.showSuccess('Staff Registered', 'New employee account registered successfully.');
+        },
+        error: (err) => {
+          this.loading = false;
+          if (err?.status === 409) {
+            this.errorMessage = 'An employee with this company email already exists.';
+          } else {
+            this.errorMessage = err.error?.message || 'Failed to register employee account.';
+          }
+          this.dialogService.showError('Registration Failed', this.errorMessage);
+        },
+      });
+    }
   }
 
-  private deleteConfirmed(selectedId: number, selectedName: string): void {
-    this.us.delete(selectedId).subscribe({
-      next: () => {
-        this.loadTable();
-        this.clear();
-        this.showMessage('Deleted', `User "${selectedName}" deleted successfully.`);
-      },
-      error: (error) => {
-        console.error('Failed to delete user', error);
-        this.showMessage('Delete Failed', 'Unable to delete the user right now. Please try again.');
-      },
+  editUser(user: FullUserRes): void {
+    this.editingId = user.id || null;
+    this.errorMessage = '';
+
+    const matchedRole = this.roles.find((r) => r.id === user.role?.id) || user.role;
+    const matchedStatus = this.statuses.find((s) => s.id === user.status?.id) || user.status;
+
+    this.form.patchValue({
+      username: user.name,
+      email: user.email,
+      password: '',
+      confirmpassword: '',
+      phone: user.phone || '',
+      userroles: matchedRole,
+      userstatuses: matchedStatus,
     });
+
+    this.form.get('password')?.setValidators([Validators.minLength(6)]);
+    this.form.get('password')?.updateValueAndValidity();
   }
 
-  requestClear(): void {
-    this.confirmAction('Confirm Clear', 'Do you want to clear all form fields?<br>Unsaved changes will be lost.').subscribe((confirmed: boolean) => {
+  deleteUser(id: number): void {
+    const user = this.users.find((u) => u.id === id);
+    const userLabel = user ? `staff account for "${user.name}"` : 'this staff account';
+    
+    this.dialogService.confirmDelete(
+      userLabel,
+      `Are you sure you want to delete ${userLabel}?<br>System login and module privileges will be removed.`
+    ).subscribe((confirmed) => {
       if (confirmed) {
-        this.clear();
-        this.showMessage('Cleared', 'Form fields cleared successfully.');
+        this.loading = true;
+        this.userService.delete(id).subscribe({
+          next: () => {
+            this.loadUsers();
+            this.loading = false;
+            this.dialogService.showSuccess('Account Removed', `${userLabel} was removed successfully.`);
+          },
+          error: (err) => {
+            console.error('Failed to delete user', err);
+            this.loading = false;
+            this.errorMessage = 'Failed to remove user account.';
+            this.dialogService.showError('Delete Failed', this.errorMessage);
+          },
+        });
       }
     });
   }
 
-  clear(): void {
+  requestClear(): void {
+    if (this.form.dirty || this.editingId) {
+      this.dialogService.confirmClear().subscribe((confirmed) => {
+        if (confirmed) {
+          this.clearForm();
+          this.dialogService.showSuccess('Cleared', 'Form fields cleared successfully.');
+        }
+      });
+    } else {
+      this.clearForm();
+    }
+  }
+
+  clearForm(): void {
+    this.editingId = null;
+    this.errorMessage = '';
+    const defaultStatus = this.statuses.find((s) => s.name?.toLowerCase() === 'active') || this.statuses[0] || null;
+
     this.form.reset({
       username: '',
       email: '',
@@ -245,111 +291,29 @@ export class UserComponent implements OnInit {
       confirmpassword: '',
       phone: '',
       userroles: null,
-      userstatuses: null,
-      updated: this.now(),
+      userstatuses: defaultStatus,
     });
-    this.clearDuplicateEmailError();
-    this.selectedRow = null;
-    this.enableButtons(true, false, false);
+
+    this.form.get('password')?.setValidators([Validators.required, Validators.minLength(6)]);
+    this.form.get('password')?.updateValueAndValidity();
   }
 
-  fillForm(row: FullUserRes): void {
-    this.selectedRow = row;
-    const selectedRole = this.roles.find((item) => item.id === row.role?.id) ?? row.role;
-    const selectedStatus = this.statuses.find((item) => item.id === row.status?.id) ?? row.status;
-
-    this.form.patchValue({
-      username: row.name,
-      email: row.email,
-      password: '',
-      confirmpassword: '',
-      phone: row.phone,
-      userroles: selectedRole,
-      userstatuses: selectedStatus,
-      updated: this.now(),
-    });
-    this.enableButtons(false, true, true);
-   }
-
-  private setDuplicateEmailError(): void {
-    const emailControl = this.form.get('email');
-    if (!emailControl) {
-      return;
+  getRoleBadgeClass(roleName?: string): string {
+    switch (roleName?.toLowerCase()) {
+      case 'admin':
+        return 'bg-purple-50 text-purple-700 border border-purple-200';
+      case 'manager':
+        return 'bg-blue-50 text-blue-700 border border-blue-200';
+      case 'receptionist':
+        return 'bg-amber-50 text-amber-700 border border-amber-200';
+      case 'chef':
+        return 'bg-rose-50 text-rose-700 border border-rose-200';
+      case 'waiter':
+        return 'bg-emerald-50 text-emerald-700 border border-emerald-200';
+      case 'cashier':
+        return 'bg-cyan-50 text-cyan-700 border border-cyan-200';
+      default:
+        return 'bg-slate-100 text-slate-700 border border-slate-200';
     }
-
-    emailControl.setErrors(
-      emailControl.errors ? { ...emailControl.errors, duplicateEmail: true } : { duplicateEmail: true },
-    );
-    emailControl.markAsTouched();
   }
-
-  private clearDuplicateEmailError(): void {
-    const emailControl = this.form.get('email');
-    if (!emailControl?.errors?.['duplicateEmail']) {
-      return;
-    }
-
-    const { duplicateEmail, ...otherErrors } = emailControl.errors;
-    emailControl.setErrors(Object.keys(otherErrors).length ? otherErrors : null);
-  }
-
-  private showMessage(heading: string, message: string): void {
-    this.dialog.open(MessageComponent, {
-      width: this.dialogWidth,
-      data: { heading, message },
-    });
-  }
-
-  btnSearchMc(): void {
-    this.data.filter = createUserSearchFilter(this.searchForm.getRawValue());
-    this.paginator?.firstPage();
-  }
-
-  btnSearchClearMc(): void {
-    this.searchForm.reset({ ssusername: '', ssrole: null });
-    this.data.filter = '';
-    this.data.data = this.users;
-    this.paginator?.firstPage();
-  }
-
-  private confirmAction(heading: string, message: string) {
-    return this.dialog.open(ConfirmComponent, {
-      width: this.dialogWidth,
-      data: { heading, message },
-    }).afterClosed();
-  }
-
-  private now(): string {
-    return new Date().toLocaleString();
-  }
-
-  private syncLayout(width: number): void {
-    if (width < 900) {
-      this.applyCompactLayout();
-      return;
-    }
-
-    this.applyDesktopLayout();
-  }
-
-  private applyCompactLayout(): void {
-    this.gridCols = 1;
-    this.formColSpan = 1;
-    this.formRowSpan = 4;
-    this.searchColSpan = 1;
-    this.searchRowSpan = 1;
-    this.tableColSpan = 1;
-    this.tableRowSpan = 3;
-  }
-
-  private applyDesktopLayout(): void {
-    this.gridCols = 12;
-    this.formColSpan = 5;
-    this.formRowSpan = 6;
-    this.searchColSpan = 7;
-    this.searchRowSpan = 2;
-    this.tableColSpan = 7;
-    this.tableRowSpan = 4;
-  }
-
 }

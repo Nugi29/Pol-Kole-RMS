@@ -14,8 +14,9 @@ export interface UserFormValue {
 }
 
 export interface UserSearchValue {
-  ssusername: string;
-  ssrole: number | null;
+  query: string;
+  roleId: number | null;
+  statusId: number | null;
 }
 
 export function toCreateUserPayload(value: UserFormValue): CreateUserPayload {
@@ -45,21 +46,30 @@ export function toUpdateUserPayload(value: UserFormValue, id?: number): UpdateUs
   };
 }
 
-export function createUserSearchFilter(value: UserSearchValue): string {
-  return buildSearchFilter(value.ssusername, value.ssrole);
-}
+export function matchesUserSearch<T extends FullUserRes>(
+  row: T,
+  search: { query: string; roleId: number | null; statusId: number | null }
+): boolean {
+  if (search.roleId != null && row.role?.id !== search.roleId) {
+    return false;
+  }
 
-export function matchesUserSearch<T extends FullUserRes>(row: T, filter: string): boolean {
-  if (!filter.trim()) {
+  if (search.statusId != null && row.status?.id !== search.statusId) {
+    return false;
+  }
+
+  if (!search.query.trim()) {
     return true;
   }
 
-  const criteria = parseSearchFilter(filter);
+  const q = search.query.toLowerCase().trim();
+  const nameMatch = (row.name || '').toLowerCase().includes(q);
+  const emailMatch = (row.email || '').toLowerCase().includes(q);
+  const phoneMatch = (row.phone || '').toLowerCase().includes(q);
+  const roleMatch = (row.role?.name || '').toLowerCase().includes(q);
 
-  return matchesSearchFilter(row, criteria, {
-    text: (item) => item.name,
-    roleId: (item) => item.role?.id ?? null,
-  });
+  return nameMatch || emailMatch || phoneMatch || roleMatch;
 }
+
 
 

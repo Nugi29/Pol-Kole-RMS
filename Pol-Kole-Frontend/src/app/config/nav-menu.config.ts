@@ -108,6 +108,12 @@ export const NAV_MENU = [
     ],
   },
   {
+    name: 'Staff & Users',
+    icon: 'manage_accounts',
+    route: '/main/users',
+    roles: ['ADMIN'],
+  },
+  {
     name: 'Audit Logging',
     icon: 'admin_panel_settings',
     route: '/main/audit-logs',

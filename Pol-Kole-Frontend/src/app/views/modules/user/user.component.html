@@ -1,157 +1,321 @@
-<mat-grid-list [cols]="gridCols" rowHeight="fit" gutterSize="10px" class="container">
-  <mat-grid-tile [colspan]="formColSpan" [rowspan]="formRowSpan">
-    <mat-card class="full-card card-elevated">
-      <mat-card-header class="card-header-custom">
-        <mat-card-title>User Details</mat-card-title>
-        <mat-card-subtitle>Create, update, or remove user accounts</mat-card-subtitle>
-      </mat-card-header>
+<div class="space-y-6 animate-fade-in">
+  <!-- Page Header -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-[22px] font-bold text-slate-900 leading-none flex items-center gap-2">
+        <span class="w-2.5 h-6 bg-indigo-600 rounded-full"></span>
+        Employee & User Management
+      </h1>
+      <p class="text-[13px] text-slate-400 mt-1.5">
+        Manage employee profiles, company credentials, assign system roles, and monitor account statuses.
+      </p>
+    </div>
+  </div>
 
-      <mat-card-content class="form-content">
-        <form [formGroup]="form" class="user-form" aria-label="User details form">
+  <!-- Status Counter Widgets -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-600 font-bold border border-slate-100">
+        {{ totalUsersCount }}
+      </div>
+      <div>
+        <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Staff</p>
+        <p class="text-[14px] font-extrabold text-slate-800">All Accounts</p>
+      </div>
+    </div>
 
-            <mat-form-field appearance="outline" class="form-field">
-              <mat-label>Username</mat-label>
-              <input matInput formControlName="username" aria-label="Username" />
-            </mat-form-field>
+    <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold border border-emerald-100">
+        {{ activeUsersCount }}
+      </div>
+      <div>
+        <p class="text-[11px] font-bold text-emerald-500 uppercase tracking-wider">Active Staff</p>
+        <p class="text-[14px] font-extrabold text-slate-800">Ready to Login</p>
+      </div>
+    </div>
 
-            <mat-form-field appearance="outline" class="form-field">
-              <mat-label>Email</mat-label>
-              <input matInput type="email" formControlName="email" aria-label="Email" />
-              <mat-error *ngIf="form.get('email')?.touched && form.get('email')?.hasError('duplicateEmail')">
-                A user with this email already exists.
-              </mat-error>
-            </mat-form-field>
+    <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold border border-purple-100">
+        {{ adminCount }}
+      </div>
+      <div>
+        <p class="text-[11px] font-bold text-purple-500 uppercase tracking-wider">Admins</p>
+        <p class="text-[14px] font-extrabold text-slate-800">Full Access</p>
+      </div>
+    </div>
 
-            <mat-form-field appearance="outline" class="form-field">
-              <mat-label>Password</mat-label>
-              <input matInput type="password" formControlName="password" aria-label="Password" />
-            </mat-form-field>
+    <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold border border-blue-100">
+        {{ managerCount }}
+      </div>
+      <div>
+        <p class="text-[11px] font-bold text-blue-500 uppercase tracking-wider">Managers</p>
+        <p class="text-[14px] font-extrabold text-slate-800">Floor & Desk</p>
+      </div>
+    </div>
+  </div>
 
-            <mat-form-field appearance="outline" class="form-field">
-              <mat-label>Confirm Password</mat-label>
-              <input matInput type="password" formControlName="confirmpassword" aria-label="Confirm password" />
-            </mat-form-field>
+  <!-- Main 2-Column Split: Form on Left, Table Directory on Right -->
+  <div class="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-6 items-start">
+    
+    <!-- Left Column: Employee Form Card -->
+    <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-50 pb-3">
+        <h2 class="text-[14px] font-bold text-slate-900 flex items-center gap-2">
+          <span class="w-1.5 h-3.5 bg-indigo-600 rounded-full"></span>
+          {{ editingId ? 'Update Staff Profile' : 'Register New Employee' }}
+        </h2>
+      </div>
 
-            <mat-form-field appearance="outline" class="form-field">
-              <mat-label>Phone</mat-label>
-              <input matInput type="tel" formControlName="phone" aria-label="Phone" />
-            </mat-form-field>
+      <div *ngIf="errorMessage" class="bg-red-50 border border-red-100 text-red-600 text-[12px] p-3 rounded-lg font-semibold">
+        {{ errorMessage }}
+      </div>
 
-            <mat-form-field appearance="outline" class="form-field">
-              <mat-label>User Role</mat-label>
-              <mat-select formControlName="userroles" [compareWith]="compareLookupById" aria-label="User role">
-                <mat-option *ngFor="let role of roles" [value]="role">{{ role.name }}</mat-option>
-              </mat-select>
-            </mat-form-field>
-
-          <mat-form-field appearance="outline" class="form-field">
-            <mat-label>User Status</mat-label>
-            <mat-select formControlName="userstatuses" [compareWith]="compareLookupById" aria-label="User status">
-              <mat-option *ngFor="let status of statuses" [value]="status">{{ status.name }}</mat-option>
-            </mat-select>
-          </mat-form-field>
-
-            <mat-form-field appearance="outline" class="form-field">
-              <mat-label>Updated</mat-label>
-              <input matInput readonly formControlName="updated" aria-label="Updated" />
-            </mat-form-field>
-        </form>
-        <div class="button-panel">
-          <button mat-raised-button color="primary" type="button" (click)="add()" [disabled]="!canAdd" class="main-action">Add</button>
-          <button mat-stroked-button type="button" (click)="requestClear()" class="neutral-action">Clear</button>
-          <button mat-raised-button type="button" (click)="update()" [disabled]="!canUpdate" class="main-action">Update</button>
-          <button mat-raised-button color="warn" type="button" (click)="delete()" [disabled]="!canDelete" class="danger-action">Delete</button>
+      <form [formGroup]="form" (ngSubmit)="saveUser()" class="space-y-3.5">
+        <!-- Full Name -->
+        <div>
+          <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Full Name</label>
+          <input
+            type="text"
+            formControlName="username"
+            placeholder="e.g. Kasun Jayawardena"
+            class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-[13px] focus:outline-none focus:border-indigo-400"
+          />
         </div>
 
-      </mat-card-content>
-    </mat-card>
-  </mat-grid-tile>
+        <!-- Company Email -->
+        <div>
+          <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Company Email</label>
+          <input
+            type="email"
+            formControlName="email"
+            placeholder="e.g. kasun@polkole.lk"
+            class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-[13px] focus:outline-none focus:border-indigo-400"
+          />
+        </div>
 
-  <mat-grid-tile [colspan]="searchColSpan" [rowspan]="searchRowSpan">
-    <mat-card class="full-card card-elevated">
-      <mat-card-header class="card-header-custom">
-        <mat-card-title>User Search</mat-card-title>
-        <mat-card-subtitle>Filter records by name or role</mat-card-subtitle>
-      </mat-card-header>
+        <!-- Phone Number -->
+        <div>
+          <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Phone Number</label>
+          <input
+            type="text"
+            formControlName="phone"
+            placeholder="e.g. +94779990000"
+            class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-[13px] focus:outline-none focus:border-indigo-400"
+          />
+        </div>
 
-      <mat-card-content class="search-content">
-        <form [formGroup]="searchForm" class="search-row" aria-label="User search form">
-
-          <mat-form-field appearance="outline" class="search-field">
-            <mat-label>Search by User Name</mat-label>
-            <input matInput formControlName="ssusername" />
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="search-field">
-            <mat-label>Role</mat-label>
-            <mat-select formControlName="ssrole">
-              <mat-option [value]="null">Not Selected</mat-option>
-              <mat-option *ngFor="let role of roles" [value]="role.id">{{ role.name }}</mat-option>
-            </mat-select>
-          </mat-form-field>
-
-          <div class="search-actions">
-            <button mat-raised-button color="primary" type="button" (click)="btnSearchMc()" class="action-btn">
-              <mat-icon>search</mat-icon>
-              Search
-            </button>
-            <button mat-stroked-button type="button" (click)="btnSearchClearMc()" class="action-btn">
-              <mat-icon>replay</mat-icon>
-              Clear
-            </button>
+        <!-- Role & Status in 2-cols -->
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">System Role</label>
+            <select
+              formControlName="userroles"
+              [compareWith]="compareLookupById"
+              class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-[13px] focus:outline-none focus:border-indigo-400"
+            >
+              <option [ngValue]="null">Select Role</option>
+              <option *ngFor="let role of roles" [ngValue]="role">{{ role.name }}</option>
+            </select>
           </div>
-        </form>
-      </mat-card-content>
-    </mat-card>
-  </mat-grid-tile>
 
-  <mat-grid-tile [colspan]="tableColSpan" [rowspan]="tableRowSpan">
-    <mat-card class="full-card card-elevated">
-      <mat-card-header class="card-header-custom">
-        <mat-card-title><span>User Table</span></mat-card-title>
-        <mat-card-subtitle>Click a row to load it into the form</mat-card-subtitle>
-      </mat-card-header>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Status</label>
+            <select
+              formControlName="userstatuses"
+              [compareWith]="compareLookupById"
+              class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-[13px] focus:outline-none focus:border-indigo-400"
+            >
+              <option [ngValue]="null">Select Status</option>
+              <option *ngFor="let status of statuses" [ngValue]="status">{{ status.name }}</option>
+            </select>
+          </div>
+        </div>
 
-      <mat-card-content class="table-content">
-        <table mat-table [dataSource]="data" class="mat-elevation-z1 user-table" aria-label="User records table">
+        <!-- Password -->
+        <div>
+          <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+            Password {{ editingId ? '(Leave blank to keep current)' : '' }}
+          </label>
+          <input
+            type="password"
+            formControlName="password"
+            class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-[13px] focus:outline-none focus:border-indigo-400"
+          />
+        </div>
+
+        <!-- Confirm Password -->
+        <div>
+          <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Confirm Password</label>
+          <input
+            type="password"
+            formControlName="confirmpassword"
+            class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-[13px] focus:outline-none focus:border-indigo-400"
+          />
+          <p *ngIf="form.hasError('passwordMismatch') && form.get('confirmpassword')?.touched" class="text-red-500 text-[11px] mt-1 font-semibold">
+            Passwords do not match.
+          </p>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="flex items-center gap-2 pt-2">
+          <button
+            type="submit"
+            [disabled]="loading"
+            class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-[13px] font-bold py-2 rounded-lg cursor-pointer transition-all disabled:opacity-50"
+          >
+            {{ editingId ? 'Update Details' : 'Register Staff' }}
+          </button>
+          <button
+            type="button"
+            (click)="requestClear()"
+            class="bg-slate-50 hover:bg-slate-100 text-slate-600 text-[13px] font-bold px-3 py-2 rounded-lg cursor-pointer border border-slate-200 transition-all"
+          >
+            Clear
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Right Column: Staff Directory Table -->
+    <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm space-y-4">
+      
+      <!-- Search & Filters Bar -->
+      <div class="flex items-center gap-2.5 flex-wrap">
+        <div class="flex-1 min-w-[200px] flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+          <svg class="w-4 h-4 text-slate-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/>
+            <path stroke-linecap="round" d="M21 21l-4.35-4.35"/>
+          </svg>
+          <input
+            type="text"
+            [(ngModel)]="searchQuery"
+            (input)="applyFilters()"
+            placeholder="Search staff by name, email, phone or role..."
+            class="border-none outline-none text-[13px] text-slate-700 placeholder-slate-400 bg-transparent w-full"
+          />
+        </div>
+
+        <div class="w-36">
+          <select
+            [(ngModel)]="selectedRoleId"
+            (change)="applyFilters()"
+            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-[13px] text-slate-700 outline-none focus:border-indigo-400 cursor-pointer"
+          >
+            <option [ngValue]="null">All Roles</option>
+            <option *ngFor="let role of roles" [ngValue]="role.id">{{ role.name }}</option>
+          </select>
+        </div>
+
+        <div class="w-36">
+          <select
+            [(ngModel)]="selectedStatusId"
+            (change)="applyFilters()"
+            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-[13px] text-slate-700 outline-none focus:border-indigo-400 cursor-pointer"
+          >
+            <option [ngValue]="null">All Statuses</option>
+            <option *ngFor="let status of statuses" [ngValue]="status.id">{{ status.name }}</option>
+          </select>
+        </div>
+
+        <button
+          type="button"
+          (click)="resetFilters()"
+          title="Reset Filters"
+          class="bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-800 border border-slate-200 p-2 rounded-xl text-[13px] font-bold flex items-center justify-center cursor-pointer transition-all active:scale-95"
+        >
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- MatTable -->
+      <div class="overflow-x-auto">
+        <table mat-table [dataSource]="dataSource" class="w-full text-left text-[13px] text-slate-700">
+          
+          <!-- Name Column -->
           <ng-container matColumnDef="name">
-            <th mat-header-cell *matHeaderCellDef>Name</th>
-            <td mat-cell *matCellDef="let row">{{ row.name || '-' }}</td>
+            <th mat-header-cell *matHeaderCellDef class="font-bold text-slate-900 border-b border-slate-100 pb-3">Staff Name</th>
+            <td mat-cell *matCellDef="let user" class="py-3 border-b border-slate-50 font-bold text-slate-900">
+              {{ user.name }}
+            </td>
           </ng-container>
 
+          <!-- Email Column -->
           <ng-container matColumnDef="email">
-            <th mat-header-cell *matHeaderCellDef>Email</th>
-            <td mat-cell *matCellDef="let row">{{ row.email }}</td>
+            <th mat-header-cell *matHeaderCellDef class="font-bold text-slate-900 border-b border-slate-100 pb-3">Company Email</th>
+            <td mat-cell *matCellDef="let user" class="py-3 border-b border-slate-50">
+              {{ user.email }}
+            </td>
           </ng-container>
 
+          <!-- Phone Column -->
+          <ng-container matColumnDef="phone">
+            <th mat-header-cell *matHeaderCellDef class="font-bold text-slate-900 border-b border-slate-100 pb-3">Phone</th>
+            <td mat-cell *matCellDef="let user" class="py-3 border-b border-slate-50 font-mono text-[12px]">
+              {{ user.phone || '-' }}
+            </td>
+          </ng-container>
+
+          <!-- Role Column -->
+          <ng-container matColumnDef="role">
+            <th mat-header-cell *matHeaderCellDef class="font-bold text-slate-900 border-b border-slate-100 pb-3">Role</th>
+            <td mat-cell *matCellDef="let user" class="py-3 border-b border-slate-50">
+              <span class="px-2 py-0.5 rounded text-[11px] font-bold" [ngClass]="getRoleBadgeClass(user.role?.name)">
+                {{ user.role?.name || 'Unassigned' }}
+              </span>
+            </td>
+          </ng-container>
+
+          <!-- Status Column -->
           <ng-container matColumnDef="status">
-            <th mat-header-cell *matHeaderCellDef>Status</th>
-            <td mat-cell *matCellDef="let row">{{ row.status?.name || '-' }}</td>
+            <th mat-header-cell *matHeaderCellDef class="font-bold text-slate-900 border-b border-slate-100 pb-3">Status</th>
+            <td mat-cell *matCellDef="let user" class="py-3 border-b border-slate-50">
+              <span
+                class="px-2.5 py-0.5 rounded-full text-[11px] font-bold"
+                [ngClass]="user.status?.name === 'Active' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-600'"
+              >
+                {{ user.status?.name || 'Inactive' }}
+              </span>
+            </td>
           </ng-container>
 
-          <ng-container matColumnDef="type">
-            <th mat-header-cell *matHeaderCellDef>Type</th>
-            <td mat-cell *matCellDef="let row">{{ row.role?.name || '-' }}</td>
-          </ng-container>
-
+          <!-- Created Date Column -->
           <ng-container matColumnDef="createdOn">
-            <th mat-header-cell *matHeaderCellDef>Created Date</th>
-            <td mat-cell *matCellDef="let row">{{ row.createdOn | date: 'yyyy-MM-dd' }}</td>
+            <th mat-header-cell *matHeaderCellDef class="font-bold text-slate-900 border-b border-slate-100 pb-3">Created</th>
+            <td mat-cell *matCellDef="let user" class="py-3 border-b border-slate-50 text-slate-400 text-[12px]">
+              {{ user.createdOn ? (user.createdOn | date:'yyyy-MM-dd') : '-' }}
+            </td>
           </ng-container>
 
-          <tr mat-header-row *matHeaderRowDef="displayedColumns" class="table-header-row"></tr>
-          <tr mat-row *matRowDef="let row; columns: displayedColumns" class="table-data-row" [class.selected-row]="selectedRow?.id === row.id" (click)="fillForm(row)" (keydown.enter)="fillForm(row)" (keydown.space)="fillForm(row)" tabindex="0"></tr>
-          <tr class="mat-row" *matNoDataRow>
-            <td class="mat-cell empty-state" [attr.colspan]="displayedColumns.length">No users found for the selected filters.</td>
-          </tr>
-        </table>
+          <!-- Actions Column -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef class="font-bold text-slate-900 border-b border-slate-100 pb-3 text-right">Actions</th>
+            <td mat-cell *matCellDef="let user" class="py-3 border-b border-slate-50 text-right space-x-1">
+              <button
+                type="button"
+                (click)="editUser(user)"
+                class="text-[12px] bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 px-2.5 py-1 rounded cursor-pointer transition-all"
+              >
+                Edit
+              </button>
+              <button
+                type="button"
+                (click)="deleteUser(user.id)"
+                class="text-[12px] bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 px-2.5 py-1 rounded cursor-pointer transition-all"
+              >
+                Delete
+              </button>
+            </td>
+          </ng-container>
 
-        <mat-paginator
-          [pageSize]="5"
-          [pageSizeOptions]="[5, 10, 20]"
-          showFirstLastButtons
-        ></mat-paginator>
-      </mat-card-content>
-    </mat-card>
-  </mat-grid-tile>
-</mat-grid-list>
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+      </div>
+
+      <mat-paginator [pageSizeOptions]="[10, 20]" showFirstLastButtons class="border-t border-slate-100 pt-2"></mat-paginator>
+    </div>
+  </div>
+</div>

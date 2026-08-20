@@ -29,8 +29,14 @@ export class MainwindowComponent implements OnInit {
     settings: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M12 12m-3 0a3 3 0 106 0 3 3 0 10-6 0',
     sync_alt: 'M5 7h11M13 3l4 4-4 4M19 17H8M11 13l-4 4 4 4',
     restaurant: 'M2 17h20v2H2zm18-4a8 8 0 00-16 0h16z',
+    meeting_room: 'M19 19H5V5h14v14zM3 21h18v-2H3v2zm9-10h2v2h-2v-2z',
+    manage_accounts: 'M12 4a4 4 0 100 8 4 4 0 000-8zm-7 14c0-2.67 5.33-4 7-4s7 1.33 7 4v2H5v-2zm14.5-5.5a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm1 4.5c0-1-.7-1.8-1.6-2.2.8-.2 1.6-.3 2.6-.3 2 0 4 .8 4 2.5V20h-5v-1.5z',
   };
   constructor(private readonly router: Router) {}
+  logout(): void {
+    localStorage.clear();
+    this.router.navigate(['/login']);
+  }
   ngOnInit(): void {
     this.role = localStorage.getItem('role') || '';
     this.name = this.getDisplayName();
