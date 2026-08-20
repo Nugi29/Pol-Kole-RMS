@@ -66,10 +66,6 @@ export class BillingComponent implements OnInit {
   paymentRef = '';
   paymentNotes = '';
 
-  // Settle tab search/filtering state
-  settleSearchText = '';
-  filteredUnpaidInvoices: Invoice[] = [];
-
   constructor(
     private readonly billingService: BillingService,
     private readonly orderService: OrderService,
@@ -86,8 +82,10 @@ export class BillingComponent implements OnInit {
       const prevTab = this.activeTab;
       if (params['tab']) {
         this.activeTab = params['tab'];
+      } else {
+        this.activeTab = 'invoices';
       }
-      if (this.activeTab !== prevTab || this.activeTab !== 'settle') {
+      if (this.activeTab !== prevTab) {
         this.closeInvoice();
       }
       this.loadInvoices();
@@ -105,27 +103,7 @@ export class BillingComponent implements OnInit {
         this.paymentDataSource.data = sortedData.filter(inv => inv.paymentStatus === 'PAID');
         this.loading = false;
         
-        this.filterUnpaidInvoices();
         this.loadCheckedOutReservations();
-
-        if (this.activeTab === 'settle') {
-          const unpaid = this.unpaidInvoices;
-          if (unpaid.length > 0) {
-            const existingId = this.activeInvoice?.id;
-            const currentUnpaid = unpaid.find(u => u.id === existingId);
-            if (currentUnpaid) {
-              this.viewInvoice(currentUnpaid);
-            } else {
-              this.viewInvoice(unpaid[0]);
-            }
-          } else {
-            this.activeInvoice = null;
-            this.activeInvoiceOrder = null;
-            this.activeInvoiceReservation = null;
-            this.activeInvoiceTableReservation = null;
-          }
-        }
-
         this.loadOrders();
         this.cdr.markForCheck();
       },
@@ -376,10 +354,7 @@ export class BillingComponent implements OnInit {
             this.paymentMethod = 'CASH';
             
             this.loadInvoices();
-            
-            if (this.activeTab !== 'settle') {
-              this.closeInvoice();
-            }
+            this.closeInvoice();
             this.dialogService.showSuccess('Settlement Completed', 'Payment processed successfully. Checkout complete!');
           },
           error: (err) => {
@@ -410,21 +385,5 @@ export class BillingComponent implements OnInit {
 
   get paymentsLedger(): Invoice[] {
     return this.invoices.filter(inv => inv.paymentStatus === 'PAID');
-  }
-
-  get unpaidInvoices(): Invoice[] {
-    return this.invoices.filter(inv => inv.paymentStatus === 'UNPAID');
-  }
-
-  filterUnpaidInvoices(): void {
-    const text = this.settleSearchText.trim().toLowerCase();
-    if (!text) {
-      this.filteredUnpaidInvoices = this.unpaidInvoices;
-    } else {
-      this.filteredUnpaidInvoices = this.unpaidInvoices.filter(inv => 
-        inv.invoiceNumber.toLowerCase().includes(text) ||
-        String(inv.orderId || inv.reservationId || inv.tableReservationId || '').toLowerCase().includes(text)
-      );
-    }
   }
 }

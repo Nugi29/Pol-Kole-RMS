@@ -94,7 +94,6 @@ export const NAV_MENU = [
     icon: 'receipt',
     roles: ['ADMIN', 'MANAGER', 'CASHIER'],
     children: [
-      { name: 'Cashier Settle', route: '/main/billing?tab=settle', roles: ['ADMIN', 'MANAGER', 'CASHIER'] },
       { name: 'Invoices Ledger', route: '/main/billing?tab=invoices', roles: ['ADMIN', 'MANAGER', 'CASHIER'] },
       { name: 'Payments Ledger', route: '/main/billing?tab=payments', roles: ['ADMIN', 'MANAGER', 'CASHIER'] },
     ],
