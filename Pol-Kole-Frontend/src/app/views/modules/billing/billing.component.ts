@@ -8,6 +8,7 @@ import { Order, OrderService } from '../../../services/order.service';
 import { BillingService, Invoice, PaymentPayload } from '../../../services/billing.service';
 import { HotelReservation, HotelReservationService } from '../../../services/hotel-reservation.service';
 import { Reservation, ReservationService } from '../../../services/reservation.service';
+import { TableService } from '../../../services/table.service';
 import { DialogService } from '../../../services/dialog.service';
 
 export interface UnifiedStayItem {
@@ -74,16 +75,20 @@ export class BillingComponent implements OnInit {
     private readonly orderService: OrderService,
     private readonly reservationService: HotelReservationService,
     private readonly tableReservationService: ReservationService,
+    private readonly tableService: TableService,
     private readonly route: ActivatedRoute,
     private readonly cdr: ChangeDetectorRef,
     private readonly dialogService: DialogService
   ) {}
 
   ngOnInit(): void {
-    this.loadInvoices();
     this.route.queryParams.subscribe(params => {
+      const prevTab = this.activeTab;
       if (params['tab']) {
         this.activeTab = params['tab'];
+      }
+      if (this.activeTab !== prevTab || this.activeTab !== 'settle') {
+        this.closeInvoice();
       }
       this.loadInvoices();
       this.cdr.markForCheck();
@@ -338,6 +343,34 @@ export class BillingComponent implements OnInit {
 
         this.billingService.processPayment(payload).subscribe({
           next: () => {
+            const paidInv = this.activeInvoice;
+            // Auto-transition table to CLEANING upon bill settlement
+            if (paidInv) {
+              if (this.activeInvoiceTableReservation?.tableId) {
+                this.tableService.updateTableStatus(this.activeInvoiceTableReservation.tableId, 'CLEANING').subscribe();
+              } else if (paidInv.tableReservationId) {
+                this.tableReservationService.getReservationById(paidInv.tableReservationId).subscribe({
+                  next: (tr) => {
+                    if (tr?.tableId) {
+                      this.tableService.updateTableStatus(tr.tableId, 'CLEANING').subscribe();
+                    }
+                  }
+                });
+              }
+
+              if (this.activeInvoiceOrder?.tableId) {
+                this.tableService.updateTableStatus(this.activeInvoiceOrder.tableId, 'CLEANING').subscribe();
+              } else if (paidInv.orderId) {
+                this.orderService.getOrderById(paidInv.orderId).subscribe({
+                  next: (ord) => {
+                    if (ord?.tableId) {
+                      this.tableService.updateTableStatus(ord.tableId, 'CLEANING').subscribe();
+                    }
+                  }
+                });
+              }
+            }
+
             this.paymentRef = '';
             this.paymentNotes = '';
             this.paymentMethod = 'CASH';

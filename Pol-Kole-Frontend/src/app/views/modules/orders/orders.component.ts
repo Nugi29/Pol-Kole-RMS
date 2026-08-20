@@ -247,11 +247,21 @@ export class OrdersComponent implements OnInit {
           items: items
         };
 
+        const orderTableId = this.serviceType === 'TABLE' ? this.selectedTableId : null;
+
         this.orderService.createOrder(payload).subscribe({
           next: (createdOrder) => {
             // Auto-print token for takeaway orders
             if (this.serviceType === 'TAKEAWAY') {
               this.printToken(createdOrder);
+            }
+
+            // Auto-update table status to OCCUPIED for dine-in orders
+            if (orderTableId) {
+              this.tableService.updateTableStatus(orderTableId, 'OCCUPIED').subscribe({
+                next: () => this.loadTables(),
+                error: (err) => console.warn('Could not auto-update table status to OCCUPIED', err)
+              });
             }
 
             this.cart = [];

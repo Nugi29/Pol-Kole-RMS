@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+import { map, switchMap, catchError } from 'rxjs/operators';
 import { ApiResponse, Page } from './room.service';
 
 export interface TableLocation {
@@ -51,6 +51,25 @@ export class TableService {
   updateTable(id: number, table: RestaurantTable): Observable<RestaurantTable> {
     return this.http.put<ApiResponse<RestaurantTable>>(`${this.baseUrl}/${id}`, table).pipe(
       map(res => res.data)
+    );
+  }
+
+  getTableById(id: number): Observable<RestaurantTable> {
+    return this.http.get<ApiResponse<RestaurantTable>>(`${this.baseUrl}/${id}`).pipe(
+      map(res => res.data)
+    );
+  }
+
+  updateTableStatus(id: number, status: string): Observable<RestaurantTable> {
+    return this.getTableById(id).pipe(
+      switchMap(table => {
+        if (!table) return of({} as RestaurantTable);
+        return this.updateTable(id, { ...table, status });
+      }),
+      catchError(err => {
+        console.warn(`Failed to auto-update table ${id} status to ${status}`, err);
+        return of({} as RestaurantTable);
+      })
     );
   }
 

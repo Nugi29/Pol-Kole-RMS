@@ -139,37 +139,54 @@
 
     <!-- Live Cost Calculator Card -->
     <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm space-y-5">
-      <div class="border-b border-slate-50 pb-3 flex items-center gap-2">
-        <span class="w-1.5 h-3.5 bg-emerald-600 rounded-full"></span>
-        <h2 class="text-[14px] font-bold text-slate-900">Seating Capacity Guidelines</h2>
+      <div class="border-b border-slate-50 pb-3 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="w-1.5 h-3.5 bg-emerald-600 rounded-full"></span>
+          <h2 class="text-[14px] font-bold text-slate-900">Seating Capacity Guidelines</h2>
+        </div>
+        <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center gap-1">
+          <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping"></span>
+          Auto-Engine Active
+        </span>
       </div>
 
       <div class="space-y-4">
-        <!-- Estimation details -->
+        <!-- Estimation details with live automated guideline monitors -->
         <div class="bg-gradient-to-br from-slate-50 to-slate-100/50 rounded-xl p-5 border border-slate-200/50 space-y-3.5">
           <div class="flex items-center justify-between text-[13px] text-slate-650">
             <span>Minimum Table Prep:</span>
-            <span class="font-bold text-slate-905">15 Minutes Before Slot</span>
+            <div class="text-right">
+              <span class="font-bold text-slate-900 block">15 Minutes Before Slot</span>
+              <span class="text-[11px] text-amber-600 font-semibold" *ngIf="prepCount > 0">⚡ {{ prepCount }} Table(s) In Prep</span>
+            </div>
           </div>
 
           <div class="flex items-center justify-between text-[13px] text-slate-650">
             <span>Grace Hold Period:</span>
-            <span class="font-bold text-slate-905">20 Minutes Max</span>
+            <div class="text-right">
+              <span class="font-bold text-slate-900 block">20 Minutes Max</span>
+              <span class="text-[11px] text-emerald-600 font-semibold" *ngIf="holdCount > 0">🟢 {{ holdCount }} Active Grace Hold</span>
+            </div>
           </div>
 
           <div class="flex items-center justify-between text-[13px] text-slate-650">
             <span>Special Amenities:</span>
-            <span class="font-bold text-slate-905">Free (Upon Request)</span>
+            <span class="font-bold text-slate-900">Free (Upon Request)</span>
+          </div>
+
+          <div *ngIf="expiredCount > 0" class="flex items-center justify-between text-[13px] bg-rose-50/80 p-2.5 rounded-lg border border-rose-150 text-rose-700">
+            <span class="font-bold">⚠️ Expired Grace Holds:</span>
+            <span class="font-extrabold">{{ expiredCount }} Pending Release</span>
           </div>
 
           <div class="border-t border-slate-200/60 pt-3 flex items-center justify-between">
-            <span class="text-[13.5px] font-extrabold text-slate-900">Status Indicator:</span>
-            <span class="text-[14px] font-extrabold text-emerald-600">Booking Engine Active</span>
+            <span class="text-[13.5px] font-extrabold text-slate-900">Auto Lifecycle:</span>
+            <span class="text-[13px] font-extrabold text-indigo-600">Available ➔ Reserved ➔ Occupied ➔ Cleaning</span>
           </div>
         </div>
 
         <div class="text-[11.5px] text-slate-450 leading-relaxed bg-emerald-50/50 p-4 border border-emerald-100 rounded-xl">
-          💡 <strong>Reservation Notice:</strong> Booking engine automatically blocks overlapping reservations for the same table on the requested date and time slot. Please ensure double bookings do not occur.
+          💡 <strong>Automated System Rules:</strong> Bookings immediately switch tables to <strong>RESERVED</strong>. Placing a POS Dine-in order transitions the table to <strong>OCCUPIED</strong>, checkout moves it to <strong>CLEANING</strong>, and waiter sanitization completes the cycle to <strong>AVAILABLE</strong>.
         </div>
       </div>
     </div>
@@ -178,10 +195,15 @@
   <!-- TAB 2: RESERVATIONS LIST -->
   <div *ngIf="activeTab === 'list'" class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm space-y-4">
     <div class="flex items-center justify-between border-b border-slate-50 pb-3">
-      <h2 class="text-[14px] font-bold text-slate-900 flex items-center gap-2">
+      <div class="flex items-center gap-2">
         <span class="w-1.5 h-3.5 bg-indigo-600 rounded-full"></span>
-        Table Reservations Ledger
-      </h2>
+        <h2 class="text-[14px] font-bold text-slate-900">Table Reservations Ledger</h2>
+      </div>
+      <div class="flex items-center gap-2 text-[12px]">
+        <span *ngIf="prepCount > 0" class="bg-amber-50 text-amber-700 border border-amber-200 font-bold px-2.5 py-1 rounded-lg">🟡 {{ prepCount }} Prep</span>
+        <span *ngIf="holdCount > 0" class="bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold px-2.5 py-1 rounded-lg">🟢 {{ holdCount }} Hold</span>
+        <span *ngIf="expiredCount > 0" class="bg-rose-50 text-rose-700 border border-rose-200 font-bold px-2.5 py-1 rounded-lg">🔴 {{ expiredCount }} Expired</span>
+      </div>
     </div>
 
     <!-- Booking stay ledger list -->
@@ -224,8 +246,8 @@
         </ng-container>
 
         <ng-container matColumnDef="status">
-          <th mat-header-cell *matHeaderCellDef class="font-bold text-slate-900 border-b border-slate-100 pb-3">Status</th>
-          <td mat-cell *matCellDef="let res" class="py-3.5 border-b border-slate-50">
+          <th mat-header-cell *matHeaderCellDef class="font-bold text-slate-900 border-b border-slate-100 pb-3">Status & Timeline</th>
+          <td mat-cell *matCellDef="let res" class="py-3.5 border-b border-slate-50 space-y-1">
             <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full inline-block border shadow-sm"
                   [ngClass]="{
                     'bg-indigo-50 border-indigo-200 text-indigo-600': res.reservationStatusName?.toUpperCase() === 'CONFIRMED',
@@ -236,14 +258,23 @@
                   }">
               {{ res.reservationStatusName }}
             </span>
+            <div *ngIf="res.reservationStatusName?.toUpperCase() === 'CONFIRMED' || res.reservationStatusName?.toUpperCase() === 'PENDING'">
+              <span class="text-[10px] font-semibold px-2 py-0.5 rounded-md inline-block" [ngClass]="getReservationTimeline(res).badgeClass">
+                {{ getReservationTimeline(res).label }}
+              </span>
+            </div>
           </td>
         </ng-container>
 
         <ng-container matColumnDef="actions">
           <th mat-header-cell *matHeaderCellDef class="font-bold text-slate-900 border-b border-slate-100 pb-3 text-right">Actions</th>
-          <td mat-cell *matCellDef="let res" class="py-3.5 border-b border-slate-50 text-right">
+          <td mat-cell *matCellDef="let res" class="py-3.5 border-b border-slate-50 text-right space-x-2">
+            <button *ngIf="getReservationTimeline(res).isExpired && (res.reservationStatusName?.toUpperCase() === 'CONFIRMED' || res.reservationStatusName?.toUpperCase() === 'PENDING')"
+                    (click)="releaseTableNoShow(res)" class="text-[12px] bg-rose-600 hover:bg-rose-700 text-white shadow-sm px-3 py-1.5 rounded-lg cursor-pointer font-bold transition-all">
+              ⚡ Release Table (No-Show)
+            </button>
             <button *ngIf="res.reservationStatusName?.toUpperCase() === 'CONFIRMED' || res.reservationStatusName?.toUpperCase() === 'PENDING'"
-                    (click)="cancelBooking(res.id)" class="text-[12px] bg-rose-550 text-rose-600 hover:bg-rose-100 hover:text-rose-700 border border-rose-200 px-3 py-1.5 rounded-lg cursor-pointer font-bold transition-all">
+                    (click)="cancelBooking(res.id)" class="text-[12px] bg-slate-100 text-slate-700 hover:bg-rose-50 hover:text-rose-700 border border-slate-200 px-3 py-1.5 rounded-lg cursor-pointer font-bold transition-all">
               Cancel
             </button>
             <span *ngIf="res.reservationStatusName?.toUpperCase() === 'CANCELLED'" class="text-[12px] text-slate-400 font-semibold">Cancelled</span>

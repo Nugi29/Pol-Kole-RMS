@@ -22,16 +22,19 @@
     <!-- Toggle Selector -->
     <div class="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200">
       <a routerLink="/main/billing" [queryParams]="{ tab: 'settle' }"
+         (click)="closeInvoice()"
          class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none"
          [ngClass]="activeTab === 'settle' ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:text-slate-800'">
         Cashier Settle
       </a>
       <a routerLink="/main/billing" [queryParams]="{ tab: 'invoices' }"
+         (click)="closeInvoice()"
          class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none"
          [ngClass]="activeTab === 'invoices' ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:text-slate-800'">
         Invoices Ledger
       </a>
       <a routerLink="/main/billing" [queryParams]="{ tab: 'payments' }"
+         (click)="closeInvoice()"
          class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none"
          [ngClass]="activeTab === 'payments' ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:text-slate-800'">
         Payments Ledger
