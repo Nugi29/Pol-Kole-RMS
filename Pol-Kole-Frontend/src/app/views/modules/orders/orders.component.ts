@@ -10,6 +10,7 @@ import { MenuItem, MenuService } from '../../../services/menu.service';
 import { HotelReservationService } from '../../../services/hotel-reservation.service';
 import { Reservation, ReservationService } from '../../../services/reservation.service';
 import { DialogService } from '../../../services/dialog.service';
+import { ItemDiscount, ItemDiscountService } from '../../../services/item-discount.service';
 
 @Component({
   selector: 'app-orders',
@@ -28,6 +29,7 @@ export class OrdersComponent implements OnInit {
   tables: RestaurantTable[] = [];
   customers: CustomerDto[] = [];
   menuItems: MenuItem[] = [];
+  itemDiscounts: ItemDiscount[] = [];
   displayedColumns = ['id', 'customer', 'table', 'totalAmount', 'status', 'actions'];
   dataSource = new MatTableDataSource<Order>([]);
 
@@ -51,6 +53,7 @@ export class OrdersComponent implements OnInit {
     private readonly tableService: TableService,
     private readonly customerService: CustomerService,
     private readonly menuService: MenuService,
+    private readonly itemDiscountService: ItemDiscountService,
     private readonly reservationService: HotelReservationService,
     private readonly tableReservationService: ReservationService,
     private readonly route: ActivatedRoute,
@@ -72,6 +75,7 @@ export class OrdersComponent implements OnInit {
   loadAll(): void {
     this.loadTables();
     this.loadCustomers();
+    this.loadItemDiscounts();
     this.loadMenuItems();
     this.loadOrders();
     this.loadCheckedInReservations();
@@ -104,6 +108,18 @@ export class OrdersComponent implements OnInit {
     });
   }
 
+  loadItemDiscounts(): void {
+    this.itemDiscountService.getAllActiveItemDiscounts().subscribe({
+      next: (discounts) => {
+        this.itemDiscounts = discounts || [];
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.itemDiscounts = [];
+      }
+    });
+  }
+
   loadMenuItems(): void {
     this.menuService.filterMenuItems(undefined, true, undefined, 0, 1000).subscribe({
       next: (page) => {
@@ -115,6 +131,19 @@ export class OrdersComponent implements OnInit {
         this.cdr.markForCheck();
       }
     });
+  }
+
+  getItemDiscount(itemId?: number): ItemDiscount | undefined {
+    if (!itemId) return undefined;
+    return this.itemDiscounts.find(d => d.menuItemId === itemId);
+  }
+
+  getItemEffectivePrice(item: MenuItem): number {
+    const discount = this.getItemDiscount(item.id);
+    if (!discount || discount.calculatedDiscountedPrice === undefined) {
+      return item.price;
+    }
+    return discount.calculatedDiscountedPrice;
   }
 
   loadCheckedInReservations(): void {
@@ -204,8 +233,17 @@ export class OrdersComponent implements OnInit {
     }
   }
 
-  get cartTotal(): number {
+  get cartOriginalSubtotal(): number {
     return this.cart.reduce((sum, c) => sum + (c.item.price * c.quantity), 0);
+  }
+
+  get cartTotal(): number {
+    return this.cart.reduce((sum, c) => sum + (this.getItemEffectivePrice(c.item) * c.quantity), 0);
+  }
+
+  get cartSavings(): number {
+    const diff = this.cartOriginalSubtotal - this.cartTotal;
+    return diff > 0 ? diff : 0;
   }
 
   requestClearCart(): void {
@@ -236,7 +274,7 @@ export class OrdersComponent implements OnInit {
         const items: OrderItemInput[] = this.cart.map(c => ({
           menuItemId: c.item.id!,
           quantity: c.quantity,
-          price: c.item.price,
+          price: this.getItemEffectivePrice(c.item),
           notes: c.notes || undefined
         }));
 
@@ -298,161 +336,99 @@ export class OrdersComponent implements OnInit {
       <tr style="border-bottom: 1px dashed #eee;">
         <td style="padding: 6px 0; font-weight: bold;">${item.menuItemName || 'Item'}</td>
         <td style="padding: 6px 0; text-align: center;">x${item.quantity}</td>
-        <td style="padding: 6px 0; text-align: right;">Rs. ${(item.price * item.quantity).toFixed(2)}</td>
+        <td style="padding: 6px 0; text-align: right;">Rs. ${item.price * item.quantity}</td>
       </tr>
-      ${item.notes ? `
-      <tr>
-        <td colspan="3" style="padding-bottom: 6px; font-size: 11px; color: #666; font-style: italic;">
-          * Note: ${item.notes}
-        </td>
-      </tr>` : ''}
     `).join('');
 
-    const customerName = order.customerName || 'Walk-in Guest';
-    const orderType = order.roomNumber ? `ROOM: ${order.roomNumber}` : (order.tableNumber ? `TABLE: ${order.tableNumber}` : 'TAKEAWAY');
-    const orderTime = order.orderTime ? new Date(order.orderTime).toLocaleString() : new Date().toLocaleString();
-
     const htmlContent = `
+      <!DOCTYPE html>
       <html>
-        <head>
-          <title>Order Token #${order.id}</title>
-          <style>
-            @page {
-              size: auto;
-              margin: 0mm;
-            }
-            body {
-              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-              font-size: 13px;
-              color: #1a1a1a;
-              width: 300px;
-              margin: 0 auto;
-              padding: 20px 10px;
-              line-height: 1.4;
-            }
-            .text-center { text-align: center; }
-            .bold { font-weight: bold; }
-            .divider { border-top: 2px dashed #ccc; margin: 12px 0; }
-            .header-title { font-size: 16px; font-weight: 800; color: #000; }
-            .token-container {
-              background: #f8f9fa;
-              border: 2px solid #000;
-              border-radius: 8px;
-              padding: 12px;
-              margin: 15px 0;
-              text-align: center;
-            }
-            .token-label {
-              font-size: 11px;
-              text-transform: uppercase;
-              letter-spacing: 1px;
-              color: #666;
-              margin-bottom: 4px;
-            }
-            .token-number {
-              font-size: 24px;
-              font-weight: 900;
-              color: #000;
-            }
-            .info-table {
-              width: 100%;
-              margin-top: 10px;
-              font-size: 12px;
-            }
-            .info-table td {
-              padding: 3px 0;
-            }
-            .items-table {
-              width: 100%;
-              border-collapse: collapse;
-              margin-top: 10px;
-              font-size: 12px;
-            }
-            .footer {
-              font-size: 10.5px;
-              color: #555;
-              margin-top: 20px;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="text-center bold header-title">POL-KOLE ROYAL RESTAURANT</div>
-          <div class="text-center" style="font-size: 11px; color: #555;">Lounge & Cafe</div>
-          
-          <div class="divider"></div>
-          
-          <div class="text-center bold" style="font-size: 14px; text-transform: uppercase;">${orderType} ORDER TOKEN</div>
-          
-          <div class="token-container">
-            <div class="token-label">Token Number</div>
-            <div class="token-number">#${order.id}</div>
-          </div>
-          
-          <table class="info-table">
-            <tr>
-              <td style="color: #666; width: 80px;">Order ID:</td>
-              <td class="bold">#${order.id}</td>
+      <head>
+        <title>Order Token #${order.id}</title>
+        <style>
+          body { font-family: 'Courier New', Courier, monospace; width: 280px; margin: 0 auto; padding: 10px; font-size: 12px; }
+          .header { text-align: center; border-bottom: 2px dashed #000; padding-bottom: 8px; margin-bottom: 8px; }
+          .logo { font-size: 16px; font-weight: bold; }
+          .token-no { font-size: 20px; font-weight: bold; margin: 6px 0; }
+          table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+          .total { border-top: 2px dashed #000; border-bottom: 2px dashed #000; padding: 6px 0; margin-top: 8px; font-weight: bold; }
+          .footer { text-align: center; margin-top: 12px; font-size: 10px; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="logo">POL-KOLE RESORT</div>
+          <div>Takeaway Order Ticket</div>
+          <div class="token-no">#${order.id}</div>
+          <div>${new Date().toLocaleString()}</div>
+        </div>
+        <div><strong>Guest:</strong> ${order.customerName || 'Walk-in'}</div>
+        <table>
+          <thead>
+            <tr style="border-bottom: 1px solid #000;">
+              <th style="text-align: left; padding-bottom: 4px;">Item</th>
+              <th style="text-align: center; padding-bottom: 4px;">Qty</th>
+              <th style="text-align: right; padding-bottom: 4px;">Price</th>
             </tr>
-            <tr>
-              <td style="color: #666;">Guest:</td>
-              <td class="bold">${customerName}</td>
-            </tr>
-            <tr>
-              <td style="color: #666;">Date/Time:</td>
-              <td>${orderTime}</td>
-            </tr>
-          </table>
-          
-          <div class="divider"></div>
-          <div class="bold" style="font-size: 12px; text-transform: uppercase; margin-bottom: 5px;">Ordered Items</div>
-          <table class="items-table">
+          </thead>
+          <tbody>
             ${itemsHtml}
-          </table>
-          
-          <div class="divider"></div>
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
-            <span class="bold" style="font-size: 14px;">TOTAL AMOUNT:</span>
-            <span class="bold" style="font-size: 16px; color: #000;">Rs. ${(order.totalAmount || 0).toFixed(2)}</span>
+          </tbody>
+        </table>
+        <div class="total">
+          <div style="display: flex; justify-content: space-between;">
+            <span>TOTAL AMOUNT:</span>
+            <span>Rs. ${order.totalAmount}</span>
           </div>
-          
-          <div class="divider"></div>
-          <div class="text-center footer">
-            Please present this token to retrieve your takeaway order.<br>
-            <strong>Thank you for dining with us!</strong>
-          </div>
-          
-          <script>
-            window.onload = function() {
-              window.print();
-              setTimeout(function() { window.close(); }, 500);
-            };
-          </script>
-        </body>
+        </div>
+        <div class="footer">
+          <div>Thank you for dining with us!</div>
+          <div>Please show this token to collect your meal.</div>
+        </div>
+        <script>
+          window.onload = function() {
+            window.print();
+            window.onafterprint = function() { window.close(); };
+          };
+        </script>
+      </body>
       </html>
     `;
 
-    printWindow.document.open();
     printWindow.document.write(htmlContent);
     printWindow.document.close();
   }
 
-  cancelOrder(id: number): void {
-    this.dialogService.confirmAction('Confirm Order Cancellation', `Are you sure you want to cancel order #${id}?`).subscribe((confirmed) => {
+  cancelOrder(order: Order): void {
+    this.dialogService.confirmAction('Cancel Order', `Are you sure you want to cancel order #${order.id}?`).subscribe((confirmed) => {
       if (confirmed) {
         this.loading = true;
-        this.orderService.cancelOrder(id).subscribe({
+        this.orderService.updateOrderStatus(order.id!, 'CANCELLED').subscribe({
           next: () => {
             this.loadOrders();
             this.loading = false;
-            this.dialogService.showSuccess('Order Cancelled', `Order #${id} has been cancelled.`);
+            this.dialogService.showSuccess('Order Cancelled', `Order #${order.id} has been marked as cancelled.`);
           },
           error: (err) => {
             this.errorMessage = err.error?.message || 'Failed to cancel order.';
             this.loading = false;
-            this.dialogService.showError('Cancellation Failed', this.errorMessage);
+            this.dialogService.showError('Cancel Failed', this.errorMessage);
           }
         });
       }
     });
+  }
+
+  viewOrderDetails(order: Order): void {
+    const itemsList = order.items.map(i => `${i.quantity}x ${i.menuItemName} (Rs. ${i.price})`).join('<br>');
+    const details = `
+      <strong>Order ID:</strong> #${order.id}<br>
+      <strong>Customer:</strong> ${order.customerName || 'Walk-in'}<br>
+      <strong>Service:</strong> ${order.tableNumber ? 'Table ' + order.tableNumber : (order.roomNumber ? 'Room ' + order.roomNumber : 'Take Away')}<br>
+      <strong>Status:</strong> ${order.statusName}<br>
+      <strong>Total:</strong> Rs. ${order.totalAmount}<br><br>
+      <strong>Items:</strong><br>${itemsList}
+    `;
+    this.dialogService.showMessage('Order Details', details, '450px');
   }
 }

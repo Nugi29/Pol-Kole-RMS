@@ -2,14 +2,15 @@ import { ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatTableDataSource } from '@angular/material/table';
-import { forkJoin, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { forkJoin, of, Subject } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { Order, OrderService } from '../../../services/order.service';
 import { BillingService, Invoice, PaymentPayload } from '../../../services/billing.service';
 import { HotelReservation, HotelReservationService } from '../../../services/hotel-reservation.service';
 import { Reservation, ReservationService } from '../../../services/reservation.service';
 import { TableService } from '../../../services/table.service';
 import { DialogService } from '../../../services/dialog.service';
+import { Voucher, VoucherService } from '../../../services/voucher.service';
 
 export interface UnifiedStayItem {
   id: number;
@@ -33,17 +34,27 @@ export class BillingComponent implements OnInit {
   @ViewChild('paymentPaginator') set paymentPaginator(mp: MatPaginator) {
     this.paymentDataSource.paginator = mp;
   }
+
+  @ViewChild('voucherPaginator') set voucherPaginator(mp: MatPaginator) {
+    this.voucherDataSource.paginator = mp;
+  }
+
   invoices: Invoice[] = [];
   takeAwayOrders: Order[] = [];
+  vouchers: Voucher[] = [];
+  activeVouchers: Voucher[] = [];
   loading = false;
   successMessage = '';
   errorMessage = '';
-  activeTab = 'invoices';
+  activeTab = 'invoices'; // 'invoices' | 'payments' | 'vouchers'
 
   displayedColumns: string[] = ['invoiceNumber', 'category', 'totalAmount', 'paymentStatus', 'actions'];
   paymentDisplayedColumns: string[] = ['invoiceNumber', 'category', 'totalAmount', 'paymentMethodName', 'transactionReference', 'actions'];
+  voucherDisplayedColumns: string[] = ['code', 'description', 'discount', 'rules', 'validity', 'usage', 'status', 'actions'];
+
   invoiceDataSource = new MatTableDataSource<Invoice>([]);
   paymentDataSource = new MatTableDataSource<Invoice>([]);
+  voucherDataSource = new MatTableDataSource<Voucher>([]);
 
   // Invoice Compiler state
   compilerType: 'TAKEAWAY' | 'TABLE' | 'ROOM' = 'TAKEAWAY';
@@ -54,6 +65,12 @@ export class BillingComponent implements OnInit {
   checkedOutTables: UnifiedStayItem[] = [];
   discountCode = '';
   redeemPoints = 0;
+
+  // Real-time voucher preview
+  voucherValidationResult: Voucher | null = null;
+  validatingVoucher = false;
+  showVoucherPickerModal = false;
+  private readonly voucherInputSubject = new Subject<string>();
 
   // Selected active invoice details
   activeInvoice: Invoice | null = null;
@@ -66,12 +83,21 @@ export class BillingComponent implements OnInit {
   paymentRef = '';
   paymentNotes = '';
 
+  // Voucher Management Modal State
+  showVoucherModal = false;
+  isEditingVoucher = false;
+  editingVoucherId: number | null = null;
+  voucherForm: Voucher = this.getEmptyVoucher();
+  voucherSearchTerm = '';
+  voucherFilterType = 'ALL';
+
   constructor(
     private readonly billingService: BillingService,
     private readonly orderService: OrderService,
     private readonly reservationService: HotelReservationService,
     private readonly tableReservationService: ReservationService,
     private readonly tableService: TableService,
+    private readonly voucherService: VoucherService,
     private readonly route: ActivatedRoute,
     private readonly cdr: ChangeDetectorRef,
     private readonly dialogService: DialogService
@@ -88,9 +114,42 @@ export class BillingComponent implements OnInit {
       if (this.activeTab !== prevTab) {
         this.closeInvoice();
       }
-      this.loadInvoices();
+      if (this.activeTab === 'vouchers') {
+        this.loadVouchers();
+      } else {
+        this.loadInvoices();
+      }
+      this.loadActiveVouchers();
       this.cdr.markForCheck();
     });
+
+    this.voucherInputSubject.pipe(
+      debounceTime(350),
+      distinctUntilChanged()
+    ).subscribe(code => {
+      this.validateVoucherCode(code);
+    });
+  }
+
+  getEmptyVoucher(): Voucher {
+    const today = new Date().toISOString().substring(0, 10);
+    const nextYear = new Date();
+    nextYear.setFullYear(nextYear.getFullYear() + 1);
+    const nextYearStr = nextYear.toISOString().substring(0, 10);
+
+    return {
+      code: '',
+      description: '',
+      discountType: 'PERCENTAGE',
+      discountValue: 10,
+      minBillAmount: undefined,
+      maxDiscountAmount: undefined,
+      activeFrom: today,
+      activeTo: nextYearStr,
+      usageLimit: undefined,
+      isActive: true,
+      applicableType: 'ALL',
+    };
   }
 
   loadInvoices(): void {
@@ -112,6 +171,39 @@ export class BillingComponent implements OnInit {
         this.errorMessage = 'Failed to load invoices.';
         this.loading = false;
         this.cdr.markForCheck();
+      }
+    });
+  }
+
+  loadVouchers(): void {
+    this.loading = true;
+    this.voucherService.searchVouchers(this.voucherSearchTerm, 0, 1000).subscribe({
+      next: (page) => {
+        let list = page?.content || [];
+        if (this.voucherFilterType !== 'ALL') {
+          list = list.filter(v => v.discountType === this.voucherFilterType);
+        }
+        this.vouchers = list;
+        this.voucherDataSource.data = list;
+        this.loading = false;
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Failed to load vouchers', err);
+        this.loading = false;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  loadActiveVouchers(): void {
+    this.voucherService.getActiveValidVouchers().subscribe({
+      next: (list) => {
+        this.activeVouchers = list || [];
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.activeVouchers = [];
       }
     });
   }
@@ -141,7 +233,7 @@ export class BillingComponent implements OnInit {
       rooms: this.reservationService.filterReservations(undefined, undefined, 'CHECKED_OUT', undefined, undefined, 0, 1000).pipe(
         catchError(() => of({ content: [] } as any))
       ),
-      tables: this.tableReservationService.filterReservations(undefined, undefined, 4, undefined, undefined, 0, 1000).pipe( // 4 = Checked Out
+      tables: this.tableReservationService.filterReservations(undefined, undefined, 4, undefined, undefined, 0, 1000).pipe(
         catchError(() => of({ content: [] } as any))
       )
     }).subscribe({
@@ -180,6 +272,201 @@ export class BillingComponent implements OnInit {
     });
   }
 
+  // --- Real-time Voucher Code Validation in Compiler ---
+  onVoucherCodeInput(code: string): void {
+    this.voucherInputSubject.next(code);
+  }
+
+  validateVoucherCode(code: string): void {
+    if (!code || !code.trim()) {
+      this.voucherValidationResult = null;
+      return;
+    }
+
+    const estimatedAmount = this.getEstimatedBillAmount();
+    this.validatingVoucher = true;
+    this.voucherService.validateVoucher(code.trim(), estimatedAmount, this.compilerType).subscribe({
+      next: (res) => {
+        this.voucherValidationResult = res;
+        this.validatingVoucher = false;
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.voucherValidationResult = {
+          code,
+          discountType: 'PERCENTAGE',
+          discountValue: 0,
+          activeFrom: '',
+          activeTo: '',
+          valid: false,
+          validationMessage: err.error?.message || 'Invalid or unrecognized voucher code'
+        };
+        this.validatingVoucher = false;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  getSelectedTakeawayOrder(): Order | undefined {
+    if (this.compilerType === 'TAKEAWAY' && this.selectedTakeAwayOrderId) {
+      return this.takeAwayOrders.find(o => o.id === this.selectedTakeAwayOrderId);
+    }
+    return undefined;
+  }
+
+  getEstimatedBillAmount(): number {
+    const selOrder = this.getSelectedTakeawayOrder();
+    if (selOrder) {
+      return selOrder.totalAmount || 0;
+    }
+    return 1000; // fallback preview estimate
+  }
+
+  openVoucherPicker(): void {
+    this.loadActiveVouchers();
+    this.showVoucherPickerModal = true;
+  }
+
+  closeVoucherPicker(): void {
+    this.showVoucherPickerModal = false;
+  }
+
+  selectVoucherFromPicker(voucher: Voucher): void {
+    this.discountCode = voucher.code;
+    this.closeVoucherPicker();
+    this.validateVoucherCode(voucher.code);
+  }
+
+  // --- Voucher CRUD Operations (Manager Portal) ---
+  openCreateVoucherModal(): void {
+    this.isEditingVoucher = false;
+    this.editingVoucherId = null;
+    this.voucherForm = this.getEmptyVoucher();
+    this.showVoucherModal = true;
+  }
+
+  openEditVoucherModal(voucher: Voucher): void {
+    this.isEditingVoucher = true;
+    this.editingVoucherId = voucher.id!;
+    this.voucherForm = {
+      ...voucher,
+      minBillAmount: voucher.minBillAmount || undefined,
+      maxDiscountAmount: voucher.maxDiscountAmount || undefined,
+      usageLimit: voucher.usageLimit || undefined
+    };
+    this.showVoucherModal = true;
+  }
+
+  closeVoucherModal(): void {
+    this.showVoucherModal = false;
+    this.voucherForm = this.getEmptyVoucher();
+  }
+
+  generateRandomCode(): void {
+    const prefixes = ['PROMO', 'VIP', 'MGR', 'SPECIAL', 'DEAL'];
+    const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+    const randomNum = Math.floor(1000 + Math.random() * 9000);
+    this.voucherForm.code = `${prefix}${randomNum}`;
+  }
+
+  saveVoucher(): void {
+    if (!this.voucherForm.code || !this.voucherForm.code.trim()) {
+      this.dialogService.showError('Validation Error', 'Voucher code is required.');
+      return;
+    }
+    if (!this.voucherForm.discountValue || this.voucherForm.discountValue <= 0) {
+      this.dialogService.showError('Validation Error', 'Discount value must be greater than zero.');
+      return;
+    }
+    if (!this.voucherForm.activeFrom || !this.voucherForm.activeTo) {
+      this.dialogService.showError('Validation Error', 'Active dates are required.');
+      return;
+    }
+
+    this.loading = true;
+    const payload: Voucher = {
+      ...this.voucherForm,
+      code: this.voucherForm.code.trim().toUpperCase()
+    };
+
+    if (this.isEditingVoucher && this.editingVoucherId) {
+      this.voucherService.updateVoucher(this.editingVoucherId, payload).subscribe({
+        next: (saved) => {
+          this.loading = false;
+          this.closeVoucherModal();
+          this.loadVouchers();
+          this.loadActiveVouchers();
+          this.dialogService.showSuccess('Voucher Updated', `Voucher "${saved.code}" has been updated successfully.`);
+        },
+        error: (err) => {
+          this.loading = false;
+          const msg = err.error?.message || 'Failed to update voucher.';
+          this.dialogService.showError('Update Failed', msg);
+        }
+      });
+    } else {
+      this.voucherService.createVoucher(payload).subscribe({
+        next: (created) => {
+          this.loading = false;
+          this.closeVoucherModal();
+          this.loadVouchers();
+          this.loadActiveVouchers();
+          this.dialogService.showSuccess('Voucher Created', `Promotional Voucher "${created.code}" created successfully.`);
+        },
+        error: (err) => {
+          this.loading = false;
+          const msg = err.error?.message || 'Failed to create voucher.';
+          this.dialogService.showError('Create Failed', msg);
+        }
+      });
+    }
+  }
+
+  deleteVoucher(voucher: Voucher): void {
+    this.dialogService.confirmDelete(voucher.code, `Are you sure you want to delete promo voucher <strong>${voucher.code}</strong>?<br>This action cannot be undone.`).subscribe(confirmed => {
+      if (confirmed) {
+        this.loading = true;
+        this.voucherService.deleteVoucher(voucher.id!).subscribe({
+          next: () => {
+            this.loading = false;
+            this.loadVouchers();
+            this.loadActiveVouchers();
+            this.dialogService.showSuccess('Voucher Deleted', `Voucher ${voucher.code} has been deleted.`);
+          },
+          error: (err) => {
+            this.loading = false;
+            this.dialogService.showError('Delete Failed', err.error?.message || 'Failed to delete voucher.');
+          }
+        });
+      }
+    });
+  }
+
+  toggleVoucherStatus(voucher: Voucher): void {
+    this.voucherService.toggleActiveStatus(voucher.id!).subscribe({
+      next: (updated) => {
+        voucher.isActive = updated.isActive;
+        voucher.status = updated.status;
+        this.loadActiveVouchers();
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.dialogService.showError('Status Update Failed', err.error?.message || 'Failed to toggle status.');
+      }
+    });
+  }
+
+  copyToClipboard(text: string): void {
+    navigator.clipboard.writeText(text).then(() => {
+      this.dialogService.showSuccess('Copied', `Voucher code "${text}" copied to clipboard!`, 1500);
+    });
+  }
+
+  getVouchersByType(type: string): Voucher[] {
+    return (this.vouchers || []).filter(v => v.discountType === type);
+  }
+
+  // --- Invoice Compilation ---
   triggerGenerateInvoice(): void {
     if (this.compilerType === 'TAKEAWAY') {
       if (!this.selectedTakeAwayOrderId) return;
@@ -193,6 +480,7 @@ export class BillingComponent implements OnInit {
               this.selectedTakeAwayOrderId = null;
               this.discountCode = '';
               this.redeemPoints = 0;
+              this.voucherValidationResult = null;
               this.loadInvoices();
               this.dialogService.showSuccess('Invoice Generated', `Take Away invoice generated: ${invoice.invoiceNumber}`);
             },
@@ -216,6 +504,7 @@ export class BillingComponent implements OnInit {
               this.selectedTableReservationId = null;
               this.discountCode = '';
               this.redeemPoints = 0;
+              this.voucherValidationResult = null;
               this.loadInvoices();
               this.dialogService.showSuccess('Invoice Generated', `Table checkout invoice generated: ${invoice.invoiceNumber}`);
             },
@@ -239,6 +528,7 @@ export class BillingComponent implements OnInit {
               this.selectedRoomReservationId = null;
               this.discountCode = '';
               this.redeemPoints = 0;
+              this.voucherValidationResult = null;
               this.loadInvoices();
               this.dialogService.showSuccess('Invoice Generated', `Room checkout invoice generated: ${invoice.invoiceNumber}`);
             },
@@ -300,90 +590,53 @@ export class BillingComponent implements OnInit {
     this.activeInvoiceTableReservation = null;
   }
 
-  submitPayment(): void {
-    if (!this.activeInvoice) return;
+  printInvoice(invoice: Invoice): void {
+    this.billingService.downloadInvoicePdf(invoice.id!).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Invoice_${invoice.invoiceNumber}.pdf`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+      },
+      error: (err) => {
+        console.error('PDF error', err);
+        this.errorMessage = 'Failed to generate Jasper PDF Receipt.';
+        this.dialogService.showError('PDF Error', this.errorMessage);
+      }
+    });
+  }
 
-    this.dialogService.confirmAction(
-      'Confirm Payment Settlement',
-      `Settle invoice ${this.activeInvoice.invoiceNumber} for Rs. ${this.activeInvoice.totalAmount.toFixed(2)} using ${this.paymentMethod}?`
-    ).subscribe((confirmed) => {
+  processPayment(invoice: Invoice): void {
+    if (!invoice || !invoice.id) return;
+    this.dialogService.confirmAction('Process Payment', `Settle ${invoice.invoiceNumber} payment of Rs. ${invoice.totalAmount}?`).subscribe((confirmed) => {
       if (confirmed) {
+        this.loading = true;
         const payload: PaymentPayload = {
-          invoiceId: this.activeInvoice!.id!,
-          amount: this.activeInvoice!.totalAmount,
+          invoiceId: invoice.id!,
+          amount: invoice.totalAmount,
           paymentMethodName: this.paymentMethod,
           transactionReference: this.paymentRef,
           notes: this.paymentNotes
         };
 
-        this.loading = true;
-        this.errorMessage = '';
-
         this.billingService.processPayment(payload).subscribe({
           next: () => {
-            const paidInv = this.activeInvoice;
-            // Auto-transition table to CLEANING upon bill settlement
-            if (paidInv) {
-              if (this.activeInvoiceTableReservation?.tableId) {
-                this.tableService.updateTableStatus(this.activeInvoiceTableReservation.tableId, 'CLEANING').subscribe();
-              } else if (paidInv.tableReservationId) {
-                this.tableReservationService.getReservationById(paidInv.tableReservationId).subscribe({
-                  next: (tr) => {
-                    if (tr?.tableId) {
-                      this.tableService.updateTableStatus(tr.tableId, 'CLEANING').subscribe();
-                    }
-                  }
-                });
-              }
-
-              if (this.activeInvoiceOrder?.tableId) {
-                this.tableService.updateTableStatus(this.activeInvoiceOrder.tableId, 'CLEANING').subscribe();
-              } else if (paidInv.orderId) {
-                this.orderService.getOrderById(paidInv.orderId).subscribe({
-                  next: (ord) => {
-                    if (ord?.tableId) {
-                      this.tableService.updateTableStatus(ord.tableId, 'CLEANING').subscribe();
-                    }
-                  }
-                });
-              }
-            }
-
+            this.loading = false;
             this.paymentRef = '';
             this.paymentNotes = '';
-            this.paymentMethod = 'CASH';
-            
             this.loadInvoices();
             this.closeInvoice();
-            this.dialogService.showSuccess('Settlement Completed', 'Payment processed successfully. Checkout complete!');
+            this.dialogService.showSuccess('Payment Successful', `Payment for invoice ${invoice.invoiceNumber} was successfully processed.`);
           },
           error: (err) => {
-            this.errorMessage = err.error?.message || 'Failed to process checkout payment.';
+            this.errorMessage = err.error?.message || 'Failed to process invoice payment.';
             this.loading = false;
             this.dialogService.showError('Payment Failed', this.errorMessage);
           }
         });
       }
     });
-  }
-
-  downloadInvoicePdf(invoice: Invoice): void {
-    this.billingService.downloadInvoicePdf(invoice.id!).subscribe({
-      next: (blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `invoice-${invoice.invoiceNumber}.pdf`;
-        a.click();
-        window.URL.revokeObjectURL(url);
-      },
-      error: () => {
-        this.dialogService.showError('Download Failed', 'Failed to download invoice PDF.');
-      }
-    });
-  }
-
-  get paymentsLedger(): Invoice[] {
-    return this.invoices.filter(inv => inv.paymentStatus === 'PAID');
   }
 }

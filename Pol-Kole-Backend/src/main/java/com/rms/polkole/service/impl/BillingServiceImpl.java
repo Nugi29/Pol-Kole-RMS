@@ -8,6 +8,7 @@ import com.rms.polkole.repository.*;
 import com.rms.polkole.service.BillingService;
 import com.rms.polkole.service.OrderService;
 import com.rms.polkole.service.CodeGeneratorService;
+import com.rms.polkole.service.VoucherService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
@@ -26,7 +27,6 @@ public class BillingServiceImpl implements BillingService {
     private final InvoiceRepository invoiceRepository;
     private final InvoiceItemRepository invoiceItemRepository;
     private final OrderRepository orderRepository;
-    private final DiscountRepository discountRepository;
     private final TaxRepository taxRepository;
     private final PaymentMethodRepository paymentMethodRepository;
     private final PaymentRepository paymentRepository;
@@ -44,6 +44,7 @@ public class BillingServiceImpl implements BillingService {
     private final ReservationStatusRepository tableStatusRepository;
     private final ModelMapper mapper;
     private final CodeGeneratorService codeGeneratorService;
+    private final VoucherService voucherService;
 
     @Override
     @Transactional
@@ -55,36 +56,39 @@ public class BillingServiceImpl implements BillingService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Invoice already generated for order: " + orderId);
         }
 
-        BigDecimal orderSubtotal = order.getTotalAmount();
+        BigDecimal grossSubtotal = BigDecimal.ZERO;
+        BigDecimal itemDiscountsTotal = BigDecimal.ZERO;
         List<InvoiceItemEntity> items = new ArrayList<>();
 
         for (OrderItemEntity orderItem : order.getItems()) {
+            BigDecimal regularPrice = (orderItem.getMenuItem() != null && orderItem.getMenuItem().getPrice() != null)
+                    ? orderItem.getMenuItem().getPrice()
+                    : orderItem.getPrice();
+            BigDecimal billedPrice = orderItem.getPrice();
+            BigDecimal qty = BigDecimal.valueOf(orderItem.getQuantity());
+
+            grossSubtotal = grossSubtotal.add(regularPrice.multiply(qty));
+            if (regularPrice.compareTo(billedPrice) > 0) {
+                itemDiscountsTotal = itemDiscountsTotal.add(regularPrice.subtract(billedPrice).multiply(qty));
+            }
+
+            String desc = orderItem.getMenuItem() != null ? orderItem.getMenuItem().getName() : "Menu Item";
+            if (regularPrice.compareTo(billedPrice) > 0) {
+                desc += " (Promo -Rs. " + regularPrice.subtract(billedPrice) + " OFF)";
+            }
+
             items.add(InvoiceItemEntity.builder()
-                    .description(orderItem.getMenuItem().getName())
+                    .description(desc)
                     .quantity(orderItem.getQuantity())
-                    .unitPrice(orderItem.getPrice())
-                    .totalPrice(orderItem.getPrice().multiply(BigDecimal.valueOf(orderItem.getQuantity())))
+                    .unitPrice(billedPrice)
+                    .totalPrice(billedPrice.multiply(qty))
                     .build());
         }
 
-        BigDecimal baseAmount = orderSubtotal;
+        BigDecimal baseAmount = grossSubtotal.subtract(itemDiscountsTotal);
 
-        // Apply Discount Voucher
-        BigDecimal discountAmount = BigDecimal.ZERO;
-        if (discountCode != null && !discountCode.trim().isEmpty()) {
-            Optional<DiscountEntity> discountOpt = discountRepository.findByCodeIgnoreCase(discountCode.trim());
-            if (discountOpt.isPresent()) {
-                DiscountEntity discount = discountOpt.get();
-                LocalDate today = LocalDate.now();
-                if (!today.isBefore(discount.getActiveFrom()) && !today.isAfter(discount.getActiveTo())) {
-                    if ("PERCENTAGE".equalsIgnoreCase(discount.getDiscountType())) {
-                        discountAmount = baseAmount.multiply(discount.getDiscountValue()).divide(BigDecimal.valueOf(100));
-                    } else {
-                        discountAmount = discount.getDiscountValue();
-                    }
-                }
-            }
-        }
+        // Apply Discount Voucher via VoucherService
+        BigDecimal voucherDiscount = voucherService.calculateAndApplyVoucher(discountCode, baseAmount, "TAKEAWAY");
 
         // Apply Loyalty Points Redemption ($0.10 per point)
         CustomerEntity customer = order.getCustomer();
@@ -94,7 +98,6 @@ public class BillingServiceImpl implements BillingService {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Insufficient loyalty points. Customer has only " + customer.getLoyaltyPoints());
             }
             loyaltyDiscount = BigDecimal.valueOf(redeemPoints).multiply(BigDecimal.valueOf(0.10)); // $0.10 per point
-            discountAmount = discountAmount.add(loyaltyDiscount);
 
             // Deduct from customer
             customer.setLoyaltyPoints(customer.getLoyaltyPoints() - redeemPoints);
@@ -109,7 +112,8 @@ public class BillingServiceImpl implements BillingService {
                     .build());
         }
 
-        BigDecimal netCharges = baseAmount.subtract(discountAmount);
+        BigDecimal totalDiscountAmount = itemDiscountsTotal.add(voucherDiscount).add(loyaltyDiscount);
+        BigDecimal netCharges = grossSubtotal.subtract(totalDiscountAmount);
         if (netCharges.compareTo(BigDecimal.ZERO) < 0) netCharges = BigDecimal.ZERO;
 
         // Apply Active Taxes
@@ -125,8 +129,8 @@ public class BillingServiceImpl implements BillingService {
         InvoiceEntity invoice = InvoiceEntity.builder()
                 .order(order)
                 .invoiceNumber(codeGeneratorService.generateNextInvoiceNumber("TAKEAWAY"))
-                .orderSubtotal(orderSubtotal)
-                .discountAmount(discountAmount)
+                .orderSubtotal(grossSubtotal)
+                .discountAmount(totalDiscountAmount)
                 .taxAmount(taxAmount)
                 .totalAmount(totalAmount)
                 .paymentStatus("UNPAID")
@@ -341,37 +345,40 @@ public class BillingServiceImpl implements BillingService {
         BigDecimal orderSubtotal = roomCharges;
 
         // Find unpaid restaurant orders for this room
+        BigDecimal itemDiscountsTotal = BigDecimal.ZERO;
         List<OrderEntity> unpaidOrders = orderRepository.findUnpaidOrdersByRoom(reservation.getRoom().getId());
         for (OrderEntity order : unpaidOrders) {
             for (OrderItemEntity orderItem : order.getItems()) {
-                items.add(InvoiceItemEntity.builder()
-                        .description("Order #" + order.getId() + ": " + orderItem.getMenuItem().getName())
-                        .quantity(orderItem.getQuantity())
-                        .unitPrice(orderItem.getPrice())
-                        .totalPrice(orderItem.getPrice().multiply(BigDecimal.valueOf(orderItem.getQuantity())))
-                        .build());
-                orderSubtotal = orderSubtotal.add(orderItem.getPrice().multiply(BigDecimal.valueOf(orderItem.getQuantity())));
-            }
-        }
+                BigDecimal regularPrice = (orderItem.getMenuItem() != null && orderItem.getMenuItem().getPrice() != null)
+                        ? orderItem.getMenuItem().getPrice()
+                        : orderItem.getPrice();
+                BigDecimal billedPrice = orderItem.getPrice();
+                BigDecimal qty = BigDecimal.valueOf(orderItem.getQuantity());
 
-        BigDecimal baseAmount = orderSubtotal;
-
-        // Apply Discount Voucher
-        BigDecimal discountAmount = BigDecimal.ZERO;
-        if (discountCode != null && !discountCode.trim().isEmpty()) {
-            Optional<DiscountEntity> discountOpt = discountRepository.findByCodeIgnoreCase(discountCode.trim());
-            if (discountOpt.isPresent()) {
-                DiscountEntity discount = discountOpt.get();
-                LocalDate today = LocalDate.now();
-                if (!today.isBefore(discount.getActiveFrom()) && !today.isAfter(discount.getActiveTo())) {
-                    if ("PERCENTAGE".equalsIgnoreCase(discount.getDiscountType())) {
-                        discountAmount = baseAmount.multiply(discount.getDiscountValue()).divide(BigDecimal.valueOf(100));
-                    } else {
-                        discountAmount = discount.getDiscountValue();
-                    }
+                orderSubtotal = orderSubtotal.add(regularPrice.multiply(qty));
+                if (regularPrice.compareTo(billedPrice) > 0) {
+                    itemDiscountsTotal = itemDiscountsTotal.add(regularPrice.subtract(billedPrice).multiply(qty));
                 }
+
+                String desc = "Order #" + order.getId() + ": " + (orderItem.getMenuItem() != null ? orderItem.getMenuItem().getName() : "Item");
+                if (regularPrice.compareTo(billedPrice) > 0) {
+                    desc += " (Promo -Rs. " + regularPrice.subtract(billedPrice) + " OFF)";
+                }
+
+                items.add(InvoiceItemEntity.builder()
+                        .description(desc)
+                        .quantity(orderItem.getQuantity())
+                        .unitPrice(billedPrice)
+                        .totalPrice(billedPrice.multiply(qty))
+                        .build());
             }
         }
+
+        BigDecimal baseAmount = orderSubtotal.subtract(itemDiscountsTotal);
+
+        // Apply Discount Voucher via VoucherService
+        BigDecimal voucherDiscount = voucherService.calculateAndApplyVoucher(discountCode, baseAmount, "ROOM");
+        BigDecimal discountAmount = itemDiscountsTotal.add(voucherDiscount);
 
         // Apply Loyalty Points Redemption ($0.10 per point)
         CustomerEntity customer = reservation.getCustomer();
@@ -497,37 +504,40 @@ public class BillingServiceImpl implements BillingService {
         BigDecimal orderSubtotal = BigDecimal.ZERO;
 
         // Find unpaid restaurant orders for this table
+        BigDecimal itemDiscountsTotal = BigDecimal.ZERO;
         List<OrderEntity> unpaidOrders = orderRepository.findUnpaidOrdersByTable(reservation.getTable().getId());
         for (OrderEntity order : unpaidOrders) {
             for (OrderItemEntity orderItem : order.getItems()) {
-                items.add(InvoiceItemEntity.builder()
-                        .description("Order #" + order.getId() + ": " + orderItem.getMenuItem().getName())
-                        .quantity(orderItem.getQuantity())
-                        .unitPrice(orderItem.getPrice())
-                        .totalPrice(orderItem.getPrice().multiply(BigDecimal.valueOf(orderItem.getQuantity())))
-                        .build());
-                orderSubtotal = orderSubtotal.add(orderItem.getPrice().multiply(BigDecimal.valueOf(orderItem.getQuantity())));
-            }
-        }
+                BigDecimal regularPrice = (orderItem.getMenuItem() != null && orderItem.getMenuItem().getPrice() != null)
+                        ? orderItem.getMenuItem().getPrice()
+                        : orderItem.getPrice();
+                BigDecimal billedPrice = orderItem.getPrice();
+                BigDecimal qty = BigDecimal.valueOf(orderItem.getQuantity());
 
-        BigDecimal baseAmount = orderSubtotal;
-
-        // Apply Discount Voucher
-        BigDecimal discountAmount = BigDecimal.ZERO;
-        if (discountCode != null && !discountCode.trim().isEmpty()) {
-            Optional<DiscountEntity> discountOpt = discountRepository.findByCodeIgnoreCase(discountCode.trim());
-            if (discountOpt.isPresent()) {
-                DiscountEntity discount = discountOpt.get();
-                LocalDate today = LocalDate.now();
-                if (!today.isBefore(discount.getActiveFrom()) && !today.isAfter(discount.getActiveTo())) {
-                    if ("PERCENTAGE".equalsIgnoreCase(discount.getDiscountType())) {
-                        discountAmount = baseAmount.multiply(discount.getDiscountValue()).divide(BigDecimal.valueOf(100));
-                    } else {
-                        discountAmount = discount.getDiscountValue();
-                    }
+                orderSubtotal = orderSubtotal.add(regularPrice.multiply(qty));
+                if (regularPrice.compareTo(billedPrice) > 0) {
+                    itemDiscountsTotal = itemDiscountsTotal.add(regularPrice.subtract(billedPrice).multiply(qty));
                 }
+
+                String desc = "Order #" + order.getId() + ": " + (orderItem.getMenuItem() != null ? orderItem.getMenuItem().getName() : "Item");
+                if (regularPrice.compareTo(billedPrice) > 0) {
+                    desc += " (Promo -Rs. " + regularPrice.subtract(billedPrice) + " OFF)";
+                }
+
+                items.add(InvoiceItemEntity.builder()
+                        .description(desc)
+                        .quantity(orderItem.getQuantity())
+                        .unitPrice(billedPrice)
+                        .totalPrice(billedPrice.multiply(qty))
+                        .build());
             }
         }
+
+        BigDecimal baseAmount = orderSubtotal.subtract(itemDiscountsTotal);
+
+        // Apply Discount Voucher via VoucherService
+        BigDecimal voucherDiscount = voucherService.calculateAndApplyVoucher(discountCode, baseAmount, "TABLE");
+        BigDecimal discountAmount = itemDiscountsTotal.add(voucherDiscount);
 
         // Apply Loyalty Points Redemption ($0.10 per point)
         CustomerEntity customer = reservation.getCustomer();

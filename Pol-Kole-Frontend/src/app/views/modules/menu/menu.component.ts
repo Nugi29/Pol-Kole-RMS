@@ -5,6 +5,7 @@ import { MatTableDataSource } from '@angular/material/table';
 import { ActivatedRoute } from '@angular/router';
 import { MenuItem, MenuCategory, MenuService } from '../../../services/menu.service';
 import { DialogService } from '../../../services/dialog.service';
+import { ItemDiscount, ItemDiscountService } from '../../../services/item-discount.service';
 
 @Component({
   selector: 'app-menu',
@@ -13,25 +14,36 @@ import { DialogService } from '../../../services/dialog.service';
   styleUrl: './menu.component.css'
 })
 export class MenuComponent implements OnInit {
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
+  @ViewChild('itemPaginator') itemPaginator!: MatPaginator;
+  @ViewChild('discountPaginator') discountPaginator!: MatPaginator;
 
   categories: MenuCategory[] = [];
   menuItems: MenuItem[] = [];
+  itemDiscounts: ItemDiscount[] = [];
+
   displayedColumns = ['name', 'description', 'price', 'categoryName', 'preparationTime', 'availability', 'actions'];
+  discountDisplayedColumns = ['title', 'menuItem', 'discount', 'dates', 'status', 'actions'];
+
   dataSource = new MatTableDataSource<MenuItem>([]);
+  discountDataSource = new MatTableDataSource<ItemDiscount>([]);
 
   itemForm: FormGroup;
   catForm: FormGroup;
+  discountForm: FormGroup;
+
   editingItemId: number | null = null;
   editingCatId: number | null = null;
+  editingDiscountId: number | null = null;
+
   loading = false;
   errorMessage = '';
   successMessage = '';
-  activeTab = 'items';
+  activeTab = 'items'; // 'items' | 'categories' | 'discounts'
 
   constructor(
     private readonly fb: FormBuilder,
     private readonly menuService: MenuService,
+    private readonly itemDiscountService: ItemDiscountService,
     private readonly route: ActivatedRoute,
     private readonly cdr: ChangeDetectorRef,
     private readonly dialogService: DialogService
@@ -39,7 +51,7 @@ export class MenuComponent implements OnInit {
     this.itemForm = this.fb.group({
       name: ['', [Validators.required, Validators.maxLength(100)]],
       description: ['', [Validators.required, Validators.maxLength(500)]],
-      price: [10.00, [Validators.required, Validators.min(0)]],
+      price: [1000.00, [Validators.required, Validators.min(0)]],
       categoryId: ['', Validators.required],
       preparationTime: [15, [Validators.required, Validators.min(1)]],
       isAvailable: [true]
@@ -48,6 +60,21 @@ export class MenuComponent implements OnInit {
     this.catForm = this.fb.group({
       name: ['', [Validators.required, Validators.maxLength(50)]],
       description: ['', Validators.maxLength(250)]
+    });
+
+    const today = new Date().toISOString().substring(0, 10);
+    const nextMonth = new Date();
+    nextMonth.setMonth(nextMonth.getMonth() + 1);
+    const nextMonthStr = nextMonth.toISOString().substring(0, 10);
+
+    this.discountForm = this.fb.group({
+      title: ['', [Validators.required, Validators.maxLength(150)]],
+      menuItemId: ['', Validators.required],
+      discountType: ['SPECIAL_PRICE', Validators.required], // SPECIAL_PRICE, PERCENTAGE, FIXED_OFF
+      discountValue: [800.00, [Validators.required, Validators.min(0.01)]],
+      startDate: [today, Validators.required],
+      endDate: [nextMonthStr, Validators.required],
+      isActive: [true]
     });
   }
 
@@ -65,6 +92,7 @@ export class MenuComponent implements OnInit {
   loadAll(): void {
     this.loadCategories();
     this.loadMenuItems();
+    this.loadItemDiscounts();
   }
 
   loadCategories(): void {
@@ -80,6 +108,11 @@ export class MenuComponent implements OnInit {
     });
   }
 
+  // Filters for Catalog Items Directory
+  itemSearchQuery = '';
+  selectedCategoryId: number | null = null;
+  selectedAvailability: boolean | null = null;
+
   loadMenuItems(): void {
     this.loading = true;
     this.errorMessage = '';
@@ -87,7 +120,10 @@ export class MenuComponent implements OnInit {
       next: (page) => {
         const data = page?.content || [];
         this.menuItems = data;
-        this.dataSource.data = data;
+        this.applyItemFilters();
+        if (this.itemPaginator) {
+          this.dataSource.paginator = this.itemPaginator;
+        }
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -100,6 +136,64 @@ export class MenuComponent implements OnInit {
     });
   }
 
+  applyItemFilters(): void {
+    let filtered = [...this.menuItems];
+
+    if (this.itemSearchQuery && this.itemSearchQuery.trim()) {
+      const q = this.itemSearchQuery.trim().toLowerCase();
+      filtered = filtered.filter(item => 
+        (item.name && item.name.toLowerCase().includes(q)) ||
+        (item.description && item.description.toLowerCase().includes(q)) ||
+        (item.categoryName && item.categoryName.toLowerCase().includes(q)) ||
+        (item.price && String(item.price).includes(q))
+      );
+    }
+
+    if (this.selectedCategoryId !== null && this.selectedCategoryId !== undefined) {
+      filtered = filtered.filter(item => item.categoryId == this.selectedCategoryId);
+    }
+
+    if (this.selectedAvailability !== null && this.selectedAvailability !== undefined) {
+      filtered = filtered.filter(item => Boolean(item.isAvailable) === Boolean(this.selectedAvailability));
+    }
+
+    this.dataSource.data = filtered;
+    if (this.itemPaginator) {
+      this.itemPaginator.firstPage();
+    }
+    this.cdr.markForCheck();
+  }
+
+  resetItemFilters(): void {
+    this.itemSearchQuery = '';
+    this.selectedCategoryId = null;
+    this.selectedAvailability = null;
+    this.dataSource.data = [...this.menuItems];
+    if (this.itemPaginator) {
+      this.itemPaginator.firstPage();
+    }
+    this.cdr.markForCheck();
+  }
+
+  loadItemDiscounts(): void {
+    this.itemDiscountService.searchItemDiscounts(undefined, 0, 1000).subscribe({
+      next: (page) => {
+        const data = page?.content || [];
+        this.itemDiscounts = data;
+        this.discountDataSource.data = data;
+        if (this.discountPaginator) {
+          this.discountDataSource.paginator = this.discountPaginator;
+        }
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.warn('Failed to load item discounts', err);
+        this.itemDiscounts = [];
+      }
+    });
+  }
+
+  // --- Menu Item CRUD ---
   saveMenuItem(): void {
     if (this.itemForm.invalid) {
       this.itemForm.markAllAsTouched();
@@ -152,22 +246,21 @@ export class MenuComponent implements OnInit {
       preparationTime: item.preparationTime,
       isAvailable: item.isAvailable
     });
+    this.cdr.markForCheck();
   }
 
-  deleteMenuItem(id: number): void {
-    const item = this.menuItems.find(m => m.id === id);
-    const itemLabel = item ? `"${item.name}"` : 'this menu item';
-    this.dialogService.confirmDelete(itemLabel).subscribe((confirmed) => {
+  deleteMenuItem(item: MenuItem): void {
+    this.dialogService.confirmDelete(item.name).subscribe((confirmed) => {
       if (confirmed) {
         this.loading = true;
-        this.menuService.deleteMenuItem(id).subscribe({
+        this.menuService.deleteMenuItem(item.id!).subscribe({
           next: () => {
             this.loadMenuItems();
             this.loading = false;
-            this.dialogService.showSuccess('Deleted', `${itemLabel} deleted successfully.`);
+            this.dialogService.showSuccess('Item Deleted', `"${item.name}" has been removed.`);
           },
-          error: () => {
-            this.errorMessage = 'Failed to delete menu item.';
+          error: (err) => {
+            this.errorMessage = err.error?.message || 'Failed to delete menu item.';
             this.loading = false;
             this.dialogService.showError('Delete Failed', this.errorMessage);
           }
@@ -176,32 +269,16 @@ export class MenuComponent implements OnInit {
     });
   }
 
-  requestClearItemForm(): void {
-    if (this.itemForm.dirty || this.editingItemId) {
-      this.dialogService.confirmClear().subscribe((confirmed) => {
-        if (confirmed) {
-          this.clearItemForm();
-          this.dialogService.showSuccess('Cleared', 'Menu item form cleared successfully.');
-        }
-      });
-    } else {
-      this.clearItemForm();
-    }
-  }
-
   clearItemForm(): void {
     this.editingItemId = null;
     this.itemForm.reset({
-      name: '',
-      description: '',
-      price: 10.00,
-      categoryId: '',
+      price: 1000.00,
       preparationTime: 15,
       isAvailable: true
     });
   }
 
-  // Categories
+  // --- Category CRUD ---
   saveCategory(): void {
     if (this.catForm.invalid) {
       this.catForm.markAllAsTouched();
@@ -233,12 +310,12 @@ export class MenuComponent implements OnInit {
           this.loadCategories();
           this.clearCatForm();
           this.loading = false;
-          this.dialogService.showSuccess('Category Registered', 'New category created successfully.');
+          this.dialogService.showSuccess('Category Created', 'Category created successfully.');
         },
         error: (err) => {
           this.errorMessage = err.error?.message || 'Failed to create category.';
           this.loading = false;
-          this.dialogService.showError('Registration Failed', this.errorMessage);
+          this.dialogService.showError('Creation Failed', this.errorMessage);
         }
       });
     }
@@ -252,21 +329,18 @@ export class MenuComponent implements OnInit {
     });
   }
 
-  deleteCategory(id: number): void {
-    const cat = this.categories.find(c => c.id === id);
-    const catLabel = cat ? `category "${cat.name}"` : 'this category';
-    this.dialogService.confirmDelete(catLabel, `Are you sure you want to delete ${catLabel}?<br>All its associated menu items will be unlinked.`).subscribe((confirmed) => {
+  deleteCategory(cat: MenuCategory): void {
+    this.dialogService.confirmDelete(cat.name).subscribe((confirmed) => {
       if (confirmed) {
         this.loading = true;
-        this.menuService.deleteCategory(id).subscribe({
+        this.menuService.deleteCategory(cat.id!).subscribe({
           next: () => {
             this.loadCategories();
-            this.loadMenuItems();
             this.loading = false;
-            this.dialogService.showSuccess('Deleted', `${catLabel} deleted successfully.`);
+            this.dialogService.showSuccess('Category Deleted', `"${cat.name}" has been deleted.`);
           },
-          error: () => {
-            this.errorMessage = 'Failed to delete category.';
+          error: (err) => {
+            this.errorMessage = err.error?.message || 'Failed to delete category.';
             this.loading = false;
             this.dialogService.showError('Delete Failed', this.errorMessage);
           }
@@ -275,24 +349,133 @@ export class MenuComponent implements OnInit {
     });
   }
 
-  requestClearCatForm(): void {
-    if (this.catForm.dirty || this.editingCatId) {
-      this.dialogService.confirmClear().subscribe((confirmed) => {
-        if (confirmed) {
-          this.clearCatForm();
-          this.dialogService.showSuccess('Cleared', 'Category form cleared successfully.');
+  clearCatForm(): void {
+    this.editingCatId = null;
+    this.catForm.reset();
+  }
+
+  // --- Special Time-Period Item Discount CRUD ---
+  saveItemDiscount(): void {
+    if (this.discountForm.invalid) {
+      this.discountForm.markAllAsTouched();
+      return;
+    }
+
+    const payload: ItemDiscount = this.discountForm.value;
+    this.loading = true;
+    this.errorMessage = '';
+
+    if (this.editingDiscountId) {
+      this.itemDiscountService.updateItemDiscount(this.editingDiscountId, payload).subscribe({
+        next: (saved) => {
+          this.loadItemDiscounts();
+          this.clearDiscountForm();
+          this.loading = false;
+          this.dialogService.showSuccess('Discount Updated', `Promotional discount for ${saved.menuItemName} updated.`);
+        },
+        error: (err) => {
+          this.loading = false;
+          this.dialogService.showError('Update Failed', err.error?.message || 'Failed to update item discount.');
         }
       });
     } else {
-      this.clearCatForm();
+      this.itemDiscountService.createItemDiscount(payload).subscribe({
+        next: (created) => {
+          this.loadItemDiscounts();
+          this.clearDiscountForm();
+          this.loading = false;
+          this.dialogService.showSuccess('Discount Created', `Special promotional price configured for ${created.menuItemName}.`);
+        },
+        error: (err) => {
+          this.loading = false;
+          this.dialogService.showError('Creation Failed', err.error?.message || 'Failed to create item discount.');
+        }
+      });
     }
   }
 
-  clearCatForm(): void {
-    this.editingCatId = null;
-    this.catForm.reset({
-      name: '',
-      description: ''
+  editItemDiscount(d: ItemDiscount): void {
+    this.editingDiscountId = d.id || null;
+    this.discountForm.patchValue({
+      title: d.title,
+      menuItemId: d.menuItemId,
+      discountType: d.discountType,
+      discountValue: d.discountValue,
+      startDate: d.startDate,
+      endDate: d.endDate,
+      isActive: d.isActive !== undefined ? d.isActive : true
     });
+    this.cdr.markForCheck();
+  }
+
+  deleteItemDiscount(d: ItemDiscount): void {
+    this.dialogService.confirmDelete(d.title, `Are you sure you want to remove special discount <strong>"${d.title}"</strong> for ${d.menuItemName}?`).subscribe((confirmed) => {
+      if (confirmed) {
+        this.loading = true;
+        this.itemDiscountService.deleteItemDiscount(d.id!).subscribe({
+          next: () => {
+            this.loadItemDiscounts();
+            this.loading = false;
+            this.dialogService.showSuccess('Discount Removed', `Special discount removed.`);
+          },
+          error: (err) => {
+            this.loading = false;
+            this.dialogService.showError('Delete Failed', err.error?.message || 'Failed to delete item discount.');
+          }
+        });
+      }
+    });
+  }
+
+  toggleItemDiscountStatus(d: ItemDiscount): void {
+    this.itemDiscountService.toggleActiveStatus(d.id!).subscribe({
+      next: (updated) => {
+        d.isActive = updated.isActive;
+        d.status = updated.status;
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.dialogService.showError('Status Error', err.error?.message || 'Failed to toggle status.');
+      }
+    });
+  }
+
+  clearDiscountForm(): void {
+    this.editingDiscountId = null;
+    const today = new Date().toISOString().substring(0, 10);
+    const nextMonth = new Date();
+    nextMonth.setMonth(nextMonth.getMonth() + 1);
+    const nextMonthStr = nextMonth.toISOString().substring(0, 10);
+
+    this.discountForm.reset({
+      title: '',
+      menuItemId: '',
+      discountType: 'SPECIAL_PRICE',
+      discountValue: 800.00,
+      startDate: today,
+      endDate: nextMonthStr,
+      isActive: true
+    });
+  }
+
+  getLiveDiscountPreview(): { original: number, discounted: number } {
+    const itemId = this.discountForm.get('menuItemId')?.value;
+    const type = this.discountForm.get('discountType')?.value;
+    const val = Number(this.discountForm.get('discountValue')?.value) || 0;
+
+    const item = this.menuItems.find(m => m.id === Number(itemId));
+    const original = item?.price || 0;
+    let discounted = original;
+
+    if (type === 'PERCENTAGE') {
+      discounted = original - (original * val / 100);
+    } else if (type === 'FIXED_OFF') {
+      discounted = original - val;
+    } else if (type === 'SPECIAL_PRICE') {
+      discounted = val;
+    }
+
+    if (discounted < 0) discounted = 0;
+    return { original, discounted };
   }
 }

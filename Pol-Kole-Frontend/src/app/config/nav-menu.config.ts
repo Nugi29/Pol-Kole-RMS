@@ -58,6 +58,7 @@ export const NAV_MENU = [
     children: [
       { name: 'Menu Items', route: '/main/menu?tab=items', roles: ['ADMIN', 'MANAGER', 'WAITER', 'CHEF'] },
       { name: 'Categories', route: '/main/menu?tab=categories', roles: ['ADMIN', 'MANAGER', 'CHEF'] },
+      { name: 'Item Discounts', route: '/main/menu?tab=discounts', roles: ['ADMIN', 'MANAGER'] },
     ],
   },
   {
@@ -96,6 +97,7 @@ export const NAV_MENU = [
     children: [
       { name: 'Invoices Ledger', route: '/main/billing?tab=invoices', roles: ['ADMIN', 'MANAGER', 'CASHIER'] },
       { name: 'Payments Ledger', route: '/main/billing?tab=payments', roles: ['ADMIN', 'MANAGER', 'CASHIER'] },
+      { name: 'Discount Vouchers', route: '/main/billing?tab=vouchers', roles: ['ADMIN', 'MANAGER'] },
     ],
   },
   {

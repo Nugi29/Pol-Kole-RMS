@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS `users` (
 
 TRUNCATE TABLE `users`;
 -- Passwords are set to 'password123' (bcrypt/plain text for dev)
-INSERT INTO `users` (`id`, `name`, `email`, `password`, `phone`, `role_id`, `userstatus_id`) VALUES
+INSERT INTO `users` (`id`, `name`, `email`, `password` , `phone`, `role_id`, `userstatus_id`) VALUES
 (1, 'Chathura Silva', 'chathura@polkole.lk', 'password123', '+94771112222', 1, 1),
 (2, 'Sanduni Perera', 'sanduni@polkole.lk', 'password123', '+94773334444', 2, 1),
 (3, 'Dilshan Fernando', 'dilshan@polkole.lk', 'password123', '+94775556666', 3, 1),
@@ -75,7 +75,8 @@ INSERT INTO `menu_categories` (`id`, `name`, `description`, `is_deleted`) VALUES
 (2, 'Sri Lankan Kottu', 'Freshly chopped kottu roti prepared with vegetables, eggs, cheese, and delicious spices.', 0),
 (3, 'Seafood Specialties', 'Freshly caught fish, crabs, cuttlefish, and prawns prepared in traditional local style.', 0),
 (4, 'Ceylon Tea & Beverages', 'Premium single-origin Ceylon tea varieties, fresh local fruit juices, and traditional king coconut water.', 0),
-(5, 'Traditional Desserts', 'Sweet Sri Lankan local delicacies including homemade watalappan and curd with treacle.', 0);
+(5, 'Traditional Desserts', 'Sweet Sri Lankan local delicacies including homemade watalappan and curd with treacle.', 0),
+(6, 'Special Combo Deals & Bundles', 'Value bundle packages and meal combos including food and beverages at discounted rates.', 0);
 
 -- 7. Populate menu_items
 TRUNCATE TABLE `menu_items`;
@@ -87,7 +88,9 @@ INSERT INTO `menu_items` (`id`, `name`, `description`, `price`, `preparation_tim
 (5, 'Ceylon Cardamom Tea (Pot)', 'Premium BOP Fanning Ceylon tea brewed with fresh cardamom pods, served with local jaggery.', 500.00, 7, 4, 1, 0),
 (6, 'Fresh King Coconut (Thambili)', 'Chilled, refreshing premium local king coconut water served fresh in the shell.', 350.00, 3, 4, 1, 0),
 (7, 'Traditional Watalappan', 'Steamed rich custard pudding made from organic coconut milk, native kithul jaggery, eggs, and freshly ground spices.', 600.00, 10, 5, 1, 0),
-(8, 'Buffalo Curd & Kithul Treacle', 'Creamy local buffalo curd served chilled with sweet, organic kithul palm treacle.', 550.00, 5, 5, 1, 0);
+(8, 'Buffalo Curd & Kithul Treacle', 'Creamy local buffalo curd served chilled with sweet, organic kithul palm treacle.', 550.00, 5, 5, 1, 0),
+(9, 'Classic Pizza + Coke 1L Combo Deal', 'Includes 1x Large Classic Pizza + 1x 1L Chilled Coca-Cola Bottle (Value Combo Deal - Save Rs. 600)', 1500.00, 20, 6, 1, 0),
+(10, 'Double Kottu + 2 Fresh Thambili Combo', 'Includes 2x Cheese & Egg Kottu Roti + 2x Fresh King Coconuts (Save Rs. 500)', 3200.00, 20, 6, 1, 0);
 
 -- 8. Populate customers
 TRUNCATE TABLE `customers`;
@@ -128,6 +131,52 @@ TRUNCATE TABLE `taxes`;
 INSERT INTO `taxes` (`id`, `name`, `percentage`, `active`) VALUES
 (1, 'VAT', 15.00, 1),
 (2, 'Service Charge', 10.00, 1);
+
+-- 13. Populate vouchers (Promotional Voucher & Coupon Codes applied at Invoice Compiler)
+CREATE TABLE IF NOT EXISTS `vouchers` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `code` VARCHAR(30) NOT NULL UNIQUE,
+    `description` VARCHAR(255),
+    `discount_type` VARCHAR(20) NOT NULL, -- PERCENTAGE, FIXED
+    `discount_value` DECIMAL(10, 2) NOT NULL,
+    `min_bill_amount` DECIMAL(10, 2) DEFAULT NULL,
+    `max_discount_amount` DECIMAL(10, 2) DEFAULT NULL,
+    `active_from` DATE NOT NULL,
+    `active_to` DATE NOT NULL,
+    `usage_limit` INT DEFAULT NULL,
+    `usage_count` INT NOT NULL DEFAULT 0,
+    `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+    `applicable_type` VARCHAR(20) DEFAULT 'ALL',
+    `is_deleted` TINYINT(1) NOT NULL DEFAULT 0
+);
+
+TRUNCATE TABLE `vouchers`;
+INSERT INTO `vouchers` (`id`, `code`, `description`, `discount_type`, `discount_value`, `min_bill_amount`, `max_discount_amount`, `active_from`, `active_to`, `usage_limit`, `usage_count`, `is_active`, `applicable_type`, `is_deleted`) VALUES
+(1, 'WELCOME10', 'Welcome Guest Promotional 10% Discount', 'PERCENTAGE', 10.00, 1000.00, 2000.00, '2026-01-01', '2026-12-31', 500, 0, 1, 'ALL', 0),
+(2, 'VIP20', 'VIP Platinum Guest 20% Special Discount', 'PERCENTAGE', 20.00, 3000.00, 5000.00, '2026-01-01', '2026-12-31', 100, 0, 1, 'ALL', 0),
+(3, 'SUMMER500', 'Summer Getaway Flat Rs. 500 Off', 'FIXED', 500.00, 2500.00, NULL, '2026-01-01', '2026-12-31', 200, 0, 1, 'ALL', 0),
+(4, 'MANAGER15', 'Manager Approved Discretionary 15% Courtesy Discount', 'PERCENTAGE', 15.00, 500.00, 3000.00, '2026-01-01', '2026-12-31', NULL, 0, 1, 'ALL', 0),
+(5, 'SEAFOOD250', 'Seafood Special Rs. 250 Off Voucher', 'FIXED', 250.00, 1500.00, NULL, '2026-01-01', '2026-12-31', 150, 0, 1, 'ALL', 0);
+
+-- 14. Populate item_discounts (Special Time-Period Menu Item Discounts: e.g. Fried rice regular Rs. 1200 -> special price Rs. 1000)
+CREATE TABLE IF NOT EXISTS `item_discounts` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `title` VARCHAR(150) NOT NULL,
+    `menu_item_id` INT NOT NULL,
+    `discount_type` VARCHAR(20) NOT NULL, -- PERCENTAGE, FIXED_OFF, SPECIAL_PRICE
+    `discount_value` DECIMAL(10, 2) NOT NULL,
+    `start_date` DATE NOT NULL,
+    `end_date` DATE NOT NULL,
+    `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+    `is_deleted` TINYINT(1) NOT NULL DEFAULT 0,
+    FOREIGN KEY (`menu_item_id`) REFERENCES `menu_items`(`id`)
+);
+
+TRUNCATE TABLE `item_discounts`;
+INSERT INTO `item_discounts` (`id`, `title`, `menu_item_id`, `discount_type`, `discount_value`, `start_date`, `end_date`, `is_active`, `is_deleted`) VALUES
+(1, 'Daily Lunch Special Promo', 1, 'SPECIAL_PRICE', 1000.00, '2026-01-01', '2026-12-31', 1, 0),
+(2, 'Evening Kottu Madness 20% Off', 2, 'PERCENTAGE', 20.00, '2026-01-01', '2026-12-31', 1, 0),
+(3, 'Chef Premium Seafood Special Rs. 300 Off', 3, 'FIXED_OFF', 300.00, '2026-01-01', '2026-12-31', 1, 0);
 
 -- Re-enable foreign key checks
 SET FOREIGN_KEY_CHECKS = 1;

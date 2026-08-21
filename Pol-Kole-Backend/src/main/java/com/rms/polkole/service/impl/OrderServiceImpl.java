@@ -5,6 +5,7 @@ import com.rms.polkole.dto.OrderItemDto;
 import com.rms.polkole.entity.*;
 import com.rms.polkole.repository.*;
 import com.rms.polkole.service.OrderService;
+import com.rms.polkole.service.ItemDiscountService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
@@ -32,6 +33,7 @@ public class OrderServiceImpl implements OrderService {
     private final KitchenOrderRepository kitchenOrderRepository;
     private final RoomRepository roomRepository;
     private final ModelMapper mapper;
+    private final ItemDiscountService itemDiscountService;
 
     @Override
     @Transactional
@@ -75,16 +77,21 @@ public class OrderServiceImpl implements OrderService {
             MenuItemEntity menuItem = menuItemRepository.findById(itemDto.getMenuItemId())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Menu item not found with ID: " + itemDto.getMenuItemId()));
 
+            BigDecimal effectivePrice = itemDiscountService.getEffectiveItemPrice(menuItem.getId());
+            if (effectivePrice == null) {
+                effectivePrice = menuItem.getPrice();
+            }
+
             OrderItemEntity item = OrderItemEntity.builder()
                     .order(order)
                     .menuItem(menuItem)
                     .quantity(itemDto.getQuantity())
-                    .price(menuItem.getPrice())
+                    .price(effectivePrice)
                     .notes(itemDto.getNotes())
                     .build();
 
             order.getItems().add(item);
-            subtotal = subtotal.add(menuItem.getPrice().multiply(BigDecimal.valueOf(itemDto.getQuantity())));
+            subtotal = subtotal.add(effectivePrice.multiply(BigDecimal.valueOf(itemDto.getQuantity())));
         }
 
         order.setTotalAmount(subtotal);
