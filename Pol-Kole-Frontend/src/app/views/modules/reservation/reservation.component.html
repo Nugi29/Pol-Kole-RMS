@@ -65,22 +65,107 @@
       </div>
 
       <form [formGroup]="form" (ngSubmit)="createBooking()" class="space-y-4">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Registered Guest / Customer</label>
-            <select formControlName="customerId"
-                    [ngClass]="form.get('customerId')?.invalid && form.get('customerId')?.touched ? 'border-rose-500 bg-rose-50/10' : 'border-slate-200'"
-                    class="w-full bg-slate-50 border rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all">
-              <option [ngValue]="null">Select registered guest...</option>
-              <option *ngFor="let cust of customers" [ngValue]="cust.id">{{ cust.name }} (Passport/NIC: {{ cust.nicPassport }})</option>
-            </select>
-            <p *ngIf="form.get('customerId')?.invalid && form.get('customerId')?.touched" class="text-rose-600 text-[11px] mt-1 font-bold animate-fade-in">
-              Please select a registered guest.
-            </p>
+        <!-- Customer Phone Number & Identification Header -->
+        <div class="bg-slate-50/80 p-4 rounded-xl border border-slate-200/80 space-y-3">
+          <div class="flex items-center justify-between">
+            <label class="block text-[11.5px] font-bold text-slate-700 uppercase tracking-wider">
+              📞 Customer Phone Number <span class="text-rose-500">*</span>
+            </label>
+            <span *ngIf="diningCustomerStatus === 'EXISTING'" class="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md flex items-center gap-1">
+              ✓ Registered Guest Found
+            </span>
+            <span *ngIf="diningCustomerStatus === 'NEW'" class="text-[11px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-md flex items-center gap-1">
+              ✨ New Guest Detected
+            </span>
           </div>
 
+          <div class="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-2 items-center">
+            <div class="relative">
+              <input type="text"
+                     formControlName="customerPhone"
+                     (input)="onDiningPhoneInput($any($event.target).value)"
+                     placeholder="Enter customer phone (e.g. 0771234567)..."
+                     class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] font-medium text-slate-800 focus:outline-none focus:border-indigo-500 transition-all"/>
+            </div>
+            
+            <!-- Quick select existing guest dropdown -->
+            <select (change)="onSelectDiningCustomer($any($event.target).value)"
+                    class="bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-[12px] text-slate-600 focus:outline-none focus:border-indigo-500 cursor-pointer">
+              <option value="">Or pick existing guest...</option>
+              <option *ngFor="let cust of customers" [value]="cust.id">{{ cust.name }} ({{ cust.phone }})</option>
+            </select>
+          </div>
+
+          <!-- Case 1: Existing Customer Profile Card -->
+          <div *ngIf="diningCustomerStatus === 'EXISTING' && diningExistingCustomer"
+               class="bg-white border border-emerald-200 rounded-xl p-3.5 shadow-xs space-y-2 animate-fade-in">
+            <div class="flex items-start justify-between">
+              <div>
+                <h4 class="text-[13.5px] font-bold text-slate-900 flex items-center gap-1.5">
+                  <span>👤</span> {{ diningExistingCustomer.name }}
+                  <span class="text-[10.5px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full font-bold">Existing Guest</span>
+                </h4>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-[11.5px] text-slate-600 mt-1">
+                  <div><strong>NIC / Passport:</strong> {{ diningExistingCustomer.nicPassport || 'N/A' }}</div>
+                  <div><strong>Phone:</strong> {{ diningExistingCustomer.phone }}</div>
+                  <div *ngIf="diningExistingCustomer.email"><strong>Email:</strong> {{ diningExistingCustomer.email }}</div>
+                  <div *ngIf="diningExistingCustomer.address"><strong>Address:</strong> {{ diningExistingCustomer.address }}</div>
+                </div>
+              </div>
+              <button type="button" (click)="clearDiningCustomer()"
+                      class="text-[11.5px] font-bold text-slate-500 hover:text-rose-600 bg-slate-100 hover:bg-rose-50 px-2.5 py-1 rounded-lg transition-all cursor-pointer">
+                Clear
+              </button>
+            </div>
+          </div>
+
+          <!-- Case 2: New Customer Form Fields (Appears right in the same form) -->
+          <div *ngIf="diningCustomerStatus === 'NEW'"
+               class="bg-amber-50/50 border border-amber-200 rounded-xl p-3.5 space-y-3 animate-fade-in">
+            <div class="flex items-center justify-between">
+              <p class="text-[12px] font-bold text-amber-900 flex items-center gap-1">
+                <span>📝</span> New Guest Profile — Enter Details:
+              </p>
+              <button type="button" (click)="clearDiningCustomer()" class="text-[11px] text-slate-400 hover:text-rose-600 font-semibold cursor-pointer">Reset</button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[10.5px] font-bold text-slate-500 uppercase tracking-wider mb-1">Guest Full Name <span class="text-rose-500">*</span></label>
+                <input type="text" formControlName="customerName" placeholder="e.g. Kasun Perera"
+                       class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-[12.5px] focus:outline-none focus:border-indigo-500"/>
+              </div>
+
+              <div>
+                <label class="block text-[10.5px] font-bold text-slate-500 uppercase tracking-wider mb-1">NIC / Passport Number <span class="text-rose-500">*</span></label>
+                <input type="text" formControlName="customerNic" placeholder="e.g. 199512345678 or N1234567"
+                       class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-[12.5px] focus:outline-none focus:border-indigo-500"/>
+              </div>
+
+              <div>
+                <label class="block text-[10.5px] font-bold text-slate-500 uppercase tracking-wider mb-1">Email Address (Optional)</label>
+                <input type="email" formControlName="customerEmail" placeholder="e.g. guest@example.com"
+                       class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-[12.5px] focus:outline-none focus:border-indigo-500"/>
+              </div>
+
+              <div>
+                <label class="block text-[10.5px] font-bold text-slate-500 uppercase tracking-wider mb-1">Address / City (Optional)</label>
+                <input type="text" formControlName="customerAddress" placeholder="e.g. Colombo, Sri Lanka"
+                       class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-[12.5px] focus:outline-none focus:border-indigo-500"/>
+              </div>
+            </div>
+          </div>
+
+          <!-- Case 3: Idle Helper -->
+          <p *ngIf="diningCustomerStatus === 'IDLE'" class="text-[11px] text-slate-400 italic">
+            Type the customer's phone number above to search existing profile or register a new guest.
+          </p>
+        </div>
+
+        <!-- Table Selection & Reservation Details -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Select Available Table</label>
+            <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Select Available Table <span class="text-rose-500">*</span></label>
             <select formControlName="tableId"
                     [ngClass]="form.get('tableId')?.invalid && form.get('tableId')?.touched ? 'border-rose-500 bg-rose-50/10' : 'border-slate-200'"
                     class="w-full bg-slate-50 border rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all">
@@ -91,11 +176,21 @@
               Please select a dining table.
             </p>
           </div>
+
+          <div>
+            <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Guests Count <span class="text-rose-500">*</span></label>
+            <input type="number" formControlName="guestsCount"
+                   [ngClass]="form.get('guestsCount')?.invalid && form.get('guestsCount')?.touched ? 'border-rose-500 bg-rose-50/10' : 'border-slate-200'"
+                   class="w-full bg-slate-50 border rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all"/>
+            <p *ngIf="form.get('guestsCount')?.invalid && form.get('guestsCount')?.touched" class="text-rose-600 text-[11px] mt-1 font-bold animate-fade-in">
+              Guest count must be at least 1.
+            </p>
+          </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Reservation Date</label>
+            <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Reservation Date <span class="text-rose-500">*</span></label>
             <input type="date" formControlName="reservationDate"
                    [ngClass]="form.get('reservationDate')?.invalid && form.get('reservationDate')?.touched ? 'border-rose-500 bg-rose-50/10' : 'border-slate-200'"
                    class="w-full bg-slate-50 border rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all"/>
@@ -105,22 +200,12 @@
           </div>
 
           <div>
-            <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Time Slot (HH:MM)</label>
+            <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Time Slot (HH:MM) <span class="text-rose-500">*</span></label>
             <input type="text" placeholder="e.g. 19:30" formControlName="reservationTime"
                    [ngClass]="form.get('reservationTime')?.invalid && form.get('reservationTime')?.touched ? 'border-rose-500 bg-rose-50/10' : 'border-slate-200'"
                    class="w-full bg-slate-50 border rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all"/>
             <p *ngIf="form.get('reservationTime')?.invalid && form.get('reservationTime')?.touched" class="text-rose-600 text-[11px] mt-1 font-bold animate-fade-in">
               Valid format (HH:MM) is required (e.g. 19:30).
-            </p>
-          </div>
-
-          <div>
-            <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Guests Count</label>
-            <input type="number" formControlName="guestsCount"
-                   [ngClass]="form.get('guestsCount')?.invalid && form.get('guestsCount')?.touched ? 'border-rose-500 bg-rose-50/10' : 'border-slate-200'"
-                   class="w-full bg-slate-50 border rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all"/>
-            <p *ngIf="form.get('guestsCount')?.invalid && form.get('guestsCount')?.touched" class="text-rose-600 text-[11px] mt-1 font-bold animate-fade-in">
-              Guest count must be at least 1.
             </p>
           </div>
         </div>
@@ -300,22 +385,107 @@
       </div>
 
       <form [formGroup]="hotelReservationForm" (ngSubmit)="createHotelBooking()" class="space-y-4">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Registered Guest / Customer</label>
-            <select formControlName="customerId"
-                    [ngClass]="hotelReservationForm.get('customerId')?.invalid && hotelReservationForm.get('customerId')?.touched ? 'border-rose-500 bg-rose-50/10' : 'border-slate-200'"
-                    class="w-full bg-slate-50 border rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all">
-              <option [ngValue]="null">Select registered guest...</option>
-              <option *ngFor="let cust of customers" [ngValue]="cust.id">{{ cust.name }} (Passport/NIC: {{ cust.nicPassport }})</option>
-            </select>
-            <p *ngIf="hotelReservationForm.get('customerId')?.invalid && hotelReservationForm.get('customerId')?.touched" class="text-rose-600 text-[11px] mt-1 font-bold animate-fade-in">
-              Please select a registered guest.
-            </p>
+        <!-- Customer Phone Number & Identification Header -->
+        <div class="bg-slate-50/80 p-4 rounded-xl border border-slate-200/80 space-y-3">
+          <div class="flex items-center justify-between">
+            <label class="block text-[11.5px] font-bold text-slate-700 uppercase tracking-wider">
+              📞 Customer Phone Number <span class="text-rose-500">*</span>
+            </label>
+            <span *ngIf="hotelCustomerStatus === 'EXISTING'" class="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md flex items-center gap-1">
+              ✓ Registered Guest Found
+            </span>
+            <span *ngIf="hotelCustomerStatus === 'NEW'" class="text-[11px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-md flex items-center gap-1">
+              ✨ New Guest Detected
+            </span>
           </div>
 
+          <div class="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-2 items-center">
+            <div class="relative">
+              <input type="text"
+                     formControlName="customerPhone"
+                     (input)="onHotelPhoneInput($any($event.target).value)"
+                     placeholder="Enter customer phone (e.g. 0771234567)..."
+                     class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] font-medium text-slate-800 focus:outline-none focus:border-indigo-500 transition-all"/>
+            </div>
+            
+            <!-- Quick select existing guest dropdown -->
+            <select (change)="onSelectHotelCustomer($any($event.target).value)"
+                    class="bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-[12px] text-slate-600 focus:outline-none focus:border-indigo-500 cursor-pointer">
+              <option value="">Or pick existing guest...</option>
+              <option *ngFor="let cust of customers" [value]="cust.id">{{ cust.name }} ({{ cust.phone }})</option>
+            </select>
+          </div>
+
+          <!-- Case 1: Existing Customer Profile Card -->
+          <div *ngIf="hotelCustomerStatus === 'EXISTING' && hotelExistingCustomer"
+               class="bg-white border border-emerald-200 rounded-xl p-3.5 shadow-xs space-y-2 animate-fade-in">
+            <div class="flex items-start justify-between">
+              <div>
+                <h4 class="text-[13.5px] font-bold text-slate-900 flex items-center gap-1.5">
+                  <span>👤</span> {{ hotelExistingCustomer.name }}
+                  <span class="text-[10.5px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full font-bold">Existing Guest</span>
+                </h4>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-[11.5px] text-slate-600 mt-1">
+                  <div><strong>NIC / Passport:</strong> {{ hotelExistingCustomer.nicPassport || 'N/A' }}</div>
+                  <div><strong>Phone:</strong> {{ hotelExistingCustomer.phone }}</div>
+                  <div *ngIf="hotelExistingCustomer.email"><strong>Email:</strong> {{ hotelExistingCustomer.email }}</div>
+                  <div *ngIf="hotelExistingCustomer.address"><strong>Address:</strong> {{ hotelExistingCustomer.address }}</div>
+                </div>
+              </div>
+              <button type="button" (click)="clearHotelCustomer()"
+                      class="text-[11.5px] font-bold text-slate-500 hover:text-rose-600 bg-slate-100 hover:bg-rose-50 px-2.5 py-1 rounded-lg transition-all cursor-pointer">
+                Clear
+              </button>
+            </div>
+          </div>
+
+          <!-- Case 2: New Customer Form Fields (Appears right in the same form) -->
+          <div *ngIf="hotelCustomerStatus === 'NEW'"
+               class="bg-amber-50/50 border border-amber-200 rounded-xl p-3.5 space-y-3 animate-fade-in">
+            <div class="flex items-center justify-between">
+              <p class="text-[12px] font-bold text-amber-900 flex items-center gap-1">
+                <span>📝</span> New Guest Profile — Enter Details:
+              </p>
+              <button type="button" (click)="clearHotelCustomer()" class="text-[11px] text-slate-400 hover:text-rose-600 font-semibold cursor-pointer">Reset</button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[10.5px] font-bold text-slate-500 uppercase tracking-wider mb-1">Guest Full Name <span class="text-rose-500">*</span></label>
+                <input type="text" formControlName="customerName" placeholder="e.g. Kasun Perera"
+                       class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-[12.5px] focus:outline-none focus:border-indigo-500"/>
+              </div>
+
+              <div>
+                <label class="block text-[10.5px] font-bold text-slate-500 uppercase tracking-wider mb-1">NIC / Passport Number <span class="text-rose-500">*</span></label>
+                <input type="text" formControlName="customerNic" placeholder="e.g. 199512345678 or N1234567"
+                       class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-[12.5px] focus:outline-none focus:border-indigo-500"/>
+              </div>
+
+              <div>
+                <label class="block text-[10.5px] font-bold text-slate-500 uppercase tracking-wider mb-1">Email Address (Optional)</label>
+                <input type="email" formControlName="customerEmail" placeholder="e.g. guest@example.com"
+                       class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-[12.5px] focus:outline-none focus:border-indigo-500"/>
+              </div>
+
+              <div>
+                <label class="block text-[10.5px] font-bold text-slate-500 uppercase tracking-wider mb-1">Address / City (Optional)</label>
+                <input type="text" formControlName="customerAddress" placeholder="e.g. Colombo, Sri Lanka"
+                       class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-[12.5px] focus:outline-none focus:border-indigo-500"/>
+              </div>
+            </div>
+          </div>
+
+          <!-- Case 3: Idle Helper -->
+          <p *ngIf="hotelCustomerStatus === 'IDLE'" class="text-[11px] text-slate-400 italic">
+            Type the customer's phone number above to search existing profile or register a new guest.
+          </p>
+        </div>
+
+        <!-- Room Selection & Dates Details -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Select Available Room</label>
+            <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Select Available Room <span class="text-rose-500">*</span></label>
             <select formControlName="roomId"
                     [ngClass]="hotelReservationForm.get('roomId')?.invalid && hotelReservationForm.get('roomId')?.touched ? 'border-rose-500 bg-rose-50/10' : 'border-slate-200'"
                     class="w-full bg-slate-50 border rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all">
@@ -326,11 +496,21 @@
               Please select an available room.
             </p>
           </div>
+
+          <div>
+            <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Guests Count <span class="text-rose-500">*</span></label>
+            <input type="number" formControlName="guestsCount"
+                   [ngClass]="hotelReservationForm.get('guestsCount')?.invalid && hotelReservationForm.get('guestsCount')?.touched ? 'border-rose-500 bg-rose-50/10' : 'border-slate-200'"
+                   class="w-full bg-slate-50 border rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all"/>
+            <p *ngIf="hotelReservationForm.get('guestsCount')?.invalid && hotelReservationForm.get('guestsCount')?.touched" class="text-rose-600 text-[11px] mt-1 font-bold animate-fade-in">
+              Guest count must be at least 1.
+            </p>
+          </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Check-In Date</label>
+            <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Check-In Date <span class="text-rose-500">*</span></label>
             <input type="date" formControlName="checkInDate"
                    [ngClass]="hotelReservationForm.get('checkInDate')?.invalid && hotelReservationForm.get('checkInDate')?.touched ? 'border-rose-500 bg-rose-50/10' : 'border-slate-200'"
                    class="w-full bg-slate-50 border rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all"/>
@@ -340,22 +520,12 @@
           </div>
 
           <div>
-            <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Check-Out Date</label>
+            <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Check-Out Date <span class="text-rose-500">*</span></label>
             <input type="date" formControlName="checkOutDate"
                    [ngClass]="hotelReservationForm.get('checkOutDate')?.invalid && hotelReservationForm.get('checkOutDate')?.touched ? 'border-rose-500 bg-rose-50/10' : 'border-slate-200'"
                    class="w-full bg-slate-50 border rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all"/>
             <p *ngIf="hotelReservationForm.get('checkOutDate')?.invalid && hotelReservationForm.get('checkOutDate')?.touched" class="text-rose-600 text-[11px] mt-1 font-bold animate-fade-in">
               Check-out date is required.
-            </p>
-          </div>
-
-          <div>
-            <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Guests Count</label>
-            <input type="number" formControlName="guestsCount"
-                   [ngClass]="hotelReservationForm.get('guestsCount')?.invalid && hotelReservationForm.get('guestsCount')?.touched ? 'border-rose-500 bg-rose-50/10' : 'border-slate-200'"
-                   class="w-full bg-slate-50 border rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all"/>
-            <p *ngIf="hotelReservationForm.get('guestsCount')?.invalid && hotelReservationForm.get('guestsCount')?.touched" class="text-rose-600 text-[11px] mt-1 font-bold animate-fade-in">
-              Guest count must be at least 1.
             </p>
           </div>
         </div>

@@ -38,6 +38,14 @@ export class ReservationComponent implements OnInit, OnDestroy {
   hotelDataSource = new MatTableDataSource<HotelReservation>([]);
   hotelDisplayedColumns = ['id', 'customer', 'room', 'checkInDate', 'checkOutDate', 'guestsCount', 'status', 'actions'];
 
+  // Dining Customer Lookup State
+  diningCustomerStatus: 'IDLE' | 'EXISTING' | 'NEW' = 'IDLE';
+  diningExistingCustomer: CustomerDto | null = null;
+
+  // Hotel Customer Lookup State
+  hotelCustomerStatus: 'IDLE' | 'EXISTING' | 'NEW' = 'IDLE';
+  hotelExistingCustomer: CustomerDto | null = null;
+
   form: FormGroup;
   loading = false;
   errorMessage = '';
@@ -58,7 +66,12 @@ export class ReservationComponent implements OnInit, OnDestroy {
     private readonly dialogService: DialogService
   ) {
     this.form = this.fb.group({
-      customerId: [null, Validators.required],
+      customerPhone: ['', [Validators.required, Validators.maxLength(20)]],
+      customerId: [null],
+      customerName: [''],
+      customerNic: [''],
+      customerEmail: [''],
+      customerAddress: [''],
       tableId: [null, Validators.required],
       reservationDate: [new Date().toISOString().slice(0, 10), Validators.required],
       reservationTime: [this.shortCurrentTime, [Validators.required, Validators.pattern('^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$')]],
@@ -67,7 +80,12 @@ export class ReservationComponent implements OnInit, OnDestroy {
     });
 
     this.hotelReservationForm = this.fb.group({
-      customerId: [null, Validators.required],
+      customerPhone: ['', [Validators.required, Validators.maxLength(20)]],
+      customerId: [null],
+      customerName: [''],
+      customerNic: [''],
+      customerEmail: [''],
+      customerAddress: [''],
       roomId: [null, Validators.required],
       checkInDate: ['', Validators.required],
       checkOutDate: ['', Validators.required],
@@ -187,38 +205,239 @@ export class ReservationComponent implements OnInit, OnDestroy {
     });
   }
 
-  createBooking(): void {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      this.errorMessage = 'Please fill out all required fields with valid values.';
-      this.dialogService.showError('Validation Error', this.errorMessage);
+  // --- Customer Phone Lookup & Binding ---
+  findCustomerByPhone(phone: string): CustomerDto | undefined {
+    if (!phone) return undefined;
+    const cleanPhone = phone.replace(/[\s\-\(\)\+]/g, '').trim().toLowerCase();
+    if (!cleanPhone) return undefined;
+    return this.customers.find(c => {
+      const cPhone = (c.phone || '').replace(/[\s\-\(\)\+]/g, '').trim().toLowerCase();
+      return cPhone === cleanPhone || (cPhone.length >= 7 && (cPhone.endsWith(cleanPhone) || cleanPhone.endsWith(cPhone)));
+    });
+  }
+
+  onDiningPhoneInput(phone: string): void {
+    const trimmed = (phone || '').trim();
+    if (!trimmed || trimmed.length < 3) {
+      this.diningCustomerStatus = 'IDLE';
+      this.diningExistingCustomer = null;
+      this.form.patchValue({ customerId: null, customerName: '', customerNic: '', customerEmail: '', customerAddress: '' });
       return;
     }
 
-    const payload = this.form.value;
+    const match = this.findCustomerByPhone(trimmed);
+    if (match) {
+      this.diningCustomerStatus = 'EXISTING';
+      this.diningExistingCustomer = match;
+      this.form.patchValue({
+        customerId: match.id,
+        customerName: match.name,
+        customerNic: match.nicPassport,
+        customerEmail: match.email || '',
+        customerAddress: match.address || ''
+      });
+    } else {
+      this.diningCustomerStatus = 'NEW';
+      this.diningExistingCustomer = null;
+      this.form.patchValue({
+        customerId: null
+      });
+    }
+  }
+
+  onSelectDiningCustomer(custId: any): void {
+    const cust = this.customers.find(c => c.id === custId);
+    if (cust) {
+      this.form.patchValue({
+        customerPhone: cust.phone,
+        customerId: cust.id,
+        customerName: cust.name,
+        customerNic: cust.nicPassport,
+        customerEmail: cust.email || '',
+        customerAddress: cust.address || ''
+      });
+      this.diningCustomerStatus = 'EXISTING';
+      this.diningExistingCustomer = cust;
+    }
+  }
+
+  clearDiningCustomer(): void {
+    this.form.patchValue({
+      customerPhone: '',
+      customerId: null,
+      customerName: '',
+      customerNic: '',
+      customerEmail: '',
+      customerAddress: ''
+    });
+    this.diningCustomerStatus = 'IDLE';
+    this.diningExistingCustomer = null;
+  }
+
+  onHotelPhoneInput(phone: string): void {
+    const trimmed = (phone || '').trim();
+    if (!trimmed || trimmed.length < 3) {
+      this.hotelCustomerStatus = 'IDLE';
+      this.hotelExistingCustomer = null;
+      this.hotelReservationForm.patchValue({ customerId: null, customerName: '', customerNic: '', customerEmail: '', customerAddress: '' });
+      return;
+    }
+
+    const match = this.findCustomerByPhone(trimmed);
+    if (match) {
+      this.hotelCustomerStatus = 'EXISTING';
+      this.hotelExistingCustomer = match;
+      this.hotelReservationForm.patchValue({
+        customerId: match.id,
+        customerName: match.name,
+        customerNic: match.nicPassport,
+        customerEmail: match.email || '',
+        customerAddress: match.address || ''
+      });
+    } else {
+      this.hotelCustomerStatus = 'NEW';
+      this.hotelExistingCustomer = null;
+      this.hotelReservationForm.patchValue({
+        customerId: null
+      });
+    }
+  }
+
+  onSelectHotelCustomer(custId: any): void {
+    const cust = this.customers.find(c => c.id === custId);
+    if (cust) {
+      this.hotelReservationForm.patchValue({
+        customerPhone: cust.phone,
+        customerId: cust.id,
+        customerName: cust.name,
+        customerNic: cust.nicPassport,
+        customerEmail: cust.email || '',
+        customerAddress: cust.address || ''
+      });
+      this.hotelCustomerStatus = 'EXISTING';
+      this.hotelExistingCustomer = cust;
+    }
+  }
+
+  clearHotelCustomer(): void {
+    this.hotelReservationForm.patchValue({
+      customerPhone: '',
+      customerId: null,
+      customerName: '',
+      customerNic: '',
+      customerEmail: '',
+      customerAddress: ''
+    });
+    this.hotelCustomerStatus = 'IDLE';
+    this.hotelExistingCustomer = null;
+  }
+
+  createBooking(): void {
+    const f = this.form;
+    const phone = (f.get('customerPhone')?.value || '').trim();
+
+    if (!phone) {
+      f.get('customerPhone')?.markAsTouched();
+      this.dialogService.showError('Validation Error', 'Please enter customer phone number.');
+      return;
+    }
+
+    if (this.diningCustomerStatus === 'NEW') {
+      const name = (f.get('customerName')?.value || '').trim();
+      const nic = (f.get('customerNic')?.value || '').trim();
+      if (!name || !nic) {
+        this.dialogService.showError('Validation Error', 'Please enter new customer Name and NIC/Passport.');
+        return;
+      }
+    } else if (this.diningCustomerStatus === 'EXISTING' && !f.get('customerId')?.value) {
+      this.dialogService.showError('Validation Error', 'Existing customer not properly linked. Please re-enter phone number.');
+      return;
+    } else if (this.diningCustomerStatus === 'IDLE') {
+      this.onDiningPhoneInput(phone);
+      if ((this.diningCustomerStatus as string) === 'NEW') {
+        const name = (f.get('customerName')?.value || '').trim();
+        const nic = (f.get('customerNic')?.value || '').trim();
+        if (!name || !nic) {
+          this.dialogService.showError('New Customer', 'Customer not found. Please enter Name and NIC/Passport to register.');
+          return;
+        }
+      }
+    }
+
+    if (!f.get('tableId')?.value || !f.get('reservationDate')?.value || !f.get('reservationTime')?.value || !f.get('guestsCount')?.value) {
+      f.markAllAsTouched();
+      this.dialogService.showError('Validation Error', 'Please fill out all required table reservation fields.');
+      return;
+    }
+
     this.loading = true;
     this.errorMessage = '';
 
-    const bookedTableId = payload.tableId;
-    this.reservationService.createReservation(payload).subscribe({
-      next: () => {
-        // Auto-mark table as RESERVED
-        if (bookedTableId) {
-          this.roomService.updateTableStatus(bookedTableId, 'RESERVED').subscribe();
+    const executeReservation = (customerId: number) => {
+      const payload: Reservation = {
+        customerId,
+        tableId: Number(f.get('tableId')?.value),
+        reservationDate: f.get('reservationDate')?.value,
+        reservationTime: f.get('reservationTime')?.value,
+        guestsCount: Number(f.get('guestsCount')?.value),
+        specialRequests: f.get('specialRequests')?.value || ''
+      };
+
+      const bookedTableId = payload.tableId;
+      this.reservationService.createReservation(payload).subscribe({
+        next: () => {
+          if (bookedTableId) {
+            this.roomService.updateTableStatus(bookedTableId, 'RESERVED').subscribe();
+          }
+          this.loadReservations();
+          this.loadRooms();
+          this.loadCustomers();
+          this.clearDiningCustomer();
+          this.form.patchValue({
+            reservationDate: new Date().toISOString().slice(0, 10),
+            reservationTime: this.shortCurrentTime,
+            guestsCount: 2,
+            specialRequests: ''
+          });
+          this.loading = false;
+          this.activeTab = 'list';
+          this.dialogService.showSuccess('Booking Confirmed', 'Table reservation booked successfully. Table is marked as RESERVED.');
+        },
+        error: (err) => {
+          this.errorMessage = err.error?.message || 'Failed to place reservation. Verify table availability and slot.';
+          this.loading = false;
+          this.dialogService.showError('Booking Failed', this.errorMessage);
         }
-        this.loadReservations();
-        this.loadRooms();
-        this.form.reset({ guestsCount: 2 });
-        this.loading = false;
-        this.activeTab = 'list';
-        this.dialogService.showSuccess('Booking Confirmed', 'Table reservation booked successfully. Table is marked as RESERVED.');
-      },
-      error: (err) => {
-        this.errorMessage = err.error?.message || 'Failed to place reservation. Verify table availability and slot.';
-        this.loading = false;
-        this.dialogService.showError('Booking Failed', this.errorMessage);
-      }
-    });
+      });
+    };
+
+    if (this.diningCustomerStatus === 'NEW') {
+      const newCustomerDto: CustomerDto = {
+        name: f.get('customerName')?.value.trim(),
+        nicPassport: f.get('customerNic')?.value.trim(),
+        phone: phone,
+        email: (f.get('customerEmail')?.value || '').trim() || undefined,
+        address: (f.get('customerAddress')?.value || '').trim() || undefined
+      };
+
+      this.customerService.createCustomer(newCustomerDto).subscribe({
+        next: (createdCust) => {
+          if (createdCust && createdCust.id) {
+            executeReservation(createdCust.id);
+          } else {
+            this.loading = false;
+            this.dialogService.showError('Registration Error', 'Customer registered but returned no ID.');
+          }
+        },
+        error: (err) => {
+          this.loading = false;
+          this.errorMessage = err.error?.message || 'Failed to register new customer.';
+          this.dialogService.showError('Customer Registration Failed', this.errorMessage);
+        }
+      });
+    } else {
+      executeReservation(Number(f.get('customerId')?.value));
+    }
   }
 
   cancelBooking(id: number): void {
@@ -324,33 +543,106 @@ export class ReservationComponent implements OnInit, OnDestroy {
   }
 
   createHotelBooking(): void {
-    if (this.hotelReservationForm.invalid) {
-      this.hotelReservationForm.markAllAsTouched();
-      this.errorMessage = 'Please fill out all required fields with valid values.';
-      this.dialogService.showError('Validation Error', this.errorMessage);
+    const f = this.hotelReservationForm;
+    const phone = (f.get('customerPhone')?.value || '').trim();
+
+    if (!phone) {
+      f.get('customerPhone')?.markAsTouched();
+      this.dialogService.showError('Validation Error', 'Please enter customer phone number.');
       return;
     }
 
-    const payload = this.hotelReservationForm.value;
-    payload.status = 'CONFIRMED';
+    if (this.hotelCustomerStatus === 'NEW') {
+      const name = (f.get('customerName')?.value || '').trim();
+      const nic = (f.get('customerNic')?.value || '').trim();
+      if (!name || !nic) {
+        this.dialogService.showError('Validation Error', 'Please enter new customer Name and NIC/Passport.');
+        return;
+      }
+    } else if (this.hotelCustomerStatus === 'EXISTING' && !f.get('customerId')?.value) {
+      this.dialogService.showError('Validation Error', 'Existing customer not properly linked. Please re-enter phone number.');
+      return;
+    } else if (this.hotelCustomerStatus === 'IDLE') {
+      this.onHotelPhoneInput(phone);
+      if ((this.hotelCustomerStatus as string) === 'NEW') {
+        const name = (f.get('customerName')?.value || '').trim();
+        const nic = (f.get('customerNic')?.value || '').trim();
+        if (!name || !nic) {
+          this.dialogService.showError('New Customer', 'Customer not found. Please enter Name and NIC/Passport to register.');
+          return;
+        }
+      }
+    }
+
+    if (!f.get('roomId')?.value || !f.get('checkInDate')?.value || !f.get('checkOutDate')?.value || !f.get('guestsCount')?.value) {
+      f.markAllAsTouched();
+      this.dialogService.showError('Validation Error', 'Please fill out all required room reservation fields (Room, Check-in, Check-out, Guests).');
+      return;
+    }
+
     this.loading = true;
     this.errorMessage = '';
 
-    this.hotelReservationService.createReservation(payload).subscribe({
-      next: () => {
-        this.loadHotelReservations();
-        this.loadHotelRooms();
-        this.hotelReservationForm.reset({ guestsCount: 1 });
-        this.loading = false;
-        this.activeTab = 'listRooms';
-        this.dialogService.showSuccess('Room Booking Confirmed', 'Hotel room reservation booked successfully.');
-      },
-      error: (err) => {
-        this.errorMessage = err.error?.message || 'Failed to place room reservation. Verify room availability.';
-        this.loading = false;
-        this.dialogService.showError('Booking Failed', this.errorMessage);
-      }
-    });
+    const executeHotelReservation = (customerId: number) => {
+      const payload: HotelReservation = {
+        customerId,
+        roomId: Number(f.get('roomId')?.value),
+        checkInDate: f.get('checkInDate')?.value,
+        checkOutDate: f.get('checkOutDate')?.value,
+        guestsCount: Number(f.get('guestsCount')?.value),
+        status: 'CONFIRMED'
+      };
+
+      this.hotelReservationService.createReservation(payload).subscribe({
+        next: () => {
+          this.loadHotelReservations();
+          this.loadHotelRooms();
+          this.loadCustomers();
+          this.clearHotelCustomer();
+          this.hotelReservationForm.patchValue({
+            checkInDate: '',
+            checkOutDate: '',
+            guestsCount: 1
+          });
+          this.loading = false;
+          this.activeTab = 'listRooms';
+          this.dialogService.showSuccess('Room Booking Confirmed', 'Hotel room reservation booked successfully.');
+        },
+        error: (err) => {
+          this.errorMessage = err.error?.message || 'Failed to place room reservation. Verify room availability.';
+          this.loading = false;
+          this.dialogService.showError('Booking Failed', this.errorMessage);
+        }
+      });
+    };
+
+    if (this.hotelCustomerStatus === 'NEW') {
+      const newCustomerDto: CustomerDto = {
+        name: f.get('customerName')?.value.trim(),
+        nicPassport: f.get('customerNic')?.value.trim(),
+        phone: phone,
+        email: (f.get('customerEmail')?.value || '').trim() || undefined,
+        address: (f.get('customerAddress')?.value || '').trim() || undefined
+      };
+
+      this.customerService.createCustomer(newCustomerDto).subscribe({
+        next: (createdCust) => {
+          if (createdCust && createdCust.id) {
+            executeHotelReservation(createdCust.id);
+          } else {
+            this.loading = false;
+            this.dialogService.showError('Registration Error', 'Customer registered but returned no ID.');
+          }
+        },
+        error: (err) => {
+          this.loading = false;
+          this.errorMessage = err.error?.message || 'Failed to register new customer.';
+          this.dialogService.showError('Customer Registration Failed', this.errorMessage);
+        }
+      });
+    } else {
+      executeHotelReservation(Number(f.get('customerId')?.value));
+    }
   }
 
   cancelHotelBooking(id: number): void {
