@@ -143,56 +143,281 @@
     <!-- Active Tables Grid Map -->
     <div class="space-y-6">
       <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm space-y-4">
-        <div class="flex items-center justify-between border-b border-slate-50 pb-3">
+        
+        <!-- Header & Quick State Filter Pills -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
           <h2 class="text-[14px] font-bold text-slate-900 flex items-center gap-2">
             <span class="w-1.5 h-3.5 bg-indigo-600 rounded-full"></span>
-            Restaurant Floorboard Grid
+            Restaurant Floorboard Grid ({{ filteredTables.length }} Tables)
           </h2>
+
+          <!-- State Filter Buttons -->
+          <div class="flex flex-wrap items-center gap-1.5 bg-slate-50 p-1 rounded-xl border border-slate-200/70">
+            <button
+              (click)="statusFilter = 'ALL'"
+              class="px-3 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer"
+              [ngClass]="statusFilter === 'ALL' ? 'bg-white text-slate-900 shadow-sm border border-slate-200' : 'text-slate-500 hover:text-slate-800'">
+              All ({{ tables.length }})
+            </button>
+            <button
+              (click)="statusFilter = 'AVAILABLE'"
+              class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer"
+              [ngClass]="statusFilter === 'AVAILABLE' ? 'bg-emerald-500 text-white shadow-sm' : 'text-emerald-600 hover:bg-emerald-50'">
+              🟢 Available ({{ getTablesCountByStatus('AVAILABLE') }})
+            </button>
+            <button
+              (click)="statusFilter = 'RESERVED'"
+              class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer"
+              [ngClass]="statusFilter === 'RESERVED' ? 'bg-blue-500 text-white shadow-sm' : 'text-blue-600 hover:bg-blue-50'">
+              🔵 Reserved ({{ getTablesCountByStatus('RESERVED') }})
+            </button>
+            <button
+              (click)="statusFilter = 'OCCUPIED'"
+              class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer"
+              [ngClass]="statusFilter === 'OCCUPIED' ? 'bg-indigo-600 text-white shadow-sm' : 'text-indigo-600 hover:bg-indigo-50'">
+              🟣 Occupied ({{ getTablesCountByStatus('OCCUPIED') }})
+            </button>
+            <button
+              (click)="statusFilter = 'CLEANING'"
+              class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer"
+              [ngClass]="statusFilter === 'CLEANING' ? 'bg-amber-500 text-white shadow-sm' : 'text-amber-600 hover:bg-amber-50'">
+              🟡 Cleaning ({{ getTablesCountByStatus('CLEANING') }})
+            </button>
+          </div>
         </div>
 
-        <div *ngIf="tables.length > 0; else emptyState" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          <div *ngFor="let tb of tables" class="bg-slate-50 hover:bg-white rounded-2xl p-4 border border-slate-150/60 hover:border-slate-300 hover:shadow-lg transition-all duration-200 flex flex-col justify-between gap-3 group relative">
+        <!-- Tables Grid Cards -->
+        <div *ngIf="filteredTables.length > 0; else emptyState" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4.5">
+          <div *ngFor="let tb of filteredTables"
+               class="rounded-2xl p-4.5 border transition-all duration-200 flex flex-col justify-between gap-3.5 group relative"
+               [ngClass]="{
+                 'bg-white border-emerald-200/80 shadow-sm hover:shadow-md hover:border-emerald-400': tb.status.toUpperCase() === 'AVAILABLE',
+                 'bg-blue-50/40 border-blue-200/90 shadow-sm hover:shadow-md hover:border-blue-400': tb.status.toUpperCase() === 'RESERVED',
+                 'bg-gradient-to-br from-indigo-50/50 via-white to-slate-50 border-indigo-200/90 shadow-md hover:shadow-lg hover:border-indigo-400': tb.status.toUpperCase() === 'OCCUPIED',
+                 'bg-amber-50/50 border-amber-200/90 shadow-sm hover:shadow-md hover:border-amber-400': tb.status.toUpperCase() === 'CLEANING'
+               }">
+            
             <div>
+              <!-- Card Header -->
               <div class="flex items-start justify-between">
-                <div>
-                  <h3 class="text-base font-extrabold text-slate-900">{{ tb.tableNumber }}</h3>
-                  <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mt-0.5">
-                    {{ tb.locationName }} <span class="text-slate-300">|</span> <span class="text-indigo-500 font-bold">{{ tb.locationCode }}</span>
-                  </p>
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm shadow-sm"
+                       [ngClass]="{
+                         'bg-emerald-100 text-emerald-800': tb.status.toUpperCase() === 'AVAILABLE',
+                         'bg-blue-100 text-blue-800': tb.status.toUpperCase() === 'RESERVED',
+                         'bg-indigo-600 text-white': tb.status.toUpperCase() === 'OCCUPIED',
+                         'bg-amber-100 text-amber-800': tb.status.toUpperCase() === 'CLEANING'
+                       }">
+                    {{ tb.tableNumber }}
+                  </div>
+                  <div>
+                    <h3 class="text-base font-extrabold text-slate-900 leading-tight">Table {{ tb.tableNumber }}</h3>
+                    <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">
+                      {{ tb.locationName || 'Main Floor' }} • {{ tb.capacity }} Seats
+                    </p>
+                  </div>
                 </div>
                 
-                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm"
+                <!-- Status Badge -->
+                <span class="text-[10px] font-black px-2.5 py-0.5 rounded-full shadow-xs uppercase tracking-wider"
                       [ngClass]="{
-                        'bg-emerald-50 border border-emerald-200 text-emerald-600': tb.status.toUpperCase() === 'AVAILABLE',
-                        'bg-blue-50 border border-blue-200 text-blue-600': tb.status.toUpperCase() === 'RESERVED',
-                        'bg-indigo-50 border border-indigo-200 text-indigo-600': tb.status.toUpperCase() === 'OCCUPIED',
-                        'bg-amber-50 border border-amber-200 text-amber-600': tb.status.toUpperCase() === 'CLEANING'
+                        'bg-emerald-50 border border-emerald-200 text-emerald-700': tb.status.toUpperCase() === 'AVAILABLE',
+                        'bg-blue-50 border border-blue-200 text-blue-700': tb.status.toUpperCase() === 'RESERVED',
+                        'bg-indigo-100 border border-indigo-200 text-indigo-800 animate-pulse': tb.status.toUpperCase() === 'OCCUPIED',
+                        'bg-amber-100 border border-amber-200 text-amber-800': tb.status.toUpperCase() === 'CLEANING'
                       }">
                   {{ tb.status }}
                 </span>
               </div>
 
-              <div class="grid grid-cols-1 gap-2 mt-3 text-[12px] text-slate-500 border-t border-slate-100 pt-2">
-                <span class="flex items-center gap-1.5"><strong class="text-slate-800">Capacity:</strong> {{ tb.capacity }} Seats</span>
+              <!-- ============================================== -->
+              <!-- STATE 1: AVAILABLE (VACANT & CLEAN) -->
+              <!-- ============================================== -->
+              <div *ngIf="tb.status.toUpperCase() === 'AVAILABLE'" class="mt-3 p-3 rounded-xl bg-emerald-50/50 border border-emerald-100/60 text-[12px]">
+                <div class="flex items-center gap-2 text-emerald-800 font-semibold">
+                  <svg class="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span>Vacant & Sanitized — Ready to seat guests</span>
+                </div>
+              </div>
+
+              <!-- ============================================== -->
+              <!-- STATE 2: RESERVED (BOOKED SLOT) -->
+              <!-- ============================================== -->
+              <div *ngIf="tb.status.toUpperCase() === 'RESERVED'" class="mt-3 p-3 rounded-xl bg-blue-50/70 border border-blue-200/60 text-[12px] space-y-1">
+                <div class="flex items-center justify-between text-blue-900 font-bold">
+                  <span class="flex items-center gap-1.5">
+                    <svg class="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span>Reserved Booking</span>
+                  </span>
+                  <span *ngIf="getReservationForTable(tb.id)?.reservationTime" class="font-mono text-blue-700">
+                    {{ getReservationForTable(tb.id)?.reservationTime }}
+                  </span>
+                </div>
+                <div *ngIf="getReservationForTable(tb.id)?.customerName" class="text-slate-700 text-xs font-semibold">
+                  Guest: <strong>{{ getReservationForTable(tb.id)?.customerName }}</strong> ({{ getReservationForTable(tb.id)?.guestsCount || tb.capacity }} Guests)
+                </div>
+                <div *ngIf="getReservationForTable(tb.id)?.specialRequests" class="text-slate-500 text-[11px] italic truncate">
+                  "{{ getReservationForTable(tb.id)?.specialRequests }}"
+                </div>
+              </div>
+
+              <!-- ============================================== -->
+              <!-- STATE 3: OCCUPIED (ACTIVE DINING & ORDER STATUS) -->
+              <!-- ============================================== -->
+              <!-- ============================================== -->
+              <!-- STATE 3: OCCUPIED (ACTIVE DINING & ORDER STATUS) -->
+              <!-- ============================================== -->
+              <div *ngIf="tb.status.toUpperCase() === 'OCCUPIED'" class="mt-3 p-3 rounded-xl bg-white border border-indigo-100 shadow-xs text-[12px] space-y-2">
+                <ng-container *ngIf="getActiveOrdersForTable(tb.id) as activeOrdersList">
+                  <div *ngIf="activeOrdersList.length > 0; else noOrderYet" class="space-y-2">
+                    <!-- Order Rounds Header & Latest Status -->
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center gap-1.5">
+                        <span class="font-black text-indigo-900 text-xs">
+                          {{ activeOrdersList.length === 1 ? 'Order #' + activeOrdersList[0].id : activeOrdersList.length + ' Orders' }}
+                        </span>
+                        <span *ngIf="activeOrdersList[activeOrdersList.length - 1].customerName" class="text-slate-500 text-[11px] truncate max-w-[100px]">
+                          ({{ activeOrdersList[activeOrdersList.length - 1].customerName }})
+                        </span>
+                      </div>
+                      <span class="text-[10px] font-black px-2 py-0.5 rounded uppercase"
+                            [ngClass]="{
+                              'bg-amber-100 text-amber-800': getKitchenStatusForOrder(activeOrdersList[activeOrdersList.length - 1].id) === 'PREPARING',
+                              'bg-emerald-100 text-emerald-800 animate-bounce': getKitchenStatusForOrder(activeOrdersList[activeOrdersList.length - 1].id) === 'READY',
+                              'bg-indigo-100 text-indigo-800': getKitchenStatusForOrder(activeOrdersList[activeOrdersList.length - 1].id) === 'DELIVERED',
+                              'bg-slate-100 text-slate-700': getKitchenStatusForOrder(activeOrdersList[activeOrdersList.length - 1].id) === 'RECEIVED'
+                            }">
+                        {{ getKitchenStatusForOrder(activeOrdersList[activeOrdersList.length - 1].id) }}
+                      </span>
+                    </div>
+
+                    <!-- Ordered Items Preview (Latest round items) -->
+                    <div class="text-slate-600 text-[11px] space-y-1 max-h-[50px] overflow-hidden">
+                      <div *ngFor="let item of (activeOrdersList[activeOrdersList.length - 1].items || []).slice(0, 2)" class="flex justify-between">
+                        <span class="truncate max-w-[170px] font-medium">{{ item.quantity }}x {{ item.menuItemName }}</span>
+                        <span class="font-mono text-slate-700">Rs. {{ (item.price * item.quantity).toFixed(0) }}</span>
+                      </div>
+                      <div *ngIf="(activeOrdersList[activeOrdersList.length - 1].items || []).length > 2" class="text-slate-400 text-[10px] italic">
+                        + {{ activeOrdersList[activeOrdersList.length - 1].items.length - 2 }} more items...
+                      </div>
+                    </div>
+
+                    <!-- Total Price Bar -->
+                    <div class="border-t border-slate-100 pt-1.5 flex items-center justify-between">
+                      <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide">
+                        {{ activeOrdersList.length > 1 ? 'Grand Total (' + activeOrdersList.length + ' orders):' : 'Total Bill:' }}
+                      </span>
+                      <span class="text-sm font-black text-emerald-600 font-mono">Rs. {{ getTableGrandTotal(tb.id) | number:'1.2-2' }}</span>
+                    </div>
+                  </div>
+                </ng-container>
+
+                <ng-template #noOrderYet>
+                  <div class="text-slate-400 text-xs italic flex items-center gap-1.5 py-1">
+                    <svg class="w-4 h-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <span>Guests seated — awaiting POS order</span>
+                  </div>
+                </ng-template>
+              </div>
+
+              <!-- ============================================== -->
+              <!-- STATE 4: CLEANING (SANITIZING) -->
+              <!-- ============================================== -->
+              <div *ngIf="tb.status.toUpperCase() === 'CLEANING'" class="mt-3 p-3 rounded-xl bg-amber-50/70 border border-amber-200/60 text-[12px]">
+                <div class="flex items-center gap-2 text-amber-900 font-semibold">
+                  <svg class="w-4 h-4 text-amber-600 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  <span>Table needs cleaning / sanitization</span>
+                </div>
               </div>
             </div>
 
-            <div class="flex items-center justify-between border-t border-slate-100 pt-3 mt-1">
-              <div class="flex items-center gap-1">
-                <button *ngIf="tb.status.toUpperCase() !== 'AVAILABLE'" (click)="quickStatusUpdate(tb, 'AVAILABLE')" class="text-[10px] bg-emerald-50 border border-emerald-200 text-emerald-600 font-bold px-2 py-0.5 rounded hover:bg-emerald-600 hover:text-white transition-all cursor-pointer">
-                  Vacate
+            <!-- Card Bottom State Actions -->
+            <div class="flex items-center justify-between border-t border-slate-100/90 pt-3 mt-1">
+              
+              <!-- State Transition Actions -->
+              <div class="flex items-center gap-1.5">
+                <!-- If AVAILABLE ➔ Quick Seat -->
+                <button *ngIf="tb.status.toUpperCase() === 'AVAILABLE'"
+                        (click)="quickStatusUpdate(tb, 'OCCUPIED')"
+                        class="text-[11px] bg-indigo-600 text-white font-bold px-2.5 py-1 rounded-lg hover:bg-indigo-700 transition shadow-xs cursor-pointer">
+                  Seat Guests
                 </button>
-                <button *ngIf="tb.status.toUpperCase() === 'AVAILABLE'" (click)="quickStatusUpdate(tb, 'OCCUPIED')" class="text-[10px] bg-indigo-50 border border-indigo-200 text-indigo-600 font-bold px-2 py-0.5 rounded hover:bg-indigo-600 hover:text-white transition-all cursor-pointer">
-                  Seat
+
+                <!-- If RESERVED ➔ Check-in / Seat & View Booking -->
+                <button *ngIf="tb.status.toUpperCase() === 'RESERVED'"
+                        (click)="quickStatusUpdate(tb, 'OCCUPIED')"
+                        class="text-[11px] bg-blue-600 text-white font-bold px-2.5 py-1 rounded-lg hover:bg-blue-700 transition shadow-xs cursor-pointer">
+                  Seat / Check-in
+                </button>
+
+                <button *ngIf="tb.status.toUpperCase() === 'RESERVED' && getReservationForTable(tb.id)"
+                        (click)="viewReservationDetails(tb)"
+                        class="text-[11px] bg-blue-50 border border-blue-200 text-blue-700 font-bold px-2 py-1 rounded-lg hover:bg-blue-100 transition cursor-pointer">
+                  View Booking
+                </button>
+
+                <!-- If OCCUPIED ➔ View Order / Finish to Cleaning -->
+                <button *ngIf="tb.status.toUpperCase() === 'OCCUPIED' && getActiveOrderForTable(tb.id)"
+                        (click)="viewTableOrderDetails(tb)"
+                        class="text-[11px] bg-indigo-50 border border-indigo-200 text-indigo-700 font-bold px-2 py-1 rounded-lg hover:bg-indigo-100 transition cursor-pointer">
+                  View Bill
+                </button>
+
+                <button *ngIf="tb.status.toUpperCase() === 'OCCUPIED'"
+                        (click)="quickStatusUpdate(tb, 'CLEANING')"
+                        class="text-[11px] bg-amber-50 border border-amber-200 text-amber-700 font-bold px-2 py-1 rounded-lg hover:bg-amber-100 transition cursor-pointer"
+                        title="Guest checkout / mark dirty">
+                  Checkout ➔ Clean
+                </button>
+
+                <!-- If CLEANING ➔ Mark Cleaned & Available -->
+                <button *ngIf="tb.status.toUpperCase() === 'CLEANING'"
+                        (click)="quickStatusUpdate(tb, 'AVAILABLE')"
+                        class="text-[11px] bg-emerald-600 text-white font-bold px-2.5 py-1 rounded-lg hover:bg-emerald-700 transition shadow-xs cursor-pointer">
+                  Mark Clean & Ready
                 </button>
               </div>
               
+              <!-- Tablet Display & POS & Edit Tools -->
               <div class="flex items-center gap-1">
-                <button (click)="editTable(tb)" class="text-[11px] font-bold text-indigo-600 bg-indigo-50/50 hover:bg-indigo-600 hover:text-white px-2.5 py-1 rounded-lg transition-all cursor-pointer">
-                  Edit
+                <button (click)="openTableDisplay(tb.id)"
+                        title="Launch Live Guest Tablet Display for this Table"
+                        class="text-[11px] text-slate-600 hover:text-indigo-600 bg-slate-100 hover:bg-indigo-50 p-1.5 rounded-lg transition cursor-pointer">
+                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                  </svg>
                 </button>
-                <button (click)="deleteTable(tb.id!)" class="text-[11px] font-bold text-rose-600 bg-rose-50/50 hover:bg-rose-600 hover:text-white px-2 py-1.5 rounded-lg transition-all cursor-pointer">
-                  Delete
+
+                <button (click)="goToPosForTable(tb.id)"
+                        title="Add/Create Order at POS for this Table"
+                        class="text-[11px] text-slate-600 hover:text-indigo-600 bg-slate-100 hover:bg-indigo-50 p-1.5 rounded-lg transition cursor-pointer">
+                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1 5h12M10 21a1 1 0 100-2 1 1 0 000 2zm8 0a1 1 0 100-2 1 1 0 000 2z" />
+                  </svg>
+                </button>
+
+                <button (click)="editTable(tb)"
+                        title="Edit Table Settings"
+                        class="text-[11px] text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 p-1.5 rounded-lg transition cursor-pointer">
+                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
+
+                <button (click)="deleteTable(tb.id!)"
+                        title="Delete Table"
+                        class="text-[11px] text-rose-600 hover:text-white bg-rose-50 hover:bg-rose-600 p-1.5 rounded-lg transition cursor-pointer">
+                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
                 </button>
               </div>
             </div>
@@ -201,7 +426,7 @@
 
         <ng-template #emptyState>
           <div class="text-center py-12 text-slate-400">
-            <p class="font-bold text-[14px]">No Tables Registered</p>
+            <p class="font-bold text-[14px]">No Tables Matching Filter</p>
           </div>
         </ng-template>
       </div>

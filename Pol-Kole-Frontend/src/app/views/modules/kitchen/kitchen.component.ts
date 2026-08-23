@@ -5,6 +5,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ApiResponse } from '../../../services/room.service';
 import { DialogService } from '../../../services/dialog.service';
+import { WebsocketService } from '../../../services/websocket.service';
 
 export interface KitchenOrderItem {
   id?: number;
@@ -47,7 +48,8 @@ export class KitchenComponent implements OnInit {
     private readonly http: HttpClient,
     private readonly route: ActivatedRoute,
     private readonly cdr: ChangeDetectorRef,
-    private readonly dialogService: DialogService
+    private readonly dialogService: DialogService,
+    private readonly wsService: WebsocketService
   ) {}
 
   ngOnInit(): void {
@@ -112,6 +114,7 @@ export class KitchenComponent implements OnInit {
           map(res => res.data)
         ).subscribe({
           next: () => {
+            this.wsService.sendMessage('KITCHEN_STATUS_CHANGED', { ticketId: id, status });
             this.loadAll();
             this.dialogService.showSuccess('Status Updated', `Ticket #${id} status updated to ${status}.`);
           },

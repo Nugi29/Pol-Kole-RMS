@@ -1,11 +1,16 @@
-import { ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatTableDataSource } from '@angular/material/table';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { RestaurantTable, TableLocation, TableService } from '../../../services/table.service';
 import { CodeService } from '../../../services/code.service';
 import { DialogService } from '../../../services/dialog.service';
+import { Order, OrderService } from '../../../services/order.service';
+import { Reservation, ReservationService } from '../../../services/reservation.service';
+import { WebsocketService } from '../../../services/websocket.service';
+import { KitchenOrder } from '../kitchen/kitchen.component';
 
 @Component({
   selector: 'app-tables',
@@ -13,7 +18,7 @@ import { DialogService } from '../../../services/dialog.service';
   templateUrl: './tables.component.html',
   styleUrl: './tables.component.css'
 })
-export class TablesComponent implements OnInit {
+export class TablesComponent implements OnInit, OnDestroy {
   locationDisplayedColumns = ['name', 'code', 'status', 'actions'];
   locationDataSource = new MatTableDataSource<TableLocation>([]);
 
@@ -22,6 +27,9 @@ export class TablesComponent implements OnInit {
   }
 
   tables: RestaurantTable[] = [];
+  orders: Order[] = [];
+  kitchenTickets: KitchenOrder[] = [];
+  reservations: Reservation[] = [];
   displayedColumns = ['tableNumber', 'capacity', 'location', 'status', 'actions'];
   dataSource = new MatTableDataSource<RestaurantTable>([]);
 
@@ -30,6 +38,7 @@ export class TablesComponent implements OnInit {
   loading = false;
   errorMessage = '';
   activeTab = 'grid';
+  statusFilter = 'ALL';
 
   // Table Location Management
   locations: TableLocation[] = [];
@@ -39,10 +48,20 @@ export class TablesComponent implements OnInit {
   locationLoading = false;
   locationErrorMessage = '';
 
+  // Order Details Modal state
+  selectedTableForDetails: RestaurantTable | null = null;
+
+  private wsSub: Subscription | null = null;
+  private ordersSub: Subscription | null = null;
+
   constructor(
     private readonly fb: FormBuilder,
     private readonly tableService: TableService,
+    private readonly orderService: OrderService,
+    private readonly reservationService: ReservationService,
+    public readonly wsService: WebsocketService,
     private readonly route: ActivatedRoute,
+    private readonly router: Router,
     private readonly codeService: CodeService,
     private readonly cdr: ChangeDetectorRef,
     private readonly dialogService: DialogService
@@ -64,14 +83,171 @@ export class TablesComponent implements OnInit {
   ngOnInit(): void {
     this.loadLocations();
     this.loadTables();
+    this.loadReservations();
+    this.listenToRealtimeOrders();
+
     this.route.queryParams.subscribe(params => {
       if (params['tab']) {
         this.activeTab = params['tab'];
       }
       this.loadTables();
       this.loadLocations();
+      this.loadReservations();
       this.cdr.markForCheck();
     });
+  }
+
+  ngOnDestroy(): void {
+    if (this.wsSub) this.wsSub.unsubscribe();
+    if (this.ordersSub) this.ordersSub.unsubscribe();
+  }
+
+  listenToRealtimeOrders(): void {
+    this.ordersSub = this.wsService.allOrders$.subscribe(orders => {
+      this.orders = orders || [];
+      this.cdr.markForCheck();
+    });
+
+    this.wsSub = this.wsService.kitchenOrders$.subscribe(tickets => {
+      this.kitchenTickets = tickets || [];
+      this.cdr.markForCheck();
+    });
+  }
+
+  loadReservations(): void {
+    this.reservationService.filterReservations(undefined, undefined, undefined, undefined, undefined, 0, 1000).subscribe({
+      next: (page) => {
+        this.reservations = page?.content || [];
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.reservations = [];
+      }
+    });
+  }
+
+  get filteredTables(): RestaurantTable[] {
+    if (this.statusFilter === 'ALL') {
+      return this.tables;
+    }
+    return this.tables.filter(t => t.status?.toUpperCase() === this.statusFilter.toUpperCase());
+  }
+
+  getActiveOrdersForTable(tableId?: number): Order[] {
+    if (!tableId || !this.orders) return [];
+    return this.orders
+      .filter(o => o.tableId === tableId)
+      .filter(o => {
+        const s = (o.statusName || '').toUpperCase();
+        return !s.includes('CANCEL') && !s.includes('PAID');
+      })
+      .sort((a, b) => (a.id || 0) - (b.id || 0));
+  }
+
+  getActiveOrderForTable(tableId?: number): Order | undefined {
+    const activeList = this.getActiveOrdersForTable(tableId);
+    return activeList.length > 0 ? activeList[activeList.length - 1] : undefined;
+  }
+
+  getTableGrandTotal(tableId?: number): number {
+    return this.getActiveOrdersForTable(tableId).reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+  }
+
+  getKitchenStatusForOrder(orderId?: number): string {
+    if (!orderId || !this.kitchenTickets) return 'ORDERED';
+    const kt = this.kitchenTickets.find(t => t.orderId === orderId);
+    if (kt && kt.preparationStatus) {
+      return kt.preparationStatus;
+    }
+    const order = this.orders.find(o => o.id === orderId);
+    return order?.statusName || 'PROCESSING';
+  }
+
+  getReservationForTable(tableId?: number): Reservation | undefined {
+    if (!tableId || !this.reservations) return undefined;
+    return this.reservations.find(r => r.tableId === tableId);
+  }
+
+  openTableDisplay(tableId?: number): void {
+    if (!tableId) return;
+    window.open(`/display/table/${tableId}`, '_blank');
+  }
+
+  goToPosForTable(tableId?: number): void {
+    this.router.navigate(['/main/orders'], { queryParams: { tab: 'pos', tableId } });
+  }
+
+  viewTableOrderDetails(table: RestaurantTable): void {
+    const activeOrders = this.getActiveOrdersForTable(table.id);
+    if (activeOrders.length === 0) {
+      this.dialogService.showMessage(`Table ${table.tableNumber}`, 'No active orders recorded for this table yet.');
+      return;
+    }
+
+    const roundsHtml = activeOrders.map((order, idx) => {
+      const kStatus = this.getKitchenStatusForOrder(order.id);
+      const itemsList = (order.items || []).map(i => `
+        <div style="display:flex; justify-content:space-between; padding:3px 0; font-size:12px; color:#475569;">
+          <span><strong>${i.quantity}x</strong> ${i.menuItemName}</span>
+          <span style="font-family:monospace;">Rs. ${(i.price * i.quantity).toFixed(2)}</span>
+        </div>
+      `).join('');
+
+      return `
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:10px; margin-bottom:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:6px; margin-bottom:6px;">
+            <div>
+              <span style="font-weight:bold; color:#1e293b;">Round ${idx + 1} — Order #${order.id}</span>
+              ${order.customerName ? `<span style="font-size:11px; color:#64748b; margin-left:4px;">(${order.customerName})</span>` : ''}
+            </div>
+            <span style="background:#e0e7ff; color:#3730a3; padding:2px 6px; border-radius:4px; font-weight:bold; font-size:10px;">${kStatus}</span>
+          </div>
+          ${itemsList}
+          <div style="text-align:right; font-weight:bold; font-size:12px; color:#0f172a; margin-top:6px; border-top:1px dashed #cbd5e1; padding-top:4px;">
+            Subtotal: Rs. ${(order.totalAmount || 0).toFixed(2)}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    const grandTotal = this.getTableGrandTotal(table.id);
+
+    const content = `
+      <div style="font-size:13px; line-height:1.6;">
+        <p style="margin-bottom:8px;"><strong>Table:</strong> Table ${table.tableNumber} (${table.locationName || 'Main Floor'}) • <strong>${activeOrders.length} ${activeOrders.length === 1 ? 'Active Order' : 'Active Order Rounds'}</strong></p>
+        <div style="max-height:280px; overflow-y:auto; padding-right:4px;">
+          ${roundsHtml}
+        </div>
+        <div style="margin-top:12px; padding-top:10px; border-top:2px solid #0f172a; display:flex; justify-content:space-between; font-weight:900; font-size:15px;">
+          <span>GRAND TOTAL BILL:</span>
+          <span style="color:#059669; font-family:monospace;">Rs. ${grandTotal.toFixed(2)}</span>
+        </div>
+      </div>
+    `;
+
+    this.dialogService.showMessage(`Table ${table.tableNumber} - Active Dining Bill`, content, '500px');
+  }
+
+  viewReservationDetails(table: RestaurantTable): void {
+    const res = this.getReservationForTable(table.id);
+    if (!res) {
+      this.dialogService.showMessage(`Table ${table.tableNumber}`, 'No reservation record linked to this table.');
+      return;
+    }
+
+    const content = `
+      <div style="font-size:13px; line-height:1.6;">
+        <p><strong>Table:</strong> Table ${table.tableNumber} (${table.locationName || 'Main Floor'})</p>
+        <p><strong>Guest Name:</strong> <span style="font-weight:bold; color:#1e40af;">${res.customerName || 'VIP Guest'}</span></p>
+        <p><strong>Reservation Time:</strong> <span style="font-weight:bold; color:#b45309;">${res.reservationTime || 'Today'}</span></p>
+        <p><strong>Reservation Date:</strong> ${res.reservationDate || 'Today'}</p>
+        <p><strong>Party Size:</strong> ${res.guestsCount || table.capacity} Guests (Table Capacity: ${table.capacity})</p>
+        <p><strong>Status:</strong> <span style="background:#dbeafe; color:#1e40af; padding:2px 8px; border-radius:4px; font-weight:bold;">${res.reservationStatusName || 'RESERVED'}</span></p>
+        ${res.specialRequests ? `<div style="margin-top:10px; padding:8px; background:#f8fafc; border-left:3px solid #3b82f6; border-radius:4px;"><strong>Special Requests:</strong> "${res.specialRequests}"</div>` : ''}
+      </div>
+    `;
+
+    this.dialogService.showMessage(`Table ${table.tableNumber} - Reservation Details`, content, '460px');
   }
 
   loadTables(): void {

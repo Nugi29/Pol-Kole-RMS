@@ -90,6 +90,12 @@ export class RoomService {
     );
   }
 
+  getRoomById(id: number): Observable<Room> {
+    return this.http.get<ApiResponse<Room>>(`${this.baseUrl}/${id}`).pipe(
+      map(res => res.data)
+    );
+  }
+
   deleteRoom(id: number): Observable<void> {
     return this.http.delete<ApiResponse<void>>(`${this.baseUrl}/${id}`).pipe(
       map(() => undefined)

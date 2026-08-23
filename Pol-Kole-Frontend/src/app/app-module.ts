@@ -44,8 +44,10 @@ import { TablesComponent } from './views/modules/tables/tables.component';
 import { MenuComponent } from './views/modules/menu/menu.component';
 import { OrdersComponent } from './views/modules/orders/orders.component';
 import { KitchenComponent } from './views/modules/kitchen/kitchen.component';
-
 import { WaiterComponent } from './views/modules/waiter/waiter.component';
+import { TakeawayDisplayComponent } from './views/modules/display/takeaway-display/takeaway-display.component';
+import { GuestDisplayComponent } from './views/modules/display/guest-display/guest-display.component';
+import { DisplayHubComponent } from './views/modules/display/display-hub/display-hub.component';
 
 @NgModule({
   declarations: [
@@ -65,7 +67,9 @@ import { WaiterComponent } from './views/modules/waiter/waiter.component';
     OrdersComponent,
     KitchenComponent,
     WaiterComponent,
-
+    TakeawayDisplayComponent,
+    GuestDisplayComponent,
+    DisplayHubComponent,
   ],
   imports: [
     BrowserModule,

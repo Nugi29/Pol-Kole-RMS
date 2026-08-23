@@ -31,6 +31,7 @@ export class MainwindowComponent implements OnInit {
     restaurant: 'M2 17h20v2H2zm18-4a8 8 0 00-16 0h16z',
     meeting_room: 'M19 19H5V5h14v14zM3 21h18v-2H3v2zm9-10h2v2h-2v-2z',
     manage_accounts: 'M12 4a4 4 0 100 8 4 4 0 000-8zm-7 14c0-2.67 5.33-4 7-4s7 1.33 7 4v2H5v-2zm14.5-5.5a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm1 4.5c0-1-.7-1.8-1.6-2.2.8-.2 1.6-.3 2.6-.3 2 0 4 .8 4 2.5V20h-5v-1.5z',
+    tv: 'M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z',
   };
   constructor(private readonly router: Router) {}
   logout(): void {

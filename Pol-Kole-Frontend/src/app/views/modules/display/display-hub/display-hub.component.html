@@ -1,0 +1,196 @@
+<div class="display-hub-container space-y-6 max-w-7xl mx-auto p-4 sm:p-6 select-none">
+
+  <!-- TOP HEADER -->
+  <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm">
+    <div class="flex items-center gap-4">
+      <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-500 to-violet-600 flex items-center justify-center text-white shadow-md">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+        </svg>
+      </div>
+      <div>
+        <h1 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Live Customer Displays Hub</h1>
+        <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Real-time WebSocket displays for Tables, Guest Rooms, and Front Big Screen TV</p>
+      </div>
+    </div>
+
+    <!-- Quick Action / Tab switch -->
+    <div class="flex items-center gap-2">
+      <button
+        (click)="activeTab = 'screens'"
+        class="px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer"
+        [ngClass]="activeTab === 'screens' ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'">
+        Display Screens
+      </button>
+
+      <button
+        (click)="activeTab = 'calls'"
+        class="px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer relative"
+        [ngClass]="activeTab === 'calls' ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'">
+        <span>Guest Calls</span>
+        <span *ngIf="activeGuestCalls.length > 0" class="ml-1.5 px-1.5 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-black animate-pulse">
+          {{ activeGuestCalls.length }}
+        </span>
+      </button>
+    </div>
+  </div>
+
+  <!-- SECTION 1: SCREENS LAUNCHER -->
+  <div *ngIf="activeTab === 'screens'" class="space-y-6">
+
+    <!-- 1. BIG SCREEN TAKEAWAY CARD -->
+    <div class="bg-gradient-to-r from-slate-900 to-indigo-950 border border-indigo-900/60 rounded-3xl p-6 sm:p-8 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
+      <div class="space-y-2 max-w-xl z-10">
+        <div class="flex items-center gap-2">
+          <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 uppercase tracking-wider">
+            LOBBY & COUNTER BIG TV
+          </span>
+          <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300">
+            WebSocket Real-Time
+          </span>
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-black tracking-tight text-white">Front Big Screen Takeaway Board</h2>
+        <p class="text-sm text-slate-300 leading-relaxed">
+          Launch this fullscreen view on wall-mounted 1080p/4K TVs in the waiting lobby. Features live dual-column cooking vs. ready queues and Web Audio chimes for token pickup announcements.
+        </p>
+      </div>
+
+      <div class="z-10 flex-shrink-0">
+        <button
+          (click)="launchTakeawayScreen()"
+          class="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 font-black text-sm tracking-wider uppercase transition-all shadow-xl shadow-orange-500/25 flex items-center gap-2.5 cursor-pointer">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+          </svg>
+          <span>Launch TV Display (New Tab)</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 2. TABLE SMART DISPLAYS SELECTOR -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 8h16M6 8v11M18 8v11M10 8v11M14 8v11M5 19h14" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white">Dining Table Displays (Small Screens)</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Click any table to open or mount its dedicated guest tablet display</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tables Grid -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3.5 pt-2">
+        <div
+          *ngFor="let table of tables"
+          (click)="openTableDisplay(table.id)"
+          class="p-4 rounded-2xl border transition-all duration-200 cursor-pointer text-center group flex flex-col items-center justify-between"
+          [ngClass]="table.status === 'OCCUPIED' ? 'bg-amber-50/50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/50 hover:border-amber-400' : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700/60 hover:border-indigo-500'">
+          <div class="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center font-black text-indigo-600 dark:text-indigo-400 text-sm group-hover:scale-110 transition">
+            {{ table.tableNumber || table.id }}
+          </div>
+          <div class="mt-2 font-bold text-xs text-slate-800 dark:text-slate-200 truncate max-w-full">
+            Table {{ table.tableNumber }}
+          </div>
+          <div class="text-[10px] font-semibold mt-0.5" [ngClass]="table.status === 'OCCUPIED' ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400'">
+            {{ table.status }} • {{ table.capacity }} Seats
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. ROOM SMART DISPLAYS SELECTOR -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white">Guest Room Displays</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Click any room to open its dedicated room service tablet screen</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Rooms Grid -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3.5 pt-2">
+        <div
+          *ngFor="let room of rooms"
+          (click)="openRoomDisplay(room.id)"
+          class="p-4 rounded-2xl border transition-all duration-200 cursor-pointer text-center group flex flex-col items-center justify-between"
+          [ngClass]="room.status === 'OCCUPIED' ? 'bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/50 hover:border-emerald-400' : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700/60 hover:border-emerald-500'">
+          <div class="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center font-black text-emerald-600 dark:text-emerald-400 text-sm group-hover:scale-110 transition">
+            {{ room.roomNumber || room.id }}
+          </div>
+          <div class="mt-2 font-bold text-xs text-slate-800 dark:text-slate-200 truncate max-w-full">
+            Room {{ room.roomNumber }}
+          </div>
+          <div class="text-[10px] font-semibold mt-0.5 text-slate-400">
+            {{ room.status }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 2: REAL-TIME GUEST CALLS LOG -->
+  <div *ngIf="activeTab === 'calls'" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-4">
+    <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+      <div>
+        <h3 class="text-base font-bold text-slate-900 dark:text-white">Active Guest Assistance Calls</h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400">Real-time alerts sent from Table and Room small displays</p>
+      </div>
+      <button
+        (click)="activeGuestCalls = []"
+        *ngIf="activeGuestCalls.length > 0"
+        class="text-xs font-bold text-slate-500 hover:text-slate-800 dark:hover:text-slate-200">
+        Clear All
+      </button>
+    </div>
+
+    <div *ngIf="activeGuestCalls.length === 0" class="py-12 text-center text-slate-400">
+      <svg class="w-12 h-12 mx-auto mb-2 text-slate-300 dark:text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+      </svg>
+      <p class="text-sm font-semibold">No pending guest calls</p>
+      <p class="text-xs text-slate-500">Incoming requests will sound a chime and appear here instantly.</p>
+    </div>
+
+    <div class="space-y-3">
+      <div
+        *ngFor="let call of activeGuestCalls"
+        class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+        <div class="flex items-center gap-3.5">
+          <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-500 flex items-center justify-center font-bold">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-sm text-slate-900 dark:text-white">{{ call.locationNumber }}</span>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300">
+                {{ call.callType }}
+              </span>
+            </div>
+            <p class="text-xs text-slate-600 dark:text-slate-300 mt-0.5">{{ call.message }}</p>
+            <p class="text-[10px] text-slate-400 mt-0.5">{{ call.timestamp | date:'shortTime' }}</p>
+          </div>
+        </div>
+
+        <button
+          (click)="resolveCall(call)"
+          class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow cursor-pointer">
+          Resolve
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

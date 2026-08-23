@@ -11,6 +11,7 @@ import { HotelReservationService } from '../../../services/hotel-reservation.ser
 import { Reservation, ReservationService } from '../../../services/reservation.service';
 import { DialogService } from '../../../services/dialog.service';
 import { ItemDiscount, ItemDiscountService } from '../../../services/item-discount.service';
+import { WebsocketService } from '../../../services/websocket.service';
 
 @Component({
   selector: 'app-orders',
@@ -58,7 +59,8 @@ export class OrdersComponent implements OnInit {
     private readonly tableReservationService: ReservationService,
     private readonly route: ActivatedRoute,
     private readonly cdr: ChangeDetectorRef,
-    private readonly dialogService: DialogService
+    private readonly dialogService: DialogService,
+    private readonly wsService: WebsocketService
   ) {}
 
   ngOnInit(): void {
@@ -289,6 +291,8 @@ export class OrdersComponent implements OnInit {
 
         this.orderService.createOrder(payload).subscribe({
           next: (createdOrder) => {
+            this.wsService.sendMessage('ORDER_CREATED', createdOrder);
+
             // Auto-print token for takeaway orders
             if (this.serviceType === 'TAKEAWAY') {
               this.printToken(createdOrder);
@@ -405,6 +409,7 @@ export class OrdersComponent implements OnInit {
         this.loading = true;
         this.orderService.updateOrderStatus(order.id!, 'CANCELLED').subscribe({
           next: () => {
+            this.wsService.sendMessage('ORDER_STATUS_CHANGED', { orderId: order.id, status: 'CANCELLED' });
             this.loadOrders();
             this.loading = false;
             this.dialogService.showSuccess('Order Cancelled', `Order #${order.id} has been marked as cancelled.`);

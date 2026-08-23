@@ -1,0 +1,464 @@
+<div class="guest-screen-root flex flex-col min-h-screen w-full bg-slate-950 text-white font-sans select-none">
+
+  <!-- TOP TABLE/ROOM BAR -->
+  <header class="bg-slate-900/95 border-b border-slate-800 px-6 py-4 flex items-center justify-between shadow-xl flex-shrink-0">
+    <div class="flex items-center gap-3.5">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-violet-600 flex items-center justify-center shadow-md">
+        <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+        </svg>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="text-lg font-black tracking-tight text-white uppercase">{{ locationLabel || 'POL-KOLE GUEST SCREEN' }}</span>
+          <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 uppercase tracking-wider">
+            {{ locationType }}
+          </span>
+        </div>
+        <p class="text-xs text-slate-400 font-medium">Pol-Kole Resort & Restaurant Smart Console</p>
+      </div>
+    </div>
+
+    <!-- Right Clock & Switch Device Link & Fullscreen -->
+    <div class="flex items-center gap-3.5">
+      <!-- Fullscreen Toggle -->
+      <button
+        (click)="toggleFullscreen()"
+        [title]="isFullscreen ? 'Exit Fullscreen' : 'Enter Kiosk Fullscreen'"
+        class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-semibold transition cursor-pointer">
+        <svg *ngIf="!isFullscreen" class="w-3.5 h-3.5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0 0l-5-5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+        </svg>
+        <svg *ngIf="isFullscreen" class="w-3.5 h-3.5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+        <span class="hidden sm:inline">{{ isFullscreen ? 'Exit Fullscreen' : 'Fullscreen' }}</span>
+      </button>
+
+      <button
+        (click)="changeLocation()"
+        title="Switch Device / Table"
+        class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-semibold transition cursor-pointer">
+        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+        </svg>
+        <span>Change Table</span>
+      </button>
+
+      <div class="text-right pl-3 border-l border-slate-800">
+        <div class="text-base font-bold text-amber-400 font-mono">
+          {{ currentTime | date:'HH:mm' }}
+        </div>
+        <div class="text-[10px] text-slate-400 uppercase font-medium">
+          {{ currentTime | date:'EEE, MMM d' }}
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- NOTIFICATION BANNER (When guest taps Call Waiter / Bill) -->
+  <div *ngIf="callState.active" class="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-6 py-3 shadow-lg flex items-center justify-between animate-fadeIn flex-shrink-0">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+        </svg>
+      </div>
+      <div>
+        <p class="font-bold text-sm leading-tight">{{ callState.message }}</p>
+        <p class="text-[11px] text-emerald-100 opacity-90">Our service team received your request at {{ callState.timestamp | date:'HH:mm:ss' }}</p>
+      </div>
+    </div>
+    <button (click)="callState.active = false" class="text-white/80 hover:text-white p-1">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
+  </div>
+
+  <!-- MAIN VIEWPORT -->
+  <main class="flex-1 p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 overflow-y-auto">
+
+    <!-- LEFT 7/12: LIVE ORDER TRACKER & ITEMS -->
+    <div class="lg:col-span-7 flex flex-col space-y-6">
+
+      <!-- IF ACTIVE ORDERS EXIST (1 OR MORE ROUNDS) -->
+      <div *ngIf="activeOrders.length > 0" class="space-y-5">
+        
+        <!-- TOP GRAND TOTAL SUMMARY BAR -->
+        <div class="bg-gradient-to-r from-slate-900 via-indigo-950/70 to-slate-900 border border-indigo-500/40 rounded-3xl p-5 shadow-xl backdrop-blur-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-black text-indigo-400 uppercase tracking-widest">
+                {{ activeOrders.length === 1 ? 'CURRENT ACTIVE ORDER' : activeOrders.length + ' ACTIVE ORDER ROUNDS' }}
+              </span>
+              <span *ngIf="activeOrders.length > 1" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                Multi-Order Dining
+              </span>
+            </div>
+            <div class="text-sm font-semibold text-slate-300 mt-0.5">
+              {{ totalItemsCount }} Total Items across {{ activeOrders.length }} {{ activeOrders.length === 1 ? 'ticket' : 'rounds' }}
+            </div>
+          </div>
+
+          <div class="text-left sm:text-right border-t sm:border-t-0 border-slate-800 pt-2 sm:pt-0 w-full sm:w-auto">
+            <span class="text-xs text-slate-400 font-medium uppercase tracking-wider">Grand Total Bill</span>
+            <div class="text-2xl sm:text-3xl font-black text-emerald-400 font-mono leading-none mt-0.5">
+              Rs. {{ grandTotalAmount | number:'1.2-2' }}
+            </div>
+          </div>
+        </div>
+
+        <!-- ENJOY YOUR MEAL BANNER (Shows when all active meals are served) -->
+        <div *ngIf="isAllOrdersDelivered"
+             class="bg-gradient-to-r from-emerald-950 via-emerald-900/90 to-teal-950 border-2 border-emerald-500/60 rounded-2xl p-4.5 shadow-xl shadow-emerald-950/40 flex items-center gap-4 animate-fadeIn">
+          <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-300 text-2xl flex-shrink-0 shadow-inner">
+            🍽️
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-black text-emerald-400 uppercase tracking-widest">BON APPÉTIT</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/30 text-emerald-200 uppercase">All Dishes Served</span>
+            </div>
+            <h3 class="text-lg font-black text-white leading-tight mt-0.5">Enjoy Your Meal!</h3>
+            <p class="text-xs text-emerald-200/90 font-medium mt-0.5">
+              Your meal has been served. We hope you enjoy dining at Pol-Kole Resort! Please let us know if you need additional refills, desserts, or service.
+            </p>
+          </div>
+        </div>
+
+        <!-- ORDER ROUNDS FILTER TABS (When multiple orders exist) -->
+        <div *ngIf="activeOrders.length > 1" class="flex items-center gap-2 overflow-x-auto pb-1">
+          <button
+            (click)="selectedOrderTab = 0"
+            class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex-shrink-0"
+            [ngClass]="selectedOrderTab === 0 ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-800 text-slate-400 hover:text-white'">
+            All Rounds ({{ activeOrders.length }})
+          </button>
+          <button
+            *ngFor="let ord of activeOrders; let idx = index"
+            (click)="selectedOrderTab = idx + 1"
+            class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 flex-shrink-0"
+            [ngClass]="selectedOrderTab === idx + 1 ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-800 text-slate-400 hover:text-white'">
+            <span>Round {{ ord.roundNumber }} (#{{ ord.order.id }})</span>
+            <span class="w-2 h-2 rounded-full"
+                  [ngClass]="{
+                    'bg-amber-400 animate-pulse': ord.kitchenStatus === 'PREPARING',
+                    'bg-emerald-400 animate-bounce': ord.kitchenStatus === 'READY',
+                    'bg-teal-400': ord.kitchenStatus === 'DELIVERED',
+                    'bg-slate-400': ord.kitchenStatus === 'RECEIVED'
+                  }"></span>
+          </button>
+        </div>
+
+        <!-- EACH ACTIVE ORDER ROUND CARD -->
+        <div
+          *ngFor="let ord of displayedOrders; trackBy: trackByOrderRound"
+          class="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 shadow-2xl backdrop-blur-md space-y-5">
+          
+          <!-- Order Card Header -->
+          <div class="flex items-center justify-between pb-4 border-b border-slate-800">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 font-black text-sm flex items-center justify-center border border-indigo-500/30">
+                R{{ ord.roundNumber }}
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <h3 class="text-xl font-black text-white leading-tight">Order #{{ ord.order.id }}</h3>
+                  <span *ngIf="activeOrders.length > 1" class="text-xs font-bold text-slate-400">(Round {{ ord.roundNumber }})</span>
+                </div>
+                <p class="text-xs text-slate-400 font-medium mt-0.5">
+                  Guest: {{ ord.order.customerName || 'Dine-in Guest' }} • {{ ord.order.items.length || 0 }} Items
+                </p>
+              </div>
+            </div>
+
+            <div class="text-right">
+              <span class="text-[11px] text-slate-400 font-medium">Subtotal</span>
+              <div class="text-xl font-black text-emerald-400 font-mono">
+                Rs. {{ ord.order.totalAmount | number:'1.2-2' }}
+              </div>
+            </div>
+          </div>
+
+          <!-- 3-STAGE LIVE ORDER STATUS TRACKER FOR THIS ROUND -->
+          <div class="py-2 px-2">
+            <div class="grid grid-cols-3 gap-2 relative">
+              <!-- Connecting Progress Bar -->
+              <div class="absolute top-1/2 left-[16%] right-[16%] -translate-y-1/2 h-1 bg-slate-800 z-0">
+                <div
+                  class="h-full bg-gradient-to-r from-amber-500 to-emerald-500 transition-all duration-700"
+                  [style.width]="ord.kitchenStatus === 'RECEIVED' ? '0%' : (ord.kitchenStatus === 'PREPARING' ? '50%' : '100%')">
+                </div>
+              </div>
+
+              <!-- Step 1: Placed -->
+              <div class="relative z-10 flex flex-col items-center text-center">
+                <div
+                  class="w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-md text-xs"
+                  [ngClass]="ord.kitchenStatus ? 'bg-amber-500 text-slate-950 font-bold' : 'bg-slate-800 text-slate-500'">
+                  <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <span class="text-xs font-bold text-white mt-1.5">Confirmed</span>
+                <span class="text-[10px] text-slate-400">Order Placed</span>
+              </div>
+
+              <!-- Step 2: Preparing -->
+              <div class="relative z-10 flex flex-col items-center text-center">
+                <div
+                  class="w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-md text-xs"
+                  [ngClass]="ord.kitchenStatus === 'PREPARING' || ord.kitchenStatus === 'READY' || ord.kitchenStatus === 'DELIVERED' ? 'bg-amber-500 text-slate-950 font-bold' : 'bg-slate-800 text-slate-500'"
+                  [class.animate-pulse]="ord.kitchenStatus === 'PREPARING'">
+                  <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
+                  </svg>
+                </div>
+                <span class="text-xs font-bold text-white mt-1.5">In Kitchen</span>
+                <span class="text-[10px] text-slate-400">Chef Cooking</span>
+              </div>
+
+              <!-- Step 3: Ready / Served -->
+              <div class="relative z-10 flex flex-col items-center text-center">
+                <div
+                  class="w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-md text-xs"
+                  [ngClass]="ord.kitchenStatus === 'READY' || ord.kitchenStatus === 'DELIVERED' ? 'bg-emerald-500 text-slate-950 font-bold' : 'bg-slate-800 text-slate-500'">
+                  <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <span class="text-xs font-bold text-white mt-1.5">{{ ord.kitchenStatus === 'DELIVERED' ? 'Served' : 'Ready' }}</span>
+                <span class="text-[10px] text-slate-400">{{ ord.kitchenStatus === 'DELIVERED' ? 'Served at table' : 'Waiter on way' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ITEMS BREAKDOWN LIST FOR THIS ROUND -->
+          <div class="border-t border-slate-800 pt-3">
+            <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5">Round {{ ord.roundNumber }} Dishes</h4>
+            <div class="space-y-2 max-h-[200px] overflow-y-auto pr-1">
+              <div
+                *ngFor="let item of ord.order.items; trackBy: trackByItemId"
+                class="flex items-center justify-between p-3 rounded-xl bg-slate-800/60 border border-slate-700/50">
+                <div class="flex items-center gap-3">
+                  <span class="w-7 h-7 rounded-lg bg-indigo-500/20 text-indigo-400 font-bold text-xs flex items-center justify-center">
+                    {{ item.quantity }}x
+                  </span>
+                  <div>
+                    <p class="font-bold text-sm text-white">{{ item.menuItemName }}</p>
+                    <p *ngIf="item.notes" class="text-xs text-amber-300/90 italic">Note: {{ item.notes }}</p>
+                  </div>
+                </div>
+                <div class="font-mono font-bold text-sm text-slate-200">
+                  Rs. {{ (item.price * item.quantity) | number:'1.2-2' }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- IF RESERVED TABLE (VIP RESERVATION WELCOME STATE - WHEN NO ORDERS YET) -->
+      <div *ngIf="activeOrders.length === 0 && (activeReservation || locationDetail?.status === 'RESERVED')"
+           class="bg-gradient-to-br from-slate-900 via-indigo-950/80 to-slate-900 border-2 border-indigo-500/50 rounded-3xl p-7 shadow-2xl backdrop-blur-md relative overflow-hidden space-y-6">
+        
+        <!-- Glow accents -->
+        <div class="absolute -top-12 -right-12 w-48 h-48 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none"></div>
+
+        <!-- VIP Badge & Table Banner -->
+        <div class="flex items-center justify-between border-b border-indigo-500/30 pb-4">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-400 to-amber-600 flex items-center justify-center text-slate-950 font-black shadow-lg shadow-amber-500/20">
+              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+              </svg>
+            </div>
+            <div>
+              <span class="text-xs font-black text-amber-400 uppercase tracking-widest flex items-center gap-1.5">
+                <span>⭐</span> RESERVED DINING TABLE
+              </span>
+              <h2 class="text-2xl font-black text-white">
+                {{ activeReservation?.customerName ? 'Welcome, ' + activeReservation?.customerName : 'Reserved for VIP Guests' }}
+              </h2>
+            </div>
+          </div>
+
+          <div class="px-3.5 py-1.5 rounded-xl bg-indigo-500/20 border border-indigo-400/40 text-indigo-300 font-bold text-xs">
+            {{ locationLabel }}
+          </div>
+        </div>
+
+        <!-- Reservation Booking Details Card -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="p-4 rounded-2xl bg-slate-800/80 border border-slate-700/60">
+            <div class="text-[11px] font-bold text-slate-400 uppercase">Reservation Time</div>
+            <div class="text-lg font-black text-amber-400 font-mono mt-0.5">
+              {{ activeReservation?.reservationTime || 'Scheduled for Today' }}
+            </div>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-slate-800/80 border border-slate-700/60">
+            <div class="text-[11px] font-bold text-slate-400 uppercase">Party Size</div>
+            <div class="text-lg font-black text-white font-mono mt-0.5">
+              {{ activeReservation?.guestsCount || 4 }} Guests
+            </div>
+          </div>
+        </div>
+
+        <!-- Special Request Note (if provided) -->
+        <div *ngIf="activeReservation?.specialRequests" class="p-3.5 rounded-xl bg-indigo-950/40 border border-indigo-800/60 text-xs text-indigo-200 italic">
+          <strong>Special Arrangement:</strong> "{{ activeReservation?.specialRequests }}"
+        </div>
+
+        <!-- Arrival & Seating Button -->
+        <div class="pt-2 flex flex-col sm:flex-row items-center gap-3">
+          <button
+            (click)="arriveAndSeatGuest()"
+            class="w-full sm:flex-1 py-3.5 px-6 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-slate-950 font-black text-sm tracking-wider uppercase transition-all shadow-xl shadow-emerald-500/25 flex items-center justify-center gap-2 cursor-pointer">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+            <span>We Have Arrived / Seat Table</span>
+          </button>
+
+          <button
+            (click)="callWaiter()"
+            class="w-full sm:w-auto py-3.5 px-5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs tracking-wider uppercase border border-slate-700 transition cursor-pointer flex items-center justify-center gap-2">
+            <svg class="w-4 h-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+            <span>Notify Waiter</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- IF NO ACTIVE ORDER & NOT RESERVED (GENERAL WELCOME STATE) -->
+      <div *ngIf="activeOrders.length === 0 && !activeReservation && locationDetail?.status !== 'RESERVED'"
+           class="bg-slate-900/80 border border-slate-800 rounded-3xl p-8 shadow-2xl backdrop-blur-md flex flex-col items-center justify-center text-center">
+        <div class="w-16 h-16 rounded-3xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 mb-4">
+          <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+          </svg>
+        </div>
+        <h2 class="text-2xl font-black text-white">Welcome to Pol-Kole Resort</h2>
+        <p class="text-sm text-slate-400 max-w-md mt-2">
+          Your order status and live kitchen updates will appear here automatically as soon as your waiter or room service places your order.
+        </p>
+        <div class="mt-6 flex items-center gap-3">
+          <button
+            (click)="callWaiter()"
+            class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white font-bold text-xs tracking-wider uppercase transition shadow-lg shadow-indigo-500/25 flex items-center gap-2 cursor-pointer">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+            <span>Call Waiter to Order</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT 5/12: GUEST QUICK ACTIONS & RESORT AMENITIES -->
+    <div class="lg:col-span-5 flex flex-col space-y-6">
+
+      <!-- GUEST QUICK ACTION BUTTONS -->
+      <div class="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 shadow-2xl backdrop-blur-md">
+        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Guest Instant Actions</h3>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <!-- Call Waiter Button -->
+          <button
+            (click)="callWaiter()"
+            class="p-4 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-indigo-500/30 hover:border-indigo-400 text-left transition-all duration-200 group cursor-pointer">
+            <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center mb-3 group-hover:scale-110 transition">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+              </svg>
+            </div>
+            <div class="font-bold text-white text-sm">Call Waiter</div>
+            <div class="text-[11px] text-slate-400 mt-0.5">Assistance at your table</div>
+          </button>
+
+          <!-- Request Bill Button -->
+          <button
+            (click)="requestBill()"
+            class="p-4 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-emerald-500/30 hover:border-emerald-400 text-left transition-all duration-200 group cursor-pointer">
+            <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center mb-3 group-hover:scale-110 transition">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z" />
+              </svg>
+            </div>
+            <div class="font-bold text-white text-sm">Request Bill</div>
+            <div class="text-[11px] text-slate-400 mt-0.5">Pay at table / invoice</div>
+          </button>
+
+          <!-- Request Water Button -->
+          <button
+            (click)="requestWater()"
+            class="p-4 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-cyan-500/30 hover:border-cyan-400 text-left transition-all duration-200 group cursor-pointer">
+            <div class="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center mb-3 group-hover:scale-110 transition">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+              </svg>
+            </div>
+            <div class="font-bold text-white text-sm">Refill Water</div>
+            <div class="text-[11px] text-slate-400 mt-0.5">Complimentary ice water</div>
+          </button>
+
+          <!-- Refresh Status -->
+          <button
+            (click)="wsService.refreshAllData()"
+            class="p-4 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 text-left transition-all duration-200 group cursor-pointer">
+            <div class="w-10 h-10 rounded-xl bg-slate-700 text-slate-300 flex items-center justify-center mb-3 group-hover:rotate-180 transition duration-300">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </div>
+            <div class="font-bold text-white text-sm">Refresh Status</div>
+            <div class="text-[11px] text-slate-400 mt-0.5">Sync with kitchen queue</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- RESORT WI-FI & AMENITIES CARD -->
+      <div class="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 shadow-2xl backdrop-blur-md space-y-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <svg class="w-5 h-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
+            </svg>
+            <span class="text-xs font-bold text-white uppercase tracking-wider">High-Speed Guest Wi-Fi</span>
+          </div>
+          <span class="text-[10px] font-bold text-emerald-400 bg-emerald-500/20 px-2 py-0.5 rounded-full">FREE</span>
+        </div>
+
+        <div class="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-between">
+          <div>
+            <div class="text-[10px] text-slate-400 uppercase font-semibold">Network SSID</div>
+            <div class="text-sm font-bold text-white font-mono">{{ wifiName }}</div>
+          </div>
+          <div class="text-right">
+            <div class="text-[10px] text-slate-400 uppercase font-semibold">Password</div>
+            <div class="text-sm font-bold text-amber-400 font-mono">{{ wifiPass }}</div>
+          </div>
+        </div>
+
+        <button
+          (click)="copyWifi()"
+          class="w-full py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 border border-slate-700 transition cursor-pointer flex items-center justify-center gap-2">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+          </svg>
+          <span>{{ copiedWifi ? 'Password Copied!' : 'Copy Wi-Fi Password' }}</span>
+        </button>
+
+        <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
+          <span>Reception Extension: <strong>Ext. 100</strong></span>
+          <span>Room Service: <strong>Ext. 102</strong></span>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>

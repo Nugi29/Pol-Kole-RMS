@@ -16,6 +16,9 @@ import { OrdersComponent } from './views/modules/orders/orders.component';
 import { KitchenComponent } from './views/modules/kitchen/kitchen.component';
 
 import { WaiterComponent } from './views/modules/waiter/waiter.component';
+import { TakeawayDisplayComponent } from './views/modules/display/takeaway-display/takeaway-display.component';
+import { GuestDisplayComponent } from './views/modules/display/guest-display/guest-display.component';
+import { DisplayHubComponent } from './views/modules/display/display-hub/display-hub.component';
 import { AuthGuard } from './services/auth.guard';
 
 const routes: Routes = [
@@ -26,6 +29,27 @@ const routes: Routes = [
   {
     path: 'login',
     component: LoginComponent,
+  },
+  // Public Kiosk & Customer Screen Routes (No login required on TV/Tablets)
+  {
+    path: 'display',
+    component: DisplayHubComponent,
+  },
+  {
+    path: 'display/takeaway',
+    component: TakeawayDisplayComponent,
+  },
+  {
+    path: 'display/front-screen',
+    component: TakeawayDisplayComponent,
+  },
+  {
+    path: 'display/table/:tableId',
+    component: GuestDisplayComponent,
+  },
+  {
+    path: 'display/room/:roomId',
+    component: GuestDisplayComponent,
   },
   {
     path: 'main',
@@ -40,6 +64,12 @@ const routes: Routes = [
       {
         path: 'dashboard',
         component: HomeComponent,
+      },
+      {
+        path: 'displays',
+        component: DisplayHubComponent,
+        canActivate: [AuthGuard],
+        data: { roles: ['ADMIN', 'MANAGER', 'WAITER', 'CASHIER', 'CHEF'] }
       },
       {
         path: 'rooms',

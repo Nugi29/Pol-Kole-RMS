@@ -20,6 +20,17 @@ export const NAV_MENU = [
     roles: ['ADMIN', 'MANAGER', 'WAITER', 'CASHIER', 'CHEF'],
   },
   {
+    name: 'Live Displays',
+    icon: 'tv',
+    roles: ['ADMIN', 'MANAGER', 'WAITER', 'CASHIER', 'CHEF'],
+    children: [
+      { name: 'Displays Hub', route: '/main/displays', roles: ['ADMIN', 'MANAGER', 'WAITER', 'CASHIER', 'CHEF'] },
+      { name: 'Takeaway Big Screen', route: '/display/takeaway', roles: ['ADMIN', 'MANAGER', 'WAITER', 'CASHIER'] },
+      { name: 'Table Displays', route: '/main/displays?tab=tables', roles: ['ADMIN', 'MANAGER', 'WAITER'] },
+      { name: 'Guest Calls', route: '/main/displays?tab=calls', roles: ['ADMIN', 'MANAGER', 'WAITER'] },
+    ],
+  },
+  {
     name: 'Rooms Hub',
     icon: 'meeting_room',
     roles: ['ADMIN', 'MANAGER'],

@@ -5,6 +5,7 @@ import { ApiResponse, RoomService, Room } from '../../../services/room.service';
 import { TableService, RestaurantTable } from '../../../services/table.service';
 import { KitchenOrder } from '../kitchen/kitchen.component';
 import { DialogService } from '../../../services/dialog.service';
+import { WebsocketService } from '../../../services/websocket.service';
 import { map, catchError } from 'rxjs/operators';
 import { forkJoin, of } from 'rxjs';
 
@@ -31,7 +32,8 @@ export class WaiterComponent implements OnInit {
     private readonly roomService: RoomService,
     private readonly tableService: TableService,
     private readonly cdr: ChangeDetectorRef,
-    private readonly dialogService: DialogService
+    private readonly dialogService: DialogService,
+    public readonly wsService: WebsocketService
   ) {}
 
   ngOnInit(): void {
@@ -180,6 +182,7 @@ export class WaiterComponent implements OnInit {
           map(res => res.data)
         ).subscribe({
           next: () => {
+            this.wsService.sendMessage('ORDER_STATUS_CHANGED', { orderId: id, status: 'DELIVERED' });
             this.loadOrders();
             this.dialogService.showSuccess('Order Delivered', `Order #${id} marked as delivered & served successfully.`);
           },
