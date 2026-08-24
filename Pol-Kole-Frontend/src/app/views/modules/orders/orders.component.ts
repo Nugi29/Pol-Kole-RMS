@@ -6,7 +6,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Order, OrderService, OrderItemInput } from '../../../services/order.service';
 import { RestaurantTable, TableService } from '../../../services/table.service';
 import { CustomerDto, CustomerService } from '../../../services/customer.service';
-import { MenuItem, MenuService } from '../../../services/menu.service';
+import { MenuItem, MenuCategory, MenuService } from '../../../services/menu.service';
 import { HotelReservationService } from '../../../services/hotel-reservation.service';
 import { Reservation, ReservationService } from '../../../services/reservation.service';
 import { DialogService } from '../../../services/dialog.service';
@@ -30,6 +30,7 @@ export class OrdersComponent implements OnInit {
   tables: RestaurantTable[] = [];
   customers: CustomerDto[] = [];
   menuItems: MenuItem[] = [];
+  categories: MenuCategory[] = [];
   itemDiscounts: ItemDiscount[] = [];
   displayedColumns = ['id', 'customer', 'table', 'totalAmount', 'status', 'actions'];
   dataSource = new MatTableDataSource<Order>([]);
@@ -38,6 +39,16 @@ export class OrdersComponent implements OnInit {
   loading = false;
   errorMessage = '';
   successMessage = '';
+
+  // POS Menu Filters
+  dishSearchQuery: string = '';
+  selectedCategoryId: number | 'SPECIALS' | null = null;
+  showSpecialsOnly: boolean = false;
+
+  // Active Orders Deck Filters
+  orderSearchQuery: string = '';
+  selectedOrderStatus: string = 'ALL';
+  selectedOrderServiceType: 'ALL' | 'TABLE' | 'ROOM' | 'TAKEAWAY' = 'ALL';
 
   // POS Order Form Builder Helper state
   selectedCustomerId: number | null = null;
@@ -78,10 +89,23 @@ export class OrdersComponent implements OnInit {
     this.loadTables();
     this.loadCustomers();
     this.loadItemDiscounts();
+    this.loadCategories();
     this.loadMenuItems();
     this.loadOrders();
     this.loadCheckedInReservations();
     this.loadCheckedInTableReservations();
+  }
+
+  loadCategories(): void {
+    this.menuService.getCategories().subscribe({
+      next: (categories) => {
+        this.categories = categories || [];
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.categories = [];
+      }
+    });
   }
 
   loadTables(): void {
@@ -148,6 +172,125 @@ export class OrdersComponent implements OnInit {
     return discount.calculatedDiscountedPrice;
   }
 
+  getCategoryItemCount(categoryId: number): number {
+    return this.menuItems.filter(m => m.categoryId === categoryId).length;
+  }
+
+  get specialsCount(): number {
+    return this.menuItems.filter(m => !!this.getItemDiscount(m.id)).length;
+  }
+
+  get filteredMenuItems(): MenuItem[] {
+    return this.menuItems.filter(item => {
+      if (this.selectedCategoryId === 'SPECIALS') {
+        if (!this.getItemDiscount(item.id)) {
+          return false;
+        }
+      } else if (this.selectedCategoryId !== null && item.categoryId !== this.selectedCategoryId) {
+        return false;
+      }
+      if (this.showSpecialsOnly && !this.getItemDiscount(item.id)) {
+        return false;
+      }
+      if (this.dishSearchQuery.trim()) {
+        const query = this.dishSearchQuery.toLowerCase().trim();
+        const nameMatch = item.name?.toLowerCase().includes(query);
+        const descMatch = item.description?.toLowerCase().includes(query);
+        const catMatch = item.categoryName?.toLowerCase().includes(query);
+        if (!nameMatch && !descMatch && !catMatch) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }
+
+  clearDishFilters(): void {
+    this.dishSearchQuery = '';
+    this.selectedCategoryId = null;
+    this.showSpecialsOnly = false;
+  }
+
+  get pendingOrdersCount(): number {
+    return this.orders.filter(o => o.statusName?.toUpperCase() === 'PENDING').length;
+  }
+
+  get preparingOrdersCount(): number {
+    return this.orders.filter(o => o.statusName?.toUpperCase() === 'PREPARING').length;
+  }
+
+  get readyOrdersCount(): number {
+    return this.orders.filter(o => o.statusName?.toUpperCase() === 'READY').length;
+  }
+
+  get completedOrdersCount(): number {
+    return this.orders.filter(o => ['COMPLETED', 'SERVED'].includes(o.statusName?.toUpperCase() || '')).length;
+  }
+
+  get cancelledOrdersCount(): number {
+    return this.orders.filter(o => o.statusName?.toUpperCase() === 'CANCELLED').length;
+  }
+
+  get hasActiveOrderFilters(): boolean {
+    return !!this.orderSearchQuery.trim() || this.selectedOrderStatus !== 'ALL' || this.selectedOrderServiceType !== 'ALL';
+  }
+
+  applyOrderFilters(): void {
+    const filtered = this.orders.filter(order => {
+      // Status filter
+      if (this.selectedOrderStatus !== 'ALL') {
+        const status = order.statusName?.toUpperCase();
+        if (this.selectedOrderStatus === 'COMPLETED') {
+          if (status !== 'COMPLETED' && status !== 'SERVED') {
+            return false;
+          }
+        } else if (status !== this.selectedOrderStatus) {
+          return false;
+        }
+      }
+
+      // Service Type filter
+      if (this.selectedOrderServiceType === 'TABLE') {
+        if (!order.tableNumber && !order.tableId) return false;
+      } else if (this.selectedOrderServiceType === 'ROOM') {
+        if (!order.roomNumber && !order.roomId) return false;
+      } else if (this.selectedOrderServiceType === 'TAKEAWAY') {
+        if (order.tableNumber || order.tableId || order.roomNumber || order.roomId) return false;
+      }
+
+      // Search Query filter
+      if (this.orderSearchQuery.trim()) {
+        const query = this.orderSearchQuery.toLowerCase().trim();
+        const cleanIdQuery = query.replace(/^#/, '');
+        const idMatch = String(order.id || '').toLowerCase().includes(cleanIdQuery);
+        const customerMatch = (order.customerName || '').toLowerCase().includes(query);
+        const tableMatch = (order.tableNumber || '').toLowerCase().includes(query) || (`table ${order.tableNumber}`).toLowerCase().includes(query);
+        const roomMatch = (order.roomNumber || '').toLowerCase().includes(query) || (`room ${order.roomNumber}`).toLowerCase().includes(query);
+        const statusMatch = (order.statusName || '').toLowerCase().includes(query);
+        const itemMatch = (order.items || []).some(i => (i.menuItemName || '').toLowerCase().includes(query));
+
+        if (!idMatch && !customerMatch && !tableMatch && !roomMatch && !statusMatch && !itemMatch) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+
+    this.dataSource.data = filtered;
+    if (this.paginator) {
+      this.dataSource.paginator = this.paginator;
+    }
+    this.cdr.markForCheck();
+  }
+
+  clearOrderFilters(): void {
+    this.orderSearchQuery = '';
+    this.selectedOrderStatus = 'ALL';
+    this.selectedOrderServiceType = 'ALL';
+    this.applyOrderFilters();
+  }
+
   loadCheckedInReservations(): void {
     this.reservationService.filterReservations(undefined, undefined, 'CHECKED_IN', undefined, undefined, 0, 1000).subscribe({
       next: (page) => {
@@ -201,7 +344,7 @@ export class OrdersComponent implements OnInit {
       next: (page) => {
         const data = page?.content || [];
         this.orders = data;
-        this.dataSource.data = data;
+        this.applyOrderFilters();
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -215,6 +358,12 @@ export class OrdersComponent implements OnInit {
   }
 
   // POS Cart management
+  getItemCartQuantity(itemId?: number): number {
+    if (!itemId) return 0;
+    const found = this.cart.find(c => c.item.id === itemId);
+    return found ? found.quantity : 0;
+  }
+
   addToCart(item: MenuItem): void {
     const existing = this.cart.find(c => c.item.id === item.id);
     if (existing) {
