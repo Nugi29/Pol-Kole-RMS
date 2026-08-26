@@ -275,14 +275,23 @@
                           ({{ activeOrdersList[activeOrdersList.length - 1].customerName }})
                         </span>
                       </div>
-                      <span class="text-[10px] font-black px-2 py-0.5 rounded uppercase"
+                      <span class="text-[10px] font-black px-2 py-0.5 rounded uppercase shadow-2xs tracking-wider flex items-center gap-1"
                             [ngClass]="{
-                              'bg-amber-100 text-amber-800': getKitchenStatusForOrder(activeOrdersList[activeOrdersList.length - 1].id) === 'PREPARING',
-                              'bg-emerald-100 text-emerald-800 animate-bounce': getKitchenStatusForOrder(activeOrdersList[activeOrdersList.length - 1].id) === 'READY',
-                              'bg-indigo-100 text-indigo-800': getKitchenStatusForOrder(activeOrdersList[activeOrdersList.length - 1].id) === 'DELIVERED',
-                              'bg-slate-100 text-slate-700': getKitchenStatusForOrder(activeOrdersList[activeOrdersList.length - 1].id) === 'RECEIVED'
+                              'bg-amber-50 border border-amber-200 text-amber-700': getKitchenStatusForOrder(activeOrdersList[activeOrdersList.length - 1].id) === 'PENDING' || getKitchenStatusForOrder(activeOrdersList[activeOrdersList.length - 1].id) === 'RECEIVED' || getKitchenStatusForOrder(activeOrdersList[activeOrdersList.length - 1].id) === 'ORDERED',
+                              'bg-blue-50 border border-blue-200 text-blue-700 animate-pulse': getKitchenStatusForOrder(activeOrdersList[activeOrdersList.length - 1].id) === 'PREPARING',
+                              'bg-emerald-50 border border-emerald-250 text-emerald-700 animate-bounce': getKitchenStatusForOrder(activeOrdersList[activeOrdersList.length - 1].id) === 'READY',
+                              'bg-teal-50 border border-teal-200 text-teal-700': getKitchenStatusForOrder(activeOrdersList[activeOrdersList.length - 1].id) === 'SERVED' || getKitchenStatusForOrder(activeOrdersList[activeOrdersList.length - 1].id) === 'DELIVERED',
+                              'bg-slate-100 border border-slate-200 text-slate-600': getKitchenStatusForOrder(activeOrdersList[activeOrdersList.length - 1].id) === 'COMPLETED'
                             }">
-                        {{ getKitchenStatusForOrder(activeOrdersList[activeOrdersList.length - 1].id) }}
+                        <span class="w-1.5 h-1.5 rounded-full"
+                              [ngClass]="{
+                                'bg-amber-500': getKitchenStatusForOrder(activeOrdersList[activeOrdersList.length - 1].id) === 'PENDING' || getKitchenStatusForOrder(activeOrdersList[activeOrdersList.length - 1].id) === 'RECEIVED' || getKitchenStatusForOrder(activeOrdersList[activeOrdersList.length - 1].id) === 'ORDERED',
+                                'bg-blue-500 animate-ping': getKitchenStatusForOrder(activeOrdersList[activeOrdersList.length - 1].id) === 'PREPARING',
+                                'bg-emerald-500': getKitchenStatusForOrder(activeOrdersList[activeOrdersList.length - 1].id) === 'READY',
+                                'bg-teal-500': getKitchenStatusForOrder(activeOrdersList[activeOrdersList.length - 1].id) === 'SERVED' || getKitchenStatusForOrder(activeOrdersList[activeOrdersList.length - 1].id) === 'DELIVERED',
+                                'bg-slate-400': getKitchenStatusForOrder(activeOrdersList[activeOrdersList.length - 1].id) === 'COMPLETED'
+                              }"></span>
+                        <span>{{ getKitchenStatusForOrder(activeOrdersList[activeOrdersList.length - 1].id) }}</span>
                       </span>
                     </div>
 

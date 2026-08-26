@@ -9,7 +9,7 @@ export interface TakeawayTicket {
   customerName: string;
   itemsSummary: string;
   itemCount: number;
-  status: 'PREPARING' | 'READY' | 'COMPLETED';
+  status: 'PENDING' | 'PREPARING' | 'READY' | 'COMPLETED';
   orderTime: string;
   isRecentlyReady?: boolean;
 }
@@ -100,6 +100,14 @@ export class TakeawayDisplayComponent implements OnInit, OnDestroy {
     this.processTakeawayOrders(allOrders, kOrders);
   }
 
+  get pendingCount(): number {
+    return this.preparingOrders.filter(t => t.status === 'PENDING').length;
+  }
+
+  get cookingCount(): number {
+    return this.preparingOrders.filter(t => t.status === 'PREPARING').length;
+  }
+
   private processTakeawayOrders(orders: Order[], kitchenTickets: KitchenOrder[]): void {
     if (!orders || orders.length === 0) {
       this.preparingOrders = [];
@@ -150,7 +158,7 @@ export class TakeawayDisplayComponent implements OnInit, OnDestroy {
         customerName: '',
         itemsSummary: '',
         itemCount: 0,
-        status: 'PREPARING',
+        status: 'PENDING',
         orderTime: order.orderTime || new Date().toISOString()
       };
 
@@ -166,9 +174,12 @@ export class TakeawayDisplayComponent implements OnInit, OnDestroy {
           }
         }
         ready.push(ticket);
-      } else {
-        // RECEIVED / PREPARING / PENDING / PROCESSING
+      } else if (kStatus === 'PREPARING' || oStatus.includes('PREPAR')) {
         ticket.status = 'PREPARING';
+        preparing.push(ticket);
+      } else {
+        // RECEIVED / PENDING / ORDERED / PROCESSING
+        ticket.status = 'PENDING';
         preparing.push(ticket);
       }
     });
