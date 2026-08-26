@@ -5,16 +5,20 @@ import { catchError, map } from 'rxjs/operators';
 import { Order } from './order.service';
 import { KitchenOrder } from '../views/modules/kitchen/kitchen.component';
 import { ApiResponse } from './room.service';
+import { StaffNotification } from './staff-notification.service';
+import { CallWaiterResponse } from './staff-assignment.service';
 
 export type WebSocketMessageType =
   | 'ORDER_CREATED'
   | 'ORDER_STATUS_CHANGED'
   | 'KITCHEN_STATUS_CHANGED'
   | 'GUEST_CALL'
+  | 'STAFF_NOTIFICATION'
   | 'SERVICE_REQUEST_UPDATED'
   | 'BILL_REQUEST'
   | 'TABLE_UPDATED'
   | 'ROOM_UPDATED'
+  | 'PRESENCE_UPDATED'
   | 'HEARTBEAT';
 
 export interface WebSocketMessage<T = any> {
@@ -51,16 +55,21 @@ export interface GuestServiceCall {
   acceptedBy?: string;
   acceptedAt?: string;
   completedAt?: string;
+  assignedStaffId?: number;
+  assignedStaffName?: string;
 }
 
 @Injectable({
   providedIn: 'root',
 })
 export class WebsocketService implements OnDestroy {
-  // Configurable WS endpoint
+  // Configurable endpoints
   private readonly wsUrl = 'ws://localhost:8080/ws/orders';
   private readonly ordersApiUrl = 'http://localhost:8080/api/orders';
   private readonly kitchenApiUrl = 'http://localhost:8080/api/kitchen';
+  private readonly presenceApiUrl = 'http://localhost:8080/api/presence';
+  private readonly staffAssignmentApiUrl = 'http://localhost:8080/api/staff-assignments';
+  private readonly notificationApiUrl = 'http://localhost:8080/api/staff-notifications';
 
   private socket: WebSocket | null = null;
   private reconnectAttempts = 0;
@@ -79,6 +88,8 @@ export class WebsocketService implements OnDestroy {
   public allOrders$ = new BehaviorSubject<Order[]>([]);
   public kitchenOrders$ = new BehaviorSubject<KitchenOrder[]>([]);
   public activeGuestCalls$ = new BehaviorSubject<GuestServiceCall[]>([]);
+  public staffNotifications$ = new BehaviorSubject<StaffNotification[]>([]);
+  public unreadNotificationCount$ = new BehaviorSubject<number>(0);
 
   // Audio synthesizer context for notifications
   private audioCtx: AudioContext | null = null;
@@ -86,8 +97,16 @@ export class WebsocketService implements OnDestroy {
   constructor(private readonly http: HttpClient) {
     this.initBroadcastChannel();
     this.loadPersistedCalls();
+    if (typeof window !== 'undefined') {
+      window.addEventListener('storage', (event) => {
+        if (event.key === 'pol_kole_guest_calls') {
+          this.loadPersistedCalls();
+        }
+      });
+    }
     this.initRealtimeConnection();
     this.startFallbackPolling();
+    this.startPresenceHeartbeat();
   }
 
   ngOnDestroy(): void {
@@ -119,7 +138,6 @@ export class WebsocketService implements OnDestroy {
         if (saved) {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed)) {
-            // Keep only uncompleted or today's calls
             const activeOnly = parsed.filter((c: GuestServiceCall) => c.status !== 'COMPLETED');
             this.activeGuestCalls$.next(activeOnly);
           }
@@ -141,7 +159,7 @@ export class WebsocketService implements OnDestroy {
   }
 
   /**
-   * Initializes the native WebSocket connection
+   * Initializes native WebSocket connection
    */
   public initRealtimeConnection(): void {
     if (typeof window === 'undefined' || !('WebSocket' in window)) {
@@ -165,18 +183,18 @@ export class WebsocketService implements OnDestroy {
           const data: WebSocketMessage = JSON.parse(event.data);
           this.handleIncomingMessage(data, true);
         } catch (e) {
-          console.warn('[WebsocketService] Received non-JSON WebSocket frame:', event.data);
+          console.warn('[WebsocketService] Non-JSON WS frame:', event.data);
         }
       };
 
-      this.socket.onclose = (event) => {
+      this.socket.onclose = () => {
         this.isConnected$.next(false);
         this.connectionMode$.next('POLLING_FALLBACK');
         this.stopHeartbeat();
         this.scheduleReconnect();
       };
 
-      this.socket.onerror = (err) => {
+      this.socket.onerror = () => {
         this.isConnected$.next(false);
         this.connectionMode$.next('POLLING_FALLBACK');
       };
@@ -215,12 +233,59 @@ export class WebsocketService implements OnDestroy {
     }
   }
 
+  private resolvingUserId = false;
+
   /**
-   * Resilient HTTP polling fallback (running every 4 seconds) to guarantee real-time updates
+   * Keep user presence alive via regular heartbeat REST calls
+   */
+  private startPresenceHeartbeat(): void {
+    interval(15000).subscribe(() => {
+      const userId = this.getCurrentUserId();
+      if (userId) {
+        this.http.post(`${this.presenceApiUrl}/heartbeat/${userId}`, {}).pipe(
+          catchError(() => of(null))
+        ).subscribe();
+      }
+    });
+  }
+
+  private getCurrentUserId(): number | null {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const idStr = localStorage.getItem('userId') || localStorage.getItem('id');
+      if (idStr && !isNaN(Number(idStr))) {
+        return Number(idStr);
+      }
+      const email = localStorage.getItem('email');
+      if (email && !this.resolvingUserId) {
+        this.resolveUserIdByEmail(email);
+      }
+    }
+    return null;
+  }
+
+  private resolveUserIdByEmail(email: string): void {
+    this.resolvingUserId = true;
+    this.http.get<any>('http://localhost:8080/api/users').pipe(
+      catchError(() => of(null))
+    ).subscribe((res) => {
+      this.resolvingUserId = false;
+      const users = res?.data || (Array.isArray(res) ? res : []);
+      if (Array.isArray(users)) {
+        const found = users.find((u: any) => u.email && u.email.toLowerCase() === email.toLowerCase());
+        if (found && found.id) {
+          localStorage.setItem('userId', String(found.id));
+          this.refreshAllData();
+        }
+      }
+    });
+  }
+
+  /**
+   * Resilient HTTP polling fallback (every 3s)
    */
   private startFallbackPolling(): void {
     this.refreshAllData();
-    this.fallbackPollingSub = interval(4000).subscribe(() => {
+    this.fallbackPollingSub = interval(3000).subscribe(() => {
       this.refreshAllData();
     });
   }
@@ -243,6 +308,56 @@ export class WebsocketService implements OnDestroy {
     ).subscribe((kOrders: KitchenOrder[]) => {
       this.kitchenOrders$.next(kOrders);
     });
+
+    // 3. Fetch notifications for logged-in user
+    const userId = this.getCurrentUserId();
+    if (userId) {
+      this.http.get<StaffNotification[]>(`${this.notificationApiUrl}/user/${userId}`).pipe(
+        catchError(() => of([]))
+      ).subscribe((notifs) => {
+        if (Array.isArray(notifs)) {
+          const prevCount = this.unreadNotificationCount$.value;
+          this.staffNotifications$.next(notifs);
+          const unreadNotifs = notifs.filter(n => n.status === 'UNREAD');
+          this.unreadNotificationCount$.next(unreadNotifs.length);
+
+          if (unreadNotifs.length > prevCount) {
+            this.playChimeSound('alert');
+          }
+
+          // Merge unread notifications into activeGuestCalls stream
+          const currentCalls = [...this.activeGuestCalls$.value];
+          let updated = false;
+
+          for (const n of unreadNotifs) {
+            if (n.type === 'CALL_WAITER' || n.type === 'GUEST_CALL' || n.type === 'BILL_REQUEST' || n.type === 'WAITER_OFFLINE') {
+              const callId = `notif-${n.id}`;
+              const exists = currentCalls.some(c => c.id === callId);
+              if (!exists) {
+                currentCalls.unshift({
+                  id: callId,
+                  locationType: (n.targetType as any) || 'TABLE',
+                  locationId: n.targetId,
+                  locationNumber: n.targetLabel || 'Table',
+                  callType: 'WAITER',
+                  message: n.message || n.title,
+                  status: 'WAITING',
+                  timestamp: n.createdAt,
+                  assignedStaffId: n.recipientId,
+                  assignedStaffName: n.recipientName
+                });
+                updated = true;
+              }
+            }
+          }
+
+          if (updated) {
+            this.activeGuestCalls$.next(currentCalls);
+            this.saveCalls(currentCalls);
+          }
+        }
+      });
+    }
   }
 
   /**
@@ -268,7 +383,6 @@ export class WebsocketService implements OnDestroy {
       }
     }
 
-    // Also trigger locally so active subscribers reflect change instantly
     this.handleIncomingMessage(message, false);
   }
 
@@ -290,6 +404,7 @@ export class WebsocketService implements OnDestroy {
         this.refreshAllData();
         break;
 
+      case 'STAFF_NOTIFICATION':
       case 'GUEST_CALL':
       case 'BILL_REQUEST':
         if (msg.payload) {
@@ -305,6 +420,7 @@ export class WebsocketService implements OnDestroy {
           }
           this.activeGuestCalls$.next(updated);
           this.saveCalls(updated);
+          this.refreshAllData();
         }
         break;
 
@@ -335,7 +451,7 @@ export class WebsocketService implements OnDestroy {
   }
 
   // ==========================================
-  // Guest Interaction API
+  // Guest Interaction & Targeted Call Waiter API
   // ==========================================
 
   public callWaiter(
@@ -344,20 +460,55 @@ export class WebsocketService implements OnDestroy {
     callType: GuestCallType = 'WAITER',
     message?: string,
     locationId?: number
-  ): GuestServiceCall {
-    const callPayload: GuestServiceCall = {
-      id: `${locationType}-${locationNumber.replace(/\s+/g, '')}-${Date.now()}`,
+  ): Observable<CallWaiterResponse> {
+    const payloadMsg = message || this.getDefaultCallMessage(callType);
+
+    // Call backend targeted routing endpoint
+    return this.http.post<CallWaiterResponse>(`${this.staffAssignmentApiUrl}/call-waiter`, {
       locationType,
       locationId,
       locationNumber,
       callType,
-      message: message || this.getDefaultCallMessage(callType),
-      status: 'WAITING',
-      timestamp: new Date().toISOString()
-    };
+      message: payloadMsg
+    }).pipe(
+      map(res => {
+        // Also add to local active guest calls feed
+        const localCall: GuestServiceCall = {
+          id: `${locationType}-${locationNumber.replace(/\s+/g, '')}-${Date.now()}`,
+          locationType,
+          locationId,
+          locationNumber,
+          callType,
+          message: payloadMsg,
+          status: 'WAITING',
+          timestamp: new Date().toISOString(),
+          assignedStaffId: res.assignedStaffId,
+          assignedStaffName: res.assignedStaffName
+        };
 
-    this.sendMessage('GUEST_CALL', callPayload);
-    return callPayload;
+        this.sendMessage('GUEST_CALL', localCall);
+        return res;
+      }),
+      catchError(() => {
+        // Fallback local broadcast if backend call fails
+        const fallbackCall: GuestServiceCall = {
+          id: `${locationType}-${locationNumber.replace(/\s+/g, '')}-${Date.now()}`,
+          locationType,
+          locationId,
+          locationNumber,
+          callType,
+          message: payloadMsg,
+          status: 'WAITING',
+          timestamp: new Date().toISOString()
+        };
+        this.sendMessage('GUEST_CALL', fallbackCall);
+        return of({
+          success: true,
+          message: 'Assistance requested. Staff attending shortly.',
+          isFallback: true
+        } as CallWaiterResponse);
+      })
+    );
   }
 
   public updateServiceRequestStatus(
@@ -378,6 +529,15 @@ export class WebsocketService implements OnDestroy {
     };
 
     this.sendMessage('SERVICE_REQUEST_UPDATED', payload);
+
+    if (callId.startsWith('notif-')) {
+      const notifId = Number(callId.replace('notif-', ''));
+      if (!isNaN(notifId)) {
+        this.http.put(`${this.notificationApiUrl}/${notifId}/read`, {}).pipe(
+          catchError(() => of(null))
+        ).subscribe(() => this.refreshAllData());
+      }
+    }
   }
 
   public resolveGuestCall(callId: string): void {
@@ -385,6 +545,15 @@ export class WebsocketService implements OnDestroy {
     const updated = this.activeGuestCalls$.value.filter(c => c.id !== callId);
     this.activeGuestCalls$.next(updated);
     this.saveCalls(updated);
+
+    if (callId.startsWith('notif-')) {
+      const notifId = Number(callId.replace('notif-', ''));
+      if (!isNaN(notifId)) {
+        this.http.put(`${this.notificationApiUrl}/${notifId}/resolve`, {}).pipe(
+          catchError(() => of(null))
+        ).subscribe(() => this.refreshAllData());
+      }
+    }
   }
 
   private getDefaultCallMessage(type: GuestCallType): string {
@@ -403,12 +572,9 @@ export class WebsocketService implements OnDestroy {
   }
 
   // ==========================================
-  // Synthesized Web Audio Alerts (No MP3 files needed)
+  // Synthesized Web Audio Chimes
   // ==========================================
 
-  /**
-   * Plays a pleasant synthesized melodic chime for order status ready and guest alerts
-   */
   public playChimeSound(type: 'ready' | 'alert' | 'ding' = 'ready'): void {
     try {
       const AudioCtxClass = window.AudioContext || (window as any).webkitAudioContext;
@@ -425,7 +591,6 @@ export class WebsocketService implements OnDestroy {
       const now = this.audioCtx.currentTime;
 
       if (type === 'ready') {
-        // Luxury 3-tone ascending chime (C5 -> E5 -> G5)
         const notes = [523.25, 659.25, 783.99, 1046.50];
         notes.forEach((freq, index) => {
           const osc = this.audioCtx!.createOscillator();
@@ -445,7 +610,6 @@ export class WebsocketService implements OnDestroy {
           osc.stop(now + index * 0.14 + 0.48);
         });
       } else if (type === 'alert') {
-        // Double ding for guest assistance call
         [600, 800].forEach((freq, idx) => {
           const osc = this.audioCtx!.createOscillator();
           const gain = this.audioCtx!.createGain();
@@ -464,7 +628,6 @@ export class WebsocketService implements OnDestroy {
           osc.stop(now + idx * 0.15 + 0.35);
         });
       } else {
-        // Simple subtle ding
         const osc = this.audioCtx.createOscillator();
         const gain = this.audioCtx.createGain();
 

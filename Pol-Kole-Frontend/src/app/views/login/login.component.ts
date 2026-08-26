@@ -48,6 +48,7 @@ export class LoginComponent implements OnInit {
         const token = this.getTokenFromResponse(res);
         const role = this.getRoleFromResponse(res);
         const name = this.getNameFromResponse(res) || this.getNameFromEmail(this.email);
+        const userId = this.getUserIdFromResponse(res);
         if (!token) {
           this.errorMessage = 'Invalid login response.';
           console.log(this.errorMessage);
@@ -57,6 +58,9 @@ export class LoginComponent implements OnInit {
         }
         localStorage.setItem('token', token);
         localStorage.setItem('email', this.email.trim());
+        if (userId) {
+          localStorage.setItem('userId', String(userId));
+        }
         if (role) {
           localStorage.setItem('role', role);
         }
@@ -98,6 +102,16 @@ export class LoginComponent implements OnInit {
       result?: { name?: string };
     };
     return candidate.name ?? candidate.data?.name ?? candidate.result?.name ?? '';
+  }
+
+  private getUserIdFromResponse(res: LoginResponse): number | null {
+    const candidate = res as unknown as {
+      userId?: number;
+      id?: number;
+      data?: { userId?: number; id?: number };
+      result?: { userId?: number; id?: number };
+    };
+    return candidate.userId ?? candidate.id ?? candidate.data?.userId ?? candidate.data?.id ?? candidate.result?.userId ?? candidate.result?.id ?? null;
   }
 
   private getNameFromEmail(email: string): string {

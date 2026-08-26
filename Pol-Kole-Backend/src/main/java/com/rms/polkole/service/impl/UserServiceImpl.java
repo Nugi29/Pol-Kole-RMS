@@ -1,217 +1,169 @@
 package com.rms.polkole.service.impl;
 
-import com.rms.polkole.dto.FullUser;
 import com.rms.polkole.dto.Login;
 import com.rms.polkole.dto.LoginResponse;
+import com.rms.polkole.dto.FullUser;
 import com.rms.polkole.dto.Lookup;
 import com.rms.polkole.dto.User;
 import com.rms.polkole.entity.UserEntity;
+import com.rms.polkole.entity.UserroleEntity;
+import com.rms.polkole.entity.UserstatusEntity;
 import com.rms.polkole.repository.UserRepository;
 import com.rms.polkole.repository.UserroleRepository;
 import com.rms.polkole.repository.UserstatusRepository;
+import com.rms.polkole.service.UserService;
 import com.rms.polkole.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import org.modelmapper.ModelMapper;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import com.rms.polkole.service.UserService;
-import org.springframework.web.server.ResponseStatusException;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class UserServiceImpl implements UserService{
+public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final UserroleRepository roleRepository;
     private final UserstatusRepository statusRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final ModelMapper modelMapper;
 
     @Override
     @Transactional
-    public String register(User dto) {
-        if (userRepository.findByEmail(dto.getEmail()).isPresent()) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "User already exists with email: " + dto.getEmail());
+    public String register(User request) {
+        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+            throw new RuntimeException("Email already in use");
         }
+
+        UserroleEntity role = roleRepository.findByNameIgnoreCase(request.getRole())
+                .orElseThrow(() -> new RuntimeException("Role not found: " + request.getRole()));
+
+        UserstatusEntity status = statusRepository.findByNameIgnoreCase(request.getStatus())
+                .orElseThrow(() -> new RuntimeException("Status not found: " + request.getStatus()));
 
         UserEntity user = UserEntity.builder()
-                .name(dto.getName())
-                .email(dto.getEmail())
-                .phone(normalizePhone(dto.getPhone()))
-                .password(passwordEncoder.encode(dto.getPassword()))
+                .name(request.getName())
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .phone(request.getPhone())
+                .role(role)
+                .status(status)
+                .onlineStatus("OFFLINE")
                 .build();
 
-        if (dto.getRole() != null && !dto.getRole().isBlank()) {
-            user.setRole(roleRepository.findByNameIgnoreCase(dto.getRole())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid role: " + dto.getRole())));
-        }
-        if (dto.getStatus() != null && !dto.getStatus().isBlank()) {
-            user.setStatus(statusRepository.findByNameIgnoreCase(dto.getStatus())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid status: " + dto.getStatus())));
-        }
-
-        userRepository.saveAndFlush(user);
+        userRepository.save(user);
         return "User registered successfully";
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public LoginResponse login(Login dto) {
-        UserEntity user = userRepository.findByEmail(dto.getEmail())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password"));
+    @Transactional
+    public LoginResponse login(Login request) {
+        UserEntity user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new RuntimeException("Invalid email or password"));
 
-        if (!passwordEncoder.matches(dto.getPassword(), user.getPassword())) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            if (!request.getPassword().equals(user.getPassword())) {
+                throw new RuntimeException("Invalid email or password");
+            }
         }
 
-        String token = jwtUtil.generateToken(user.getEmail(), user.getRole() != null ? user.getRole().getName() : "");
+        user.setOnlineStatus("ONLINE");
+        user.setLastSeen(Instant.now());
+        userRepository.save(user);
+
+        String roleName = user.getRole() != null ? user.getRole().getName() : "Staff";
+        String token = jwtUtil.generateToken(user.getEmail(), roleName);
 
         return LoginResponse.builder()
                 .token(token)
                 .userId(user.getId())
                 .name(user.getName())
                 .email(user.getEmail())
-                .role(user.getRole() != null ? user.getRole().getName() : null)
+                .role(roleName)
+                .onlineStatus(user.getOnlineStatus())
+                .lastSeen(user.getLastSeen())
                 .build();
     }
 
     @Override
-    @Transactional(readOnly = true)
     public User getCurrentAuthenticatedUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No authenticated user found");
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new RuntimeException("No authenticated user");
         }
 
-        String email = authentication.getName();
-        UserEntity user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found with email: " + email));
+        UserEntity user = userRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
 
-        return User.builder()
-                .name(user.getName())
-                .email(user.getEmail())
-                .phone(user.getPhone())
-                .password(null)
-                .role(user.getRole() != null ? user.getRole().getName() : null)
-                .status(user.getStatus() != null ? user.getStatus().getName() : null)
-                .build();
+        return modelMapper.map(user, User.class);
     }
 
     @Override
-    @Transactional(readOnly = true)
     public User getUserById(Integer id) {
         UserEntity user = userRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found with id: " + id));
-
-        return User.builder()
-                .name(user.getName())
-                .email(user.getEmail())
-                .phone(user.getPhone())
-                .password(null)
-                .role(user.getRole() != null ? user.getRole().getName() : null)
-                .status(user.getStatus() != null ? user.getStatus().getName() : null)
-                .build();
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + id));
+        return modelMapper.map(user, User.class);
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<FullUser> getAllUserDtos() {
         return userRepository.findAll().stream()
-                .map(this::toFullUser)
-                .toList();
+                .map(u -> FullUser.builder()
+                        .id(u.getId())
+                        .name(u.getName())
+                        .email(u.getEmail())
+                        .phone(u.getPhone())
+                        .createdOn(u.getCreatedAt())
+                        .updatedOn(u.getUpdatedAt())
+                        .role(u.getRole() != null ? new Lookup(u.getRole().getId(), u.getRole().getName()) : null)
+                        .status(u.getStatus() != null ? new Lookup(u.getStatus().getId(), u.getStatus().getName()) : null)
+                        .onlineStatus(u.getOnlineStatus() != null ? u.getOnlineStatus() : "OFFLINE")
+                        .lastSeen(u.getLastSeen())
+                        .build())
+                .collect(Collectors.toList());
     }
 
     @Override
     @Transactional
-    public User updateUser(Integer id, User updateUser) {
+    public User updateUser(Integer id, User request) {
         UserEntity user = userRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found with id: " + id));
+                .orElseThrow(() -> new RuntimeException("User not found: " + id));
 
-        if (updateUser.getName() != null && !updateUser.getName().isBlank()) {
-            user.setName(updateUser.getName());
+        user.setName(request.getName());
+        user.setPhone(request.getPhone());
+        user.setEmail(request.getEmail());
+
+        if (request.getRole() != null) {
+            UserroleEntity role = roleRepository.findByNameIgnoreCase(request.getRole())
+                    .orElseThrow(() -> new RuntimeException("Role not found: " + request.getRole()));
+            user.setRole(role);
         }
 
-        if (updateUser.getEmail() != null && !updateUser.getEmail().isBlank()) {
-            userRepository.findByEmail(updateUser.getEmail())
-                    .filter(existingUser -> !existingUser.getId().equals(id))
-                    .ifPresent(existingUser -> {
-                        throw new ResponseStatusException(HttpStatus.CONFLICT, "User already exists with email: " + updateUser.getEmail());
-                    });
-            user.setEmail(updateUser.getEmail());
+        if (request.getStatus() != null) {
+            UserstatusEntity status = statusRepository.findByNameIgnoreCase(request.getStatus())
+                    .orElseThrow(() -> new RuntimeException("Status not found: " + request.getStatus()));
+            user.setStatus(status);
         }
 
-        if (updateUser.getPassword() != null && !updateUser.getPassword().isBlank()) {
-            user.setPassword(passwordEncoder.encode(updateUser.getPassword()));
+        if (request.getPassword() != null && !request.getPassword().isBlank()) {
+            user.setPassword(passwordEncoder.encode(request.getPassword()));
         }
 
-        if (updateUser.getPhone() != null) {
-            user.setPhone(normalizePhone(updateUser.getPhone()));
-        }
-
-        if (updateUser.getRole() != null && !updateUser.getRole().isBlank()) {
-            user.setRole(roleRepository.findByNameIgnoreCase(updateUser.getRole())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid role: " + updateUser.getRole())));
-        }
-
-        if (updateUser.getStatus() != null && !updateUser.getStatus().isBlank()) {
-            user.setStatus(statusRepository.findByNameIgnoreCase(updateUser.getStatus())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid status: " + updateUser.getStatus())));
-        }
-
-        userRepository.saveAndFlush(user);
-
-        return User.builder()
-                .name(user.getName())
-                .email(user.getEmail())
-                .phone(user.getPhone())
-                .password(null)
-                .role(user.getRole() != null ? user.getRole().getName() : null)
-                .status(user.getStatus() != null ? user.getStatus().getName() : null)
-                .build();
+        userRepository.save(user);
+        return modelMapper.map(user, User.class);
     }
 
     @Override
     @Transactional
     public void deleteUser(Integer id) {
-        if (!userRepository.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found with id: " + id);
-        }
         userRepository.deleteById(id);
     }
-
-    private FullUser toFullUser(UserEntity user) {
-        return FullUser.builder()
-                .id(user.getId())
-                .name(user.getName())
-                .email(user.getEmail())
-                .phone(user.getPhone())
-                .createdOn(user.getCreatedAt())
-                .updatedOn(user.getUpdatedAt())
-                .role(user.getRole() != null ? toLookup(user.getRole()) : null)
-                .status(user.getStatus() != null ? toLookup(user.getStatus()) : null)
-                .build();
-    }
-
-    private Lookup toLookup(com.rms.polkole.entity.UserroleEntity role) {
-        return new Lookup(role.getId(), role.getName());
-    }
-
-    private Lookup toLookup(com.rms.polkole.entity.UserstatusEntity status) {
-        return new Lookup(status.getId(), status.getName());
-    }
-
-    private String normalizePhone(String phone) {
-        if (phone == null) {
-            return null;
-        }
-
-        String trimmed = phone.trim();
-        return trimmed.isEmpty() ? null : trimmed;
-    }
 }
-

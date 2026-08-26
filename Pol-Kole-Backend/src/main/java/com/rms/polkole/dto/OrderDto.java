@@ -20,17 +20,20 @@ public class OrderDto {
     private Integer tableId;
     private String tableNumber;
 
+    private Integer roomId;
+    private String roomNumber;
+
+    private Integer assignedWaiterId;
+    private String assignedWaiterName;
+
     @NotNull(message = "Order items list cannot be empty")
     @Size(min = 1, message = "At least one item must be ordered")
     private List<OrderItemDto> items;
 
     private Integer statusId;
-    private String statusName; // PENDING, PREPARING, READY, SERVED, COMPLETED, CANCELLED
+    private String statusName;
 
     private Instant orderTime;
     private BigDecimal totalAmount;
     private String notes;
-
-    private Integer roomId;
-    private String roomNumber;
 }

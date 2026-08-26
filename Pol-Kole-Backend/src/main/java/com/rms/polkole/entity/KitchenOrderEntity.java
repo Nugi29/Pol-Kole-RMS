@@ -21,6 +21,13 @@ public class KitchenOrderEntity {
     @JoinColumn(name = "order_id", nullable = false)
     private OrderEntity order;
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "assigned_chef_id")
+    private UserEntity assignedChef;
+
+    @Column(name = "station", length = 50)
+    private String station;
+
     @Column(name = "preparation_status", nullable = false, length = 50)
     private String preparationStatus; // RECEIVED, PREPARING, READY, DELIVERED
 

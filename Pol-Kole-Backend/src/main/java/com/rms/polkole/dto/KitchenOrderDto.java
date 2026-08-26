@@ -21,4 +21,6 @@ public class KitchenOrderDto {
     private Instant startTime;
     private Instant endTime;
     private String customerName;
+    private Integer assignedChefId;
+    private String assignedChefName;
 }

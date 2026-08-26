@@ -1,0 +1,448 @@
+<div class="space-y-6">
+
+  <!-- Header & Title Banner -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm">
+    <div class="space-y-1">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-sm">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Staff Attendance & Presence</h1>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Daily check-in roster, historical records & decoupled online status monitor</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs & Date selector -->
+    <div class="flex items-center gap-3 flex-wrap">
+      <div class="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+        <button
+          type="button"
+          (click)="switchTab('today')"
+          class="px-4 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+          [ngClass]="activeTab === 'today' ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 shadow-xs' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'">
+          Daily Roster
+        </button>
+        <button
+          type="button"
+          (click)="switchTab('history')"
+          class="px-4 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+          [ngClass]="activeTab === 'history' ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 shadow-xs' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'">
+          History Ledger
+        </button>
+      </div>
+
+      <div *ngIf="activeTab === 'today'" class="flex items-center gap-2">
+        <input
+          type="date"
+          [(ngModel)]="selectedDate"
+          (change)="onDateChange()"
+          class="px-3 py-1.5 text-xs font-medium bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+        />
+        <button
+          type="button"
+          (click)="markAllPresent()"
+          [disabled]="saving"
+          class="px-3 py-1.5 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-all shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+          Mark All Present
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TODAY'S TAB CONTENT -->
+  <div *ngIf="activeTab === 'today'" class="space-y-6">
+
+    <!-- KPI Summary Metrics -->
+    <div class="grid grid-cols-2 sm:grid-cols-5 gap-3.5">
+      <!-- Total Staff -->
+      <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-100 dark:border-slate-800 shadow-xs">
+        <p class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Total Staff</p>
+        <p class="text-2xl font-extrabold text-slate-800 dark:text-white mt-1">{{ summary?.totalStaff || todayRecords.length || 0 }}</p>
+      </div>
+
+      <!-- Present -->
+      <div class="bg-emerald-50/60 dark:bg-emerald-950/20 p-4 rounded-xl border border-emerald-100 dark:border-emerald-900/40 shadow-xs">
+        <div class="flex items-center justify-between">
+          <p class="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Present</p>
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        </div>
+        <p class="text-2xl font-extrabold text-emerald-700 dark:text-emerald-400 mt-1">{{ summary?.presentCount || 0 }}</p>
+      </div>
+
+      <!-- Late -->
+      <div class="bg-amber-50/60 dark:bg-amber-950/20 p-4 rounded-xl border border-amber-100 dark:border-amber-900/40 shadow-xs">
+        <div class="flex items-center justify-between">
+          <p class="text-[11px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">Late</p>
+          <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+        </div>
+        <p class="text-2xl font-extrabold text-amber-700 dark:text-amber-400 mt-1">{{ summary?.lateCount || 0 }}</p>
+      </div>
+
+      <!-- Absent -->
+      <div class="bg-rose-50/60 dark:bg-rose-950/20 p-4 rounded-xl border border-rose-100 dark:border-rose-900/40 shadow-xs">
+        <div class="flex items-center justify-between">
+          <p class="text-[11px] font-bold text-rose-700 dark:text-rose-400 uppercase tracking-wider">Absent</p>
+          <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+        </div>
+        <p class="text-2xl font-extrabold text-rose-700 dark:text-rose-400 mt-1">{{ summary?.absentCount || 0 }}</p>
+      </div>
+
+      <!-- On Leave -->
+      <div class="bg-indigo-50/60 dark:bg-indigo-950/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-900/40 shadow-xs">
+        <div class="flex items-center justify-between">
+          <p class="text-[11px] font-bold text-indigo-700 dark:text-indigo-400 uppercase tracking-wider">On Leave</p>
+          <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+        </div>
+        <p class="text-2xl font-extrabold text-indigo-700 dark:text-indigo-400 mt-1">{{ summary?.onLeaveCount || 0 }}</p>
+      </div>
+    </div>
+
+    <!-- Active Available Staff Alert Pill -->
+    <div class="bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-indigo-500/10 border border-emerald-200/60 dark:border-emerald-800/60 p-4 rounded-xl flex items-center justify-between flex-wrap gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-emerald-500 text-white flex items-center justify-center flex-shrink-0">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+        </div>
+        <div>
+          <p class="text-xs font-bold text-slate-800 dark:text-slate-100">
+            Available for Daily Assignment Today: 
+            <span class="text-emerald-600 dark:text-emerald-400 font-extrabold">
+              {{ (summary?.activeWaiters?.length || 0) + (summary?.activeChefs?.length || 0) }} Staff Members
+            </span>
+          </p>
+          <p class="text-[11px] text-slate-500 dark:text-slate-400">
+            {{ summary?.activeWaiters?.length || 0 }} Active Waiters &bull; {{ summary?.activeChefs?.length || 0 }} Active Chefs
+          </p>
+        </div>
+      </div>
+      <a
+        routerLink="/main/staff-assignments"
+        class="px-3.5 py-1.5 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow-xs transition-all flex items-center gap-1.5 cursor-pointer">
+        Go to Staff Assignment Matrix
+        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+        </svg>
+      </a>
+    </div>
+
+    <!-- Attendance Table -->
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
+      <div class="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+        <div>
+          <h2 class="text-sm font-bold text-slate-800 dark:text-slate-100">Staff Attendance for {{ selectedDate }}</h2>
+          <p class="text-[11px] text-slate-400">Mark check-in, check-out or status changes for each team member</p>
+        </div>
+        <button
+          type="button"
+          (click)="loadTodayAttendance()"
+          class="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-50/75 dark:bg-slate-800/50 text-slate-400 dark:text-slate-400 font-semibold border-b border-slate-100 dark:border-slate-800">
+            <tr>
+              <th class="py-3 px-4">Staff Member</th>
+              <th class="py-3 px-4">Role</th>
+              <th class="py-3 px-4">App Presence</th>
+              <th class="py-3 px-4">Daily Attendance</th>
+              <th class="py-3 px-4">Check-In</th>
+              <th class="py-3 px-4">Check-Out</th>
+              <th class="py-3 px-4">Notes</th>
+              <th class="py-3 px-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+            <tr *ngFor="let record of todayRecords" class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
+              <!-- Staff Member -->
+              <td class="py-3 px-4">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-slate-700 to-slate-900 text-white flex items-center justify-center font-bold text-xs flex-shrink-0">
+                    {{ (record.userName || 'U').substring(0, 2).toUpperCase() }}
+                  </div>
+                  <div>
+                    <p class="font-bold text-slate-900 dark:text-white">{{ record.userName }}</p>
+                    <p class="text-[10px] text-slate-400">{{ record.userEmail }}</p>
+                  </div>
+                </div>
+              </td>
+
+              <!-- Role -->
+              <td class="py-3 px-4">
+                <span class="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                  {{ record.roleName || 'Staff' }}
+                </span>
+              </td>
+
+              <!-- App Presence (Separated concept) -->
+              <td class="py-3 px-4">
+                <div class="flex items-center gap-1.5" title="App Connection is independent from daily attendance">
+                  <span
+                    class="w-2 h-2 rounded-full"
+                    [ngClass]="record.onlineStatus === 'ONLINE' ? 'bg-emerald-500 shadow-xs' : 'bg-slate-300 dark:bg-slate-600'">
+                  </span>
+                  <span class="text-[11px] font-medium" [ngClass]="record.onlineStatus === 'ONLINE' ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-slate-400'">
+                    {{ record.onlineStatus === 'ONLINE' ? 'ONLINE' : 'OFFLINE' }}
+                  </span>
+                </div>
+              </td>
+
+              <!-- Daily Attendance Status -->
+              <td class="py-3 px-4">
+                <div class="flex items-center gap-1.5">
+                  <span class="px-2.5 py-1 rounded-lg text-[11px] font-bold border" [ngClass]="getStatusBadgeClass(record.status)">
+                    {{ record.status }}
+                  </span>
+                </div>
+              </td>
+
+              <!-- Check-In Time -->
+              <td class="py-3 px-4 font-mono text-[11px]">
+                <span *ngIf="record.checkInTime" class="text-slate-800 dark:text-slate-200 font-semibold">{{ record.checkInTime }}</span>
+                <span *ngIf="!record.checkInTime" class="text-slate-400">&mdash;</span>
+              </td>
+
+              <!-- Check-Out Time -->
+              <td class="py-3 px-4 font-mono text-[11px]">
+                <span *ngIf="record.checkOutTime" class="text-slate-800 dark:text-slate-200 font-semibold">{{ record.checkOutTime }}</span>
+                <span *ngIf="!record.checkOutTime" class="text-slate-400">&mdash;</span>
+              </td>
+
+              <!-- Notes -->
+              <td class="py-3 px-4 max-w-[160px] truncate text-[11px] text-slate-500 dark:text-slate-400" title="{{ record.notes }}">
+                {{ record.notes || '&mdash;' }}
+              </td>
+
+              <!-- Actions -->
+              <td class="py-3 px-4 text-right space-x-1">
+                <button
+                  type="button"
+                  *ngIf="!record.checkInTime"
+                  (click)="quickCheckIn(record.userId, record.userName)"
+                  title="Check In"
+                  class="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 rounded-md font-semibold text-[10px] transition-colors cursor-pointer">
+                  Check-in
+                </button>
+                <button
+                  type="button"
+                  *ngIf="record.checkInTime && !record.checkOutTime"
+                  (click)="quickCheckOut(record.userId, record.userName)"
+                  title="Check Out"
+                  class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 rounded-md font-semibold text-[10px] transition-colors cursor-pointer">
+                  Check-out
+                </button>
+                <button
+                  type="button"
+                  (click)="openEditModal(record)"
+                  class="p-1 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  title="Edit Status / Notes">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTORY LEDGER TAB CONTENT -->
+  <div *ngIf="activeTab === 'history'" class="space-y-6">
+
+    <!-- Filters Bar -->
+    <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex items-center justify-between flex-wrap gap-3">
+      <div class="flex items-center gap-3 flex-wrap flex-1">
+        <!-- Start Date -->
+        <div>
+          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">From</label>
+          <input
+            type="date"
+            [(ngModel)]="historyStartDate"
+            (change)="loadHistory()"
+            class="px-2.5 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-emerald-500"
+          />
+        </div>
+
+        <!-- End Date -->
+        <div>
+          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">To</label>
+          <input
+            type="date"
+            [(ngModel)]="historyEndDate"
+            (change)="loadHistory()"
+            class="px-2.5 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-emerald-500"
+          />
+        </div>
+
+        <!-- Role Filter -->
+        <div>
+          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Role</label>
+          <select
+            [(ngModel)]="historyRoleFilter"
+            class="px-2.5 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-emerald-500">
+            <option value="ALL">All Roles</option>
+            <option value="WAITER">Waiters</option>
+            <option value="CHEF">Chefs</option>
+            <option value="MANAGER">Managers</option>
+            <option value="ADMIN">Admins</option>
+          </select>
+        </div>
+
+        <!-- Status Filter -->
+        <div>
+          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Status</label>
+          <select
+            [(ngModel)]="historyStatusFilter"
+            class="px-2.5 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-emerald-500">
+            <option value="ALL">All Statuses</option>
+            <option value="PRESENT">PRESENT</option>
+            <option value="LATE">LATE</option>
+            <option value="ABSENT">ABSENT</option>
+            <option value="ON_LEAVE">ON_LEAVE</option>
+          </select>
+        </div>
+
+        <!-- Search Input -->
+        <div class="flex-1 min-w-[200px]">
+          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Search Staff</label>
+          <input
+            type="text"
+            placeholder="Search by staff name or email..."
+            [(ngModel)]="historySearchQuery"
+            class="w-full px-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-emerald-500"
+          />
+        </div>
+      </div>
+
+      <button
+        type="button"
+        (click)="loadHistory()"
+        class="px-3 py-1.5 text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg transition-colors flex items-center gap-1 cursor-pointer">
+        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        Filter
+      </button>
+    </div>
+
+    <!-- History Table -->
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
+      <div class="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+        <div>
+          <h2 class="text-sm font-bold text-slate-800 dark:text-slate-100">Historical Attendance Records</h2>
+          <p class="text-[11px] text-slate-400">Found {{ filteredHistoryRecords.length }} records in selected date window</p>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-50/75 dark:bg-slate-800/50 text-slate-400 font-semibold border-b border-slate-100 dark:border-slate-800">
+            <tr>
+              <th class="py-3 px-4">Date</th>
+              <th class="py-3 px-4">Staff Member</th>
+              <th class="py-3 px-4">Role</th>
+              <th class="py-3 px-4">Status</th>
+              <th class="py-3 px-4">Check-In</th>
+              <th class="py-3 px-4">Check-Out</th>
+              <th class="py-3 px-4">Notes</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+            <tr *ngFor="let h of filteredHistoryRecords" class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
+              <td class="py-3 px-4 font-mono font-bold text-slate-900 dark:text-white">{{ h.attendanceDate }}</td>
+              <td class="py-3 px-4 font-bold">{{ h.userName }}</td>
+              <td class="py-3 px-4">
+                <span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                  {{ h.roleName || 'Staff' }}
+                </span>
+              </td>
+              <td class="py-3 px-4">
+                <span class="px-2.5 py-0.5 rounded-lg text-[10px] font-bold border" [ngClass]="getStatusBadgeClass(h.status)">
+                  {{ h.status }}
+                </span>
+              </td>
+              <td class="py-3 px-4 font-mono text-[11px]">{{ h.checkInTime || '&mdash;' }}</td>
+              <td class="py-3 px-4 font-mono text-[11px]">{{ h.checkOutTime || '&mdash;' }}</td>
+              <td class="py-3 px-4 text-[11px] text-slate-500">{{ h.notes || '&mdash;' }}</td>
+            </tr>
+            <tr *ngIf="filteredHistoryRecords.length === 0">
+              <td colspan="7" class="py-8 text-center text-slate-400">No attendance records found matching filters.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Status / Notes Modal -->
+  <div *ngIf="editingRecord" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 max-w-md w-full p-6 space-y-4 shadow-xl">
+      <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+        <div>
+          <h3 class="text-sm font-bold text-slate-900 dark:text-white">Edit Attendance Record</h3>
+          <p class="text-xs text-slate-500">{{ editingRecord.userName }} &bull; {{ selectedDate }}</p>
+        </div>
+        <button (click)="closeEditModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Attendance Status</label>
+          <select
+            [(ngModel)]="editStatus"
+            class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-emerald-500">
+            <option value="PRESENT">PRESENT (Attended work)</option>
+            <option value="LATE">LATE (Arrived late)</option>
+            <option value="ON_LEAVE">ON_LEAVE (Approved leave)</option>
+            <option value="ABSENT">ABSENT (Not attended)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Notes / Justification</label>
+          <textarea
+            rows="3"
+            [(ngModel)]="editNotes"
+            placeholder="e.g. Medical appointment, traffic delay, authorized leave..."
+            class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-emerald-500"></textarea>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+        <button
+          type="button"
+          (click)="closeEditModal()"
+          class="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer">
+          Cancel
+        </button>
+        <button
+          type="button"
+          (click)="saveEditModal()"
+          [disabled]="saving"
+          class="px-4 py-2 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-xs transition-colors cursor-pointer disabled:opacity-50">
+          Save Record
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>

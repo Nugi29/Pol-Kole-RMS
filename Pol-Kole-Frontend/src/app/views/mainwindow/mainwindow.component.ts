@@ -1,6 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { NAV_MENU, NavMenuItem } from '../../config/nav-menu.config';
+import { WebsocketService } from '../../services/websocket.service';
+import { StaffNotification, StaffNotificationService } from '../../services/staff-notification.service';
+
 @Component({
   selector: 'app-mainwindow',
   standalone: false,
@@ -10,10 +13,17 @@ import { NAV_MENU, NavMenuItem } from '../../config/nav-menu.config';
 export class MainwindowComponent implements OnInit {
   role: string = '';
   name: string = '';
+  userId: number | null = null;
   isSidebarCollapsed = false;
   isDarkMode = false;
   navMenu: NavMenuItem[] = [];
   expandedGroups: Record<string, boolean> = {};
+  
+  // Real-time Notification Popover
+  showNotificationPanel = false;
+  notifications: StaffNotification[] = [];
+  unreadCount = 0;
+
   private currentRoles = new Set<string>();
   private readonly iconPaths: Record<string, string> = {
     dashboard: 'M3 11l9-7 9 7M5 10v10h14V10M9 20v-6h6v6',
@@ -33,14 +43,30 @@ export class MainwindowComponent implements OnInit {
     manage_accounts: 'M12 4a4 4 0 100 8 4 4 0 000-8zm-7 14c0-2.67 5.33-4 7-4s7 1.33 7 4v2H5v-2zm14.5-5.5a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm1 4.5c0-1-.7-1.8-1.6-2.2.8-.2 1.6-.3 2.6-.3 2 0 4 .8 4 2.5V20h-5v-1.5z',
     tv: 'M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z',
   };
-  constructor(private readonly router: Router) {}
+
+  constructor(
+    private readonly router: Router,
+    public readonly wsService: WebsocketService,
+    private readonly notificationService: StaffNotificationService
+  ) {}
+
   logout(): void {
+    if (this.userId) {
+      // Disconnect cleanly
+      this.wsService.disconnect();
+    }
     localStorage.clear();
     this.router.navigate(['/login']);
   }
+
   ngOnInit(): void {
     this.role = localStorage.getItem('role') || '';
     this.name = this.getDisplayName();
+    const idStr = localStorage.getItem('userId') || localStorage.getItem('id');
+    if (idStr && !isNaN(Number(idStr))) {
+      this.userId = Number(idStr);
+    }
+
     this.currentRoles = this.extractRoles(this.role);
     this.navMenu = this.filterNavMenuByRole(NAV_MENU);
     for (const item of this.navMenu) {
@@ -58,10 +84,21 @@ export class MainwindowComponent implements OnInit {
       this.isDarkMode = false;
       document.documentElement.classList.remove('dark');
     }
+
+    // Subscribe to real-time notification streams
+    this.wsService.staffNotifications$.subscribe(notifs => {
+      this.notifications = notifs || [];
+    });
+
+    this.wsService.unreadNotificationCount$.subscribe(count => {
+      this.unreadCount = count;
+    });
   }
+
   toggleSidebar(): void {
     this.isSidebarCollapsed = !this.isSidebarCollapsed;
   }
+
   toggleTheme(): void {
     this.isDarkMode = !this.isDarkMode;
     if (this.isDarkMode) {
@@ -72,9 +109,46 @@ export class MainwindowComponent implements OnInit {
       localStorage.setItem('theme', 'light');
     }
   }
+
+  toggleNotificationPanel(): void {
+    this.showNotificationPanel = !this.showNotificationPanel;
+  }
+
+  markNotificationRead(notif: StaffNotification): void {
+    this.notificationService.markAsRead(notif.id).subscribe({
+      next: () => {
+        notif.status = 'READ';
+        this.wsService.refreshAllData();
+      }
+    });
+  }
+
+  resolveNotification(notif: StaffNotification): void {
+    this.notificationService.resolveNotification(notif.id).subscribe({
+      next: () => {
+        notif.status = 'RESOLVED';
+        this.notifications = this.notifications.filter(n => n.id !== notif.id);
+        this.wsService.refreshAllData();
+      }
+    });
+  }
+
+  markAllRead(): void {
+    if (this.userId) {
+      this.notificationService.markAllAsRead(this.userId).subscribe({
+        next: () => {
+          this.notifications.forEach(n => n.status = 'READ');
+          this.unreadCount = 0;
+          this.wsService.refreshAllData();
+        }
+      });
+    }
+  }
+
   toggleGroup(group: string): void {
     this.expandedGroups[group] = !this.expandedGroups[group];
   }
+
   onGroupClick(item: NavMenuItem): void {
     this.expandedGroups[item.name] = true;
     const targetRoute = item.route ?? item.children?.[0]?.route;
@@ -84,19 +158,24 @@ export class MainwindowComponent implements OnInit {
       this.router.navigate([path], { queryParams });
     }
   }
+
   isGroupExpanded(group: string): boolean {
     return !!this.expandedGroups[group];
   }
+
   getSubnavHeight(item: NavMenuItem): number {
     return (item.children?.length ?? 0) * 42;
   }
+
   getIconPath(icon: string): string {
     return this.iconPaths[icon] || 'M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z';
   }
+
   getRoutePath(route: string): string {
     if (!route) return '';
     return route.split('?')[0];
   }
+
   getRouteQueryParams(route: string): Record<string, string> {
     if (!route || !route.includes('?')) return {};
     const queryString = route.split('?')[1];
@@ -110,6 +189,7 @@ export class MainwindowComponent implements OnInit {
     }
     return params;
   }
+
   private getDisplayName(): string {
     const savedName = localStorage.getItem('name')?.trim();
     if (savedName) {
@@ -121,6 +201,7 @@ export class MainwindowComponent implements OnInit {
     }
     return savedEmail.split('@')[0]?.trim() || '';
   }
+
   private extractRoles(rawRoles: string): Set<string> {
     if (!rawRoles?.trim()) {
       return new Set<string>();
@@ -137,6 +218,7 @@ export class MainwindowComponent implements OnInit {
     }
     return new Set(rawRoles.split(',').map((role) => this.normalizeRole(role)).filter(Boolean));
   }
+
   private normalizeRole(role: string): string {
     let r = role.trim().toUpperCase();
     if (r.startsWith('ROLE_')) {
@@ -144,12 +226,14 @@ export class MainwindowComponent implements OnInit {
     }
     return r;
   }
+
   private hasAccess(allowedRoles: string[]): boolean {
     if (this.currentRoles.size === 0) {
       return false;
     }
     return allowedRoles.some((role) => this.currentRoles.has(this.normalizeRole(role)));
   }
+
   private filterNavMenuByRole(menuItems: NavMenuItem[]): NavMenuItem[] {
     const visibleMenu: NavMenuItem[] = [];
     for (const item of menuItems) {

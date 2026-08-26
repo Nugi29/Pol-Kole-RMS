@@ -96,6 +96,11 @@ public class KitchenServiceImpl implements KitchenService {
             dto.setRoomNumber(kOrder.getOrder().getRoom().getRoomNumber());
         }
 
+        if (kOrder.getAssignedChef() != null) {
+            dto.setAssignedChefId(kOrder.getAssignedChef().getId());
+            dto.setAssignedChefName(kOrder.getAssignedChef().getName());
+        }
+
         if (kOrder.getOrder().getCustomer() != null) {
             dto.setCustomerName(kOrder.getOrder().getCustomer().getName());
         }

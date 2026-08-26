@@ -1,0 +1,4 @@
+/* Staff assignment styles */
+:host {
+  display: block;
+}

@@ -121,6 +121,18 @@ export const NAV_MENU = [
     ],
   },
   {
+    name: 'Staff Attendance',
+    icon: 'event',
+    route: '/main/attendance',
+    roles: ['ADMIN', 'MANAGER'],
+  },
+  {
+    name: 'Staff Assignments',
+    icon: 'sync_alt',
+    route: '/main/staff-assignments',
+    roles: ['ADMIN', 'MANAGER'],
+  },
+  {
     name: 'Staff & Users',
     icon: 'manage_accounts',
     route: '/main/users',

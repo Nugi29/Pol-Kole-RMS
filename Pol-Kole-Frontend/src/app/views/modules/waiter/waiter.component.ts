@@ -6,6 +6,8 @@ import { TableService, RestaurantTable } from '../../../services/table.service';
 import { KitchenOrder } from '../kitchen/kitchen.component';
 import { DialogService } from '../../../services/dialog.service';
 import { WebsocketService } from '../../../services/websocket.service';
+import { StaffAssignmentService, DailyStaffAssignment } from '../../../services/staff-assignment.service';
+import { StaffNotificationService, StaffNotification } from '../../../services/staff-notification.service';
 import { map, catchError } from 'rxjs/operators';
 import { forkJoin, of } from 'rxjs';
 
@@ -20,10 +22,18 @@ export class WaiterComponent implements OnInit {
   cleaningRooms: Room[] = [];
   cleaningTables: RestaurantTable[] = [];
   activeGuestCalls: any[] = [];
+  myNotifications: StaffNotification[] = [];
+  myAssignments: DailyStaffAssignment[] = [];
+  
   loading = false;
   successMessage = '';
   errorMessage = '';
   activeTab = 'ready'; // ready / requests / history / cleaning
+
+  // Filters
+  filterMyTablesOnly = false;
+  currentUserId: number | null = null;
+  currentUserName: string = '';
 
   private readonly baseUrl = 'http://localhost:8080/api/kitchen';
 
@@ -32,24 +42,90 @@ export class WaiterComponent implements OnInit {
     private readonly route: ActivatedRoute,
     private readonly roomService: RoomService,
     private readonly tableService: TableService,
+    private readonly staffAssignmentService: StaffAssignmentService,
+    private readonly notificationService: StaffNotificationService,
     private readonly cdr: ChangeDetectorRef,
     private readonly dialogService: DialogService,
     public readonly wsService: WebsocketService
   ) {}
 
   ngOnInit(): void {
+    this.initCurrentUser();
+
     this.wsService.activeGuestCalls$.subscribe(calls => {
       this.activeGuestCalls = calls || [];
       this.cdr.markForCheck();
     });
 
+    this.wsService.staffNotifications$.subscribe(notifs => {
+      this.myNotifications = notifs || [];
+      this.cdr.markForCheck();
+    });
+
+    this.loadMyAssignments();
+    this.loadMyNotifications();
+    this.wsService.refreshAllData();
     this.syncBoard();
+
     this.route.queryParams.subscribe(params => {
       if (params['tab']) {
         this.activeTab = params['tab'];
       }
       this.syncBoard();
       this.cdr.markForCheck();
+    });
+  }
+
+  initCurrentUser(): void {
+    const idStr = localStorage.getItem('userId') || localStorage.getItem('id');
+    if (idStr && !isNaN(Number(idStr))) {
+      this.currentUserId = Number(idStr);
+    }
+    this.currentUserName = localStorage.getItem('name') || 'Waiter Staff';
+
+    if (!this.currentUserId) {
+      const email = localStorage.getItem('email');
+      if (email) {
+        this.http.get<any>('http://localhost:8080/api/users').pipe(
+          catchError(() => of(null))
+        ).subscribe((res) => {
+          const users = res?.data || (Array.isArray(res) ? res : []);
+          if (Array.isArray(users)) {
+            const found = users.find((u: any) => u.email && u.email.toLowerCase() === email.toLowerCase());
+            if (found && found.id) {
+              this.currentUserId = found.id;
+              localStorage.setItem('userId', String(found.id));
+              this.loadMyAssignments();
+              this.loadMyNotifications();
+              this.wsService.refreshAllData();
+              this.cdr.markForCheck();
+            }
+          }
+        });
+      }
+    }
+  }
+
+  loadMyAssignments(): void {
+    if (!this.currentUserId) return;
+    const today = new Date().toISOString().split('T')[0];
+    this.staffAssignmentService.getAssignmentsForUser(this.currentUserId, today).subscribe({
+      next: (assignments) => {
+        this.myAssignments = assignments || [];
+        this.cdr.markForCheck();
+      },
+      error: () => {}
+    });
+  }
+
+  loadMyNotifications(): void {
+    if (!this.currentUserId) return;
+    this.notificationService.getUserNotifications(this.currentUserId, true).subscribe({
+      next: (notifs) => {
+        this.myNotifications = notifs || [];
+        this.cdr.markForCheck();
+      },
+      error: () => {}
     });
   }
 
@@ -150,14 +226,13 @@ export class WaiterComponent implements OnInit {
     this.loading = true;
     this.errorMessage = '';
     
-    // We determine status depending on the tab: READY for ready, DELIVERED for served history
     const status = this.activeTab === 'ready' ? 'READY' : 'DELIVERED';
     
     this.http.get<ApiResponse<KitchenOrder[]>>(`${this.baseUrl}/orders/status?status=${status}`).pipe(
       map(res => res.data)
     ).subscribe({
       next: (orders) => {
-        const orderList = orders || [];
+        let orderList = orders || [];
         if (this.activeTab === 'ready') {
           orderList.sort((a, b) => {
             const timeA = a.startTime ? new Date(a.startTime).getTime() : 0;
@@ -178,7 +253,79 @@ export class WaiterComponent implements OnInit {
     });
   }
 
-  deliverOrder(id: number): void {
+  private normalizeNum(val: any): string {
+    if (!val) return '';
+    return String(val).toLowerCase().replace(/table/g, '').replace(/room/g, '').replace(/t-/g, '').replace(/t/g, '').replace(/#/g, '').replace(/\s+/g, '').trim();
+  }
+
+  get filteredKitchenOrders(): KitchenOrder[] {
+    if (!this.filterMyTablesOnly || this.myAssignments.length === 0) {
+      return this.kitchenOrders;
+    }
+
+    return this.kitchenOrders.filter(ko => {
+      const koTableNorm = this.normalizeNum(ko.tableNumber);
+      const koRoomNorm = this.normalizeNum(ko.roomNumber);
+
+      const tableMatch = this.myAssignments.some(a => 
+        a.assignmentType === 'TABLE' && this.normalizeNum(a.tableNumber) === koTableNorm
+      );
+      if (tableMatch) return true;
+
+      const roomMatch = this.myAssignments.some(a => 
+        a.assignmentType === 'ROOM' && this.normalizeNum(a.roomNumber) === koRoomNorm
+      );
+      return roomMatch;
+    });
+  }
+
+  get filteredGuestCalls(): any[] {
+    if (!this.filterMyTablesOnly || this.myAssignments.length === 0) {
+      return this.activeGuestCalls;
+    }
+
+    return this.activeGuestCalls.filter(call => {
+      // 1. Direct staff assignment ID match
+      if (call.assignedStaffId && this.currentUserId && Number(call.assignedStaffId) === Number(this.currentUserId)) {
+        return true;
+      }
+
+      // 2. Table location match
+      if (call.locationType === 'TABLE') {
+        const callNorm = this.normalizeNum(call.locationNumber);
+        const match = this.myAssignments.some(a => 
+          a.assignmentType === 'TABLE' && (
+            (a.tableId && call.locationId && Number(a.tableId) === Number(call.locationId)) ||
+            (this.normalizeNum(a.tableNumber) === callNorm) ||
+            (a.tableNumber && call.locationNumber && a.tableNumber.trim().toLowerCase() === call.locationNumber.trim().toLowerCase())
+          )
+        );
+        if (match) return true;
+      }
+
+      // 3. Room location match
+      if (call.locationType === 'ROOM') {
+        const callNorm = this.normalizeNum(call.locationNumber);
+        const match = this.myAssignments.some(a => 
+          a.assignmentType === 'ROOM' && (
+            (a.roomId && call.locationId && Number(a.roomId) === Number(call.locationId)) ||
+            (this.normalizeNum(a.roomNumber) === callNorm) ||
+            (a.roomNumber && call.locationNumber && a.roomNumber.trim().toLowerCase() === call.locationNumber.trim().toLowerCase())
+          )
+        );
+        if (match) return true;
+      }
+
+      return false;
+    });
+  }
+
+  get urgentGuestCalls(): any[] {
+    return this.filteredGuestCalls.filter(c => c.status === 'WAITING');
+  }
+
+  deliverOrder(id?: number): void {
+    if (!id) return;
     this.dialogService.confirmAction('Confirm Delivery', `Mark Order #${id} as Delivered & Served to guest?`).subscribe((confirmed) => {
       if (confirmed) {
         this.loading = true;
@@ -204,7 +351,7 @@ export class WaiterComponent implements OnInit {
 
   acceptServiceRequest(call: any): void {
     if (!call?.id) return;
-    this.wsService.updateServiceRequestStatus(call.id, 'IN_PROGRESS', 'Waiter Staff');
+    this.wsService.updateServiceRequestStatus(call.id, 'IN_PROGRESS', this.currentUserName);
     this.dialogService.showSuccess('Request Accepted', `Attending to ${call.locationType} ${call.locationNumber} (${call.callType}).`);
   }
 
@@ -212,5 +359,14 @@ export class WaiterComponent implements OnInit {
     if (!call?.id) return;
     this.wsService.resolveGuestCall(call.id);
     this.dialogService.showSuccess('Request Completed', `Completed ${call.callType} for ${call.locationType} ${call.locationNumber}.`);
+  }
+
+  dismissNotification(notif: StaffNotification): void {
+    this.notificationService.resolveNotification(notif.id).subscribe({
+      next: () => {
+        this.myNotifications = this.myNotifications.filter(n => n.id !== notif.id);
+        this.cdr.markForCheck();
+      }
+    });
   }
 }

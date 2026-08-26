@@ -437,67 +437,86 @@ export class GuestDisplayComponent implements OnInit, OnDestroy {
     }
   }
 
-  // ==========================================
-  // Guest Quick Actions & Service Requests
-  // ==========================================
+  get activeLocationNumber(): string {
+    if (this.isTable && this.locationDetail) {
+      return (this.locationDetail as RestaurantTable).tableNumber || this.locationLabel;
+    }
+    if (this.isRoom && this.locationDetail) {
+      return (this.locationDetail as Room).roomNumber || this.locationLabel;
+    }
+    return this.locationLabel;
+  }
 
   callWaiter(): void {
+    const locNum = this.activeLocationNumber;
     this.wsService.callWaiter(
       this.locationType,
-      this.locationLabel,
+      locNum,
       'WAITER',
       'Guest requested waiter assistance at table',
       this.locationId || undefined
-    );
-    this.showCallFeedback('WAITER', 'Waiter Notified', 'A staff member has received your call and is coming to your table.');
+    ).subscribe((res) => {
+      const staffName = res.assignedStaffName ? ` (Assigned: ${res.assignedStaffName})` : '';
+      const feedbackMsg = res.isFallback && res.fallbackReason 
+        ? `${res.message} - ${res.fallbackReason}` 
+        : `A staff member${staffName} has received your call and is coming to your table.`;
+      this.showCallFeedback('WAITER', 'Waiter Notified', feedbackMsg);
+    });
   }
 
   callReception(): void {
+    const locNum = this.activeLocationNumber;
     this.wsService.callWaiter(
       this.locationType,
-      this.locationLabel,
+      locNum,
       'RECEPTION',
       'Guest requested reception assistance from room',
       this.locationId || undefined
-    );
-    this.showCallFeedback('RECEPTION', 'Reception Notified', 'Front desk has received your request and will assist you shortly.');
+    ).subscribe((res) => {
+      this.showCallFeedback('RECEPTION', 'Reception Notified', res.message || 'Front desk has received your request and will assist you shortly.');
+    });
   }
 
   requestBill(): void {
+    const locNum = this.activeLocationNumber;
     this.wsService.callWaiter(
       this.locationType,
-      this.locationLabel,
+      locNum,
       'BILL',
       'Guest requested final invoice & bill',
       this.locationId || undefined
-    );
-    this.showCallFeedback(
-      'BILL',
-      'Bill Requested',
-      `Your bill request has been sent to the cashier. Please wait while your invoice is printed for ${this.locationLabel}.`
-    );
-    this.showBillModal = false;
+    ).subscribe(() => {
+      this.showCallFeedback(
+        'BILL',
+        'Bill Requested',
+        `Your bill request has been sent to the cashier. Please wait while your invoice is printed for ${this.locationLabel}.`
+      );
+      this.showBillModal = false;
+    });
   }
 
   requestService(callType: GuestCallType, customMsg?: string): void {
+    const locNum = this.activeLocationNumber;
     this.wsService.callWaiter(
       this.locationType,
-      this.locationLabel,
+      locNum,
       callType,
       customMsg,
       this.locationId || undefined
-    );
-    let title = 'Service Requested';
-    if (callType === 'WATER') title = 'Water Requested';
-    else if (callType === 'CUTLERY') title = 'Cutlery Requested';
-    else if (callType === 'CLEANING') title = 'Cleaning Requested';
-    else if (callType === 'HOUSEKEEPING') title = 'Housekeeping Requested';
-    else if (callType === 'TOWELS') title = 'Fresh Towels Requested';
-    else if (callType === 'TOILETRIES') title = 'Amenities Kit Requested';
-    else if (callType === 'RECEPTION') title = 'Reception Called';
+    ).subscribe((res) => {
+      let title = 'Service Requested';
+      if (callType === 'WATER') title = 'Water Requested';
+      else if (callType === 'CUTLERY') title = 'Cutlery Requested';
+      else if (callType === 'CLEANING') title = 'Cleaning Requested';
+      else if (callType === 'HOUSEKEEPING') title = 'Housekeeping Requested';
+      else if (callType === 'TOWELS') title = 'Fresh Towels Requested';
+      else if (callType === 'TOILETRIES') title = 'Amenities Kit Requested';
+      else if (callType === 'RECEPTION') title = 'Reception Called';
 
-    this.showCallFeedback(callType, title, 'Our team has received your request and is attending to it.');
-    this.showServiceModal = false;
+      const staffInfo = res.assignedStaffName ? ` (${res.assignedStaffName} attending)` : '';
+      this.showCallFeedback(callType, title, (res.message || 'Our team has received your request and is attending to it.') + staffInfo);
+      this.showServiceModal = false;
+    });
   }
 
   private showCallFeedback(type: string, title: string, message: string): void {

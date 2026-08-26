@@ -3,11 +3,7 @@ package com.rms.polkole.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.ColumnDefault;
-
 import java.time.Instant;
-import java.util.LinkedHashSet;
-import java.util.Set;
 
 @Getter
 @Setter
@@ -42,6 +38,12 @@ public class UserEntity {
     @JoinColumn(name = "userstatus_id")
     private UserstatusEntity status;
 
+    @Builder.Default
+    @Column(name = "online_status", length = 20)
+    private String onlineStatus = "OFFLINE"; // ONLINE, OFFLINE
+
+    @Column(name = "last_seen")
+    private Instant lastSeen;
 
     @Column(name = "created_at")
     private Instant createdAt;
@@ -56,11 +58,13 @@ public class UserEntity {
             createdAt = now;
         }
         updatedAt = now;
+        if (onlineStatus == null) {
+            onlineStatus = "OFFLINE";
+        }
     }
 
     @PreUpdate
     protected void onUpdate() {
         updatedAt = Instant.now();
     }
-
 }

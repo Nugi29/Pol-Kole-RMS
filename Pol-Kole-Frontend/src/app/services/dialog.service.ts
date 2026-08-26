@@ -37,6 +37,10 @@ export class DialogService {
     return this.showMessage(heading, message, this.defaultWidth, duration);
   }
 
+  showInfo(heading: string, message: string, duration = 2500): Observable<boolean> {
+    return this.showMessage(heading, message, this.defaultWidth, duration);
+  }
+
   showError(heading: string, message: string, duration = 3500): Observable<boolean> {
     return this.showMessage(heading, message, this.defaultWidth, duration);
   }

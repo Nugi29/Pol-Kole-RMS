@@ -1,11 +1,9 @@
 package com.rms.polkole.dto;
 
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
 import java.time.Instant;
 
 @Data
@@ -21,4 +19,6 @@ public class FullUser {
     private Instant updatedOn;
     private Lookup status;
     private Lookup role;
+    private String onlineStatus;
+    private Instant lastSeen;
 }

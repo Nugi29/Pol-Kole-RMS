@@ -36,6 +36,10 @@ public class OrderEntity {
     @JoinColumn(name = "room_id")
     private RoomEntity room;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assigned_waiter_id")
+    private UserEntity assignedWaiter;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "status_id", nullable = false)
     private OrderStatusEntity status;

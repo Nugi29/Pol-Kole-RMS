@@ -5,15 +5,13 @@ import java.time.Instant;
 
 @Getter
 @Setter
-@AllArgsConstructor
-@NoArgsConstructor
 @Builder
-public class LoginResponse {
-    private String token;
+@NoArgsConstructor
+@AllArgsConstructor
+public class PresenceStatusDto {
     private Integer userId;
     private String name;
-    private String email;
     private String role;
-    private String onlineStatus;
+    private String onlineStatus; // ONLINE, OFFLINE
     private Instant lastSeen;
 }

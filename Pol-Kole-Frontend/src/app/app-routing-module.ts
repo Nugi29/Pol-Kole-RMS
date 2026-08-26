@@ -16,6 +16,8 @@ import { OrdersComponent } from './views/modules/orders/orders.component';
 import { KitchenComponent } from './views/modules/kitchen/kitchen.component';
 
 import { WaiterComponent } from './views/modules/waiter/waiter.component';
+import { AttendanceComponent } from './views/modules/attendance/attendance.component';
+import { StaffAssignmentComponent } from './views/modules/staff-assignment/staff-assignment.component';
 import { TakeawayDisplayComponent } from './views/modules/display/takeaway-display/takeaway-display.component';
 import { GuestDisplayComponent } from './views/modules/display/guest-display/guest-display.component';
 import { DisplayHubComponent } from './views/modules/display/display-hub/display-hub.component';
@@ -130,6 +132,18 @@ const routes: Routes = [
         component: WaiterComponent,
         canActivate: [AuthGuard],
         data: { roles: ['ADMIN', 'MANAGER', 'WAITER'] }
+      },
+      {
+        path: 'attendance',
+        component: AttendanceComponent,
+        canActivate: [AuthGuard],
+        data: { roles: ['ADMIN', 'MANAGER'] }
+      },
+      {
+        path: 'staff-assignments',
+        component: StaffAssignmentComponent,
+        canActivate: [AuthGuard],
+        data: { roles: ['ADMIN', 'MANAGER'] }
       },
 
       {
