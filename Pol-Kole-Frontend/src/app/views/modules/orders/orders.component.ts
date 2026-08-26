@@ -438,6 +438,18 @@ export class OrdersComponent implements OnInit {
     return diff > 0 ? diff : 0;
   }
 
+  get cartServiceCharge(): number {
+    // 10% Service Charge for Table dining and Room service; No service charge for Takeaway
+    if (this.serviceType === 'TAKEAWAY') {
+      return 0;
+    }
+    return this.cartTotal * 0.10;
+  }
+
+  get cartFinalTotal(): number {
+    return this.cartTotal + this.cartServiceCharge;
+  }
+
   requestClearCart(): void {
     if (this.cart.length === 0) return;
     this.dialogService.confirmClear('Do you want to clear all items in the order cart?').subscribe((confirmed) => {
@@ -457,8 +469,13 @@ export class OrdersComponent implements OnInit {
       return;
     }
 
-    const total = this.cartTotal;
-    this.dialogService.confirmAction('Confirm Place Order', `Place this order for Rs. ${total.toFixed(2)} to the kitchen queue?`).subscribe((confirmed) => {
+    const finalTotal = this.cartFinalTotal;
+    const isTakeaway = this.serviceType === 'TAKEAWAY';
+    const confirmPrompt = isTakeaway
+      ? `Place this takeaway order for Rs. ${finalTotal.toFixed(2)} to the kitchen queue?`
+      : `Place this ${this.serviceType === 'TABLE' ? 'Table' : 'Room'} order for Rs. ${finalTotal.toFixed(2)} (including 10% service charge) to the kitchen queue?`;
+
+    this.dialogService.confirmAction('Confirm Place Order', confirmPrompt).subscribe((confirmed) => {
       if (confirmed) {
         this.loading = true;
         this.errorMessage = '';
@@ -483,9 +500,9 @@ export class OrdersComponent implements OnInit {
           next: (createdOrder) => {
             this.wsService.sendMessage('ORDER_CREATED', createdOrder);
 
-            // Auto-print token for takeaway orders
+            // Auto-print receipt / token for takeaway and dining orders
             if (this.serviceType === 'TAKEAWAY') {
-              this.printToken(createdOrder);
+              this.printReceipt(createdOrder);
             }
 
             // Auto-update table status to OCCUPIED for dine-in orders
@@ -519,18 +536,34 @@ export class OrdersComponent implements OnInit {
     });
   }
 
-  printToken(order: Order): void {
-    const printWindow = window.open('', '_blank', 'width=350,height=600');
+  printReceipt(order: Order): void {
+    const printWindow = window.open('', '_blank', 'width=380,height=650');
     if (!printWindow) {
-      this.dialogService.showError('Popup Blocked', 'Please allow popups in your browser to print tokens.');
+      this.dialogService.showError('Popup Blocked', 'Please allow popups in your browser to print receipts.');
       return;
     }
 
-    const itemsHtml = order.items.map(item => `
-      <tr style="border-bottom: 1px dashed #eee;">
-        <td style="padding: 6px 0; font-weight: bold;">${item.menuItemName || 'Item'}</td>
-        <td style="padding: 6px 0; text-align: center;">x${item.quantity}</td>
-        <td style="padding: 6px 0; text-align: right;">Rs. ${item.price * item.quantity}</td>
+    const isTakeaway = !order.tableNumber && !order.roomNumber;
+    const isTable = !!order.tableNumber;
+    const isRoom = !isTable && !!order.roomNumber;
+
+    const itemsSubtotal = (order.items || []).reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    // 10% Service Charge for Table dining and Room ordering; No service charge for Takeaway
+    const serviceCharge = (isTable || isRoom) ? (itemsSubtotal * 0.10) : 0;
+    const netTotal = itemsSubtotal + serviceCharge;
+
+    const serviceTitle = isTable 
+      ? `Table Dining Receipt (Table ${order.tableNumber})` 
+      : (isRoom ? `Room Service Receipt (Room ${order.roomNumber})` : `Takeaway Order Ticket & Token`);
+
+    const itemsHtml = (order.items || []).map(item => `
+      <tr style="border-bottom: 1px dashed #e2e8f0;">
+        <td style="padding: 6px 0; font-weight: 600; color: #1e293b;">
+          ${item.menuItemName || 'Item'}
+          ${item.notes ? `<div style="font-size: 10px; color: #64748b; font-style: italic;">* ${item.notes}</div>` : ''}
+        </td>
+        <td style="padding: 6px 0; text-align: center; color: #475569;">x${item.quantity}</td>
+        <td style="padding: 6px 0; text-align: right; font-weight: 600; color: #0f172a;">Rs. ${(item.price * item.quantity).toFixed(2)}</td>
       </tr>
     `).join('');
 
@@ -538,47 +571,95 @@ export class OrdersComponent implements OnInit {
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Order Token #${order.id}</title>
+        <meta charset="utf-8">
+        <title>Receipt #${order.id} - Pol-Kole Resort</title>
         <style>
-          body { font-family: 'Courier New', Courier, monospace; width: 280px; margin: 0 auto; padding: 10px; font-size: 12px; }
-          .header { text-align: center; border-bottom: 2px dashed #000; padding-bottom: 8px; margin-bottom: 8px; }
-          .logo { font-size: 16px; font-weight: bold; }
-          .token-no { font-size: 20px; font-weight: bold; margin: 6px 0; }
-          table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-          .total { border-top: 2px dashed #000; border-bottom: 2px dashed #000; padding: 6px 0; margin-top: 8px; font-weight: bold; }
-          .footer { text-align: center; margin-top: 12px; font-size: 10px; }
+          body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            width: 320px; 
+            margin: 0 auto; 
+            padding: 16px; 
+            font-size: 12px; 
+            color: #1e293b; 
+            background: #fff;
+          }
+          .header { text-align: center; border-bottom: 2px dashed #94a3b8; padding-bottom: 12px; margin-bottom: 12px; }
+          .logo { font-size: 18px; font-weight: 900; letter-spacing: 1px; color: #0f172a; }
+          .sublogo { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; margin-top: 2px; }
+          .receipt-type { font-size: 13px; font-weight: 700; color: #2563eb; margin-top: 6px; }
+          .token-badge { 
+            display: inline-block; 
+            background: #f1f5f9; 
+            border: 2px solid #0f172a; 
+            font-size: 22px; 
+            font-weight: 900; 
+            padding: 4px 14px; 
+            border-radius: 8px; 
+            margin: 8px 0; 
+            font-family: monospace;
+          }
+          .meta-box { margin-bottom: 12px; font-size: 11.5px; line-height: 1.5; color: #334155; }
+          table { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 12px; }
+          .breakdown { border-top: 2px dashed #94a3b8; border-bottom: 2px dashed #94a3b8; padding: 8px 0; margin-top: 10px; font-size: 12px; }
+          .row { display: flex; justify-content: space-between; padding: 2px 0; }
+          .total-row { display: flex; justify-content: space-between; font-size: 15px; font-weight: 900; color: #0f172a; margin-top: 4px; padding-top: 4px; border-top: 1px solid #e2e8f0; }
+          .footer { text-align: center; margin-top: 16px; font-size: 10.5px; color: #64748b; line-height: 1.4; border-top: 1px solid #f1f5f9; padding-top: 10px; }
+          .notice-tag { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 6px; margin-top: 6px; font-size: 10px; }
+          @media print {
+            body { width: 100%; padding: 0; }
+          }
         </style>
       </head>
       <body>
         <div class="header">
           <div class="logo">POL-KOLE RESORT</div>
-          <div>Takeaway Order Ticket</div>
-          <div class="token-no">#${order.id}</div>
-          <div>${new Date().toLocaleString()}</div>
+          <div class="sublogo">Hospitality & Dining Hub</div>
+          <div class="receipt-type">${serviceTitle}</div>
+          <div class="token-badge">#${order.id}</div>
+          <div style="font-size: 11px; color: #64748b;">${new Date().toLocaleString()}</div>
         </div>
-        <div><strong>Guest:</strong> ${order.customerName || 'Walk-in'}</div>
+
+        <div class="meta-box">
+          <div><strong>Guest:</strong> ${order.customerName || 'Walk-in Guest'}</div>
+          <div><strong>Service Location:</strong> ${isTable ? 'Table ' + order.tableNumber + ' (Dine-In)' : (isRoom ? 'Room ' + order.roomNumber + ' (Room Service)' : 'Takeaway Counter')}</div>
+          <div><strong>Status:</strong> ${order.statusName || 'CONFIRMED'}</div>
+        </div>
+
         <table>
           <thead>
-            <tr style="border-bottom: 1px solid #000;">
-              <th style="text-align: left; padding-bottom: 4px;">Item</th>
-              <th style="text-align: center; padding-bottom: 4px;">Qty</th>
-              <th style="text-align: right; padding-bottom: 4px;">Price</th>
+            <tr style="border-bottom: 1.5px solid #0f172a;">
+              <th style="text-align: left; padding-bottom: 4px; font-size: 11px; text-transform: uppercase;">Item</th>
+              <th style="text-align: center; padding-bottom: 4px; font-size: 11px; text-transform: uppercase;">Qty</th>
+              <th style="text-align: right; font-size: 11px; text-transform: uppercase;">Amount</th>
             </tr>
           </thead>
           <tbody>
             ${itemsHtml}
           </tbody>
         </table>
-        <div class="total">
-          <div style="display: flex; justify-content: space-between;">
-            <span>TOTAL AMOUNT:</span>
-            <span>Rs. ${order.totalAmount}</span>
+
+        <div class="breakdown">
+          <div class="row">
+            <span style="color: #64748b;">Items Subtotal:</span>
+            <span style="font-weight: 600;">Rs. ${itemsSubtotal.toFixed(2)}</span>
+          </div>
+          <div class="row">
+            <span style="color: #64748b;">${isTakeaway ? 'Service Charge:' : 'Service Charge (10%):'}</span>
+            <span style="font-weight: 600; color: ${isTakeaway ? '#64748b' : '#0d9488'};">
+              ${isTakeaway ? 'Rs. 0.00 (Takeaway)' : '+Rs. ' + serviceCharge.toFixed(2)}
+            </span>
+          </div>
+          <div class="total-row">
+            <span>NET TOTAL:</span>
+            <span>Rs. ${netTotal.toFixed(2)}</span>
           </div>
         </div>
+
         <div class="footer">
-          <div>Thank you for dining with us!</div>
-          <div>Please show this token to collect your meal.</div>
+          <div>${isTakeaway ? 'Please present this token at the pickup counter.' : 'Thank you for dining with us at Pol-Kole Resort!'}</div>
+          <div class="notice-tag">No Taxes/VAT • 10% Service Charge applies to Dine-in & Rooms</div>
         </div>
+
         <script>
           window.onload = function() {
             window.print();
@@ -591,6 +672,10 @@ export class OrdersComponent implements OnInit {
 
     printWindow.document.write(htmlContent);
     printWindow.document.close();
+  }
+
+  printToken(order: Order): void {
+    this.printReceipt(order);
   }
 
   cancelOrder(order: Order): void {
@@ -615,15 +700,53 @@ export class OrdersComponent implements OnInit {
   }
 
   viewOrderDetails(order: Order): void {
-    const itemsList = order.items.map(i => `${i.quantity}x ${i.menuItemName} (Rs. ${i.price})`).join('<br>');
+    const isTakeaway = !order.tableNumber && !order.roomNumber;
+    const isTable = !!order.tableNumber;
+    const isRoom = !isTable && !!order.roomNumber;
+
+    const itemsSubtotal = (order.items || []).reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    // 10% service charge for Table dining and Room ordering; No service charge for Takeaway
+    const serviceCharge = (isTable || isRoom) ? (itemsSubtotal * 0.10) : 0;
+    const netTotal = itemsSubtotal + serviceCharge;
+
+    const itemsList = order.items.map(i => `
+      <div style="display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px; border-bottom: 1px dashed #f1f5f9;">
+        <span><strong>${i.quantity}x</strong> ${i.menuItemName}</span>
+        <span>Rs. ${(i.price * i.quantity).toFixed(2)}</span>
+      </div>
+    `).join('');
+
     const details = `
-      <strong>Order ID:</strong> #${order.id}<br>
-      <strong>Customer:</strong> ${order.customerName || 'Walk-in'}<br>
-      <strong>Service:</strong> ${order.tableNumber ? 'Table ' + order.tableNumber : (order.roomNumber ? 'Room ' + order.roomNumber : 'Take Away')}<br>
-      <strong>Status:</strong> ${order.statusName}<br>
-      <strong>Total:</strong> Rs. ${order.totalAmount}<br><br>
-      <strong>Items:</strong><br>${itemsList}
+      <div style="font-size: 12.5px; line-height: 1.6; color: #334155;">
+        <div style="background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 12px;">
+          <div><strong>Order ID:</strong> #${order.id}</div>
+          <div><strong>Customer:</strong> ${order.customerName || 'Walk-in'}</div>
+          <div><strong>Service Location:</strong> <span style="font-weight: bold; color: ${isTakeaway ? '#0284c7' : '#16a34a'};">${isTable ? 'Table ' + order.tableNumber + ' (Dine-In)' : (isRoom ? 'Room ' + order.roomNumber + ' (Room Service)' : 'Take Away')}</span></div>
+          <div><strong>Status:</strong> <span style="font-weight: bold; color: #4338ca;">${order.statusName}</span></div>
+        </div>
+
+        <div style="font-weight: bold; margin-bottom: 6px; color: #0f172a; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px;">Ordered Items:</div>
+        <div style="background: #fff; padding: 6px 10px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 12px;">
+          ${itemsList}
+        </div>
+
+        <div style="background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
+          <div style="display: flex; justify-content: space-between; padding: 2px 0;">
+            <span style="color: #64748b;">Items Subtotal:</span>
+            <span style="font-weight: 600;">Rs. ${itemsSubtotal.toFixed(2)}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; padding: 2px 0; color: ${isTakeaway ? '#64748b' : '#0d9488'}; font-weight: 600;">
+            <span>${isTakeaway ? 'Service Charge:' : 'Service Charge (10%):'}</span>
+            <span>${isTakeaway ? 'Rs. 0.00 (Takeaway)' : '+Rs. ' + serviceCharge.toFixed(2)}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 14px; font-weight: 900; color: #0f172a; margin-top: 6px; padding-top: 6px; border-top: 1px solid #cbd5e1;">
+            <span>Net Total:</span>
+            <span>Rs. ${netTotal.toFixed(2)}</span>
+          </div>
+        </div>
+      </div>
     `;
-    this.dialogService.showMessage('Order Details', details, '450px');
+
+    this.dialogService.showMessage('Order Details & Breakdown', details, '460px');
   }
 }

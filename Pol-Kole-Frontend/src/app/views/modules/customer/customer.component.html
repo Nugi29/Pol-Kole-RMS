@@ -86,8 +86,13 @@
           </ng-container>
 
           <ng-container matColumnDef="loyalty">
-            <th mat-header-cell *matHeaderCellDef class="font-bold text-slate-900 border-b border-slate-100 pb-3">Loyalty Points</th>
-            <td mat-cell *matCellDef="let cust" class="py-3 border-b border-slate-50"><span class="bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full text-[11px] font-bold">{{ cust.loyaltyPoints }} pts</span></td>
+            <th mat-header-cell *matHeaderCellDef class="font-bold text-slate-900 border-b border-slate-100 pb-3">Loyalty Points (Rs. 0.001/pt)</th>
+            <td mat-cell *matCellDef="let cust" class="py-3 border-b border-slate-50">
+              <div class="flex items-center gap-1.5">
+                <span class="bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full text-[11px] font-bold">{{ cust.loyaltyPoints || 0 }} pts</span>
+                <span class="text-[10px] text-slate-400 font-mono font-medium">(Rs. {{ ((cust.loyaltyPoints || 0) * 0.001).toFixed(2) }})</span>
+              </div>
+            </td>
           </ng-container>
 
           <ng-container matColumnDef="actions">

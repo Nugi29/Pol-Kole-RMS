@@ -41,10 +41,12 @@ export class ReservationComponent implements OnInit, OnDestroy {
   // Dining Customer Lookup State
   diningCustomerStatus: 'IDLE' | 'EXISTING' | 'NEW' = 'IDLE';
   diningExistingCustomer: CustomerDto | null = null;
+  selectedDiningCustomerId = '';
 
   // Hotel Customer Lookup State
   hotelCustomerStatus: 'IDLE' | 'EXISTING' | 'NEW' = 'IDLE';
   hotelExistingCustomer: CustomerDto | null = null;
+  selectedHotelCustomerId = '';
 
   form: FormGroup;
   loading = false;
@@ -221,7 +223,9 @@ export class ReservationComponent implements OnInit, OnDestroy {
     if (!trimmed || trimmed.length < 3) {
       this.diningCustomerStatus = 'IDLE';
       this.diningExistingCustomer = null;
+      this.selectedDiningCustomerId = '';
       this.form.patchValue({ customerId: null, customerName: '', customerNic: '', customerEmail: '', customerAddress: '' });
+      this.cdr.markForCheck();
       return;
     }
 
@@ -229,6 +233,7 @@ export class ReservationComponent implements OnInit, OnDestroy {
     if (match) {
       this.diningCustomerStatus = 'EXISTING';
       this.diningExistingCustomer = match;
+      this.selectedDiningCustomerId = String(match.id);
       this.form.patchValue({
         customerId: match.id,
         customerName: match.name,
@@ -239,17 +244,24 @@ export class ReservationComponent implements OnInit, OnDestroy {
     } else {
       this.diningCustomerStatus = 'NEW';
       this.diningExistingCustomer = null;
+      this.selectedDiningCustomerId = '';
       this.form.patchValue({
         customerId: null
       });
     }
+    this.cdr.markForCheck();
   }
 
   onSelectDiningCustomer(custId: any): void {
-    const cust = this.customers.find(c => c.id === custId);
+    this.selectedDiningCustomerId = custId ? String(custId) : '';
+    if (!custId) {
+      this.clearDiningCustomer();
+      return;
+    }
+    const cust = this.customers.find(c => String(c.id) === String(custId) || c.id === Number(custId));
     if (cust) {
       this.form.patchValue({
-        customerPhone: cust.phone,
+        customerPhone: cust.phone || '',
         customerId: cust.id,
         customerName: cust.name,
         customerNic: cust.nicPassport,
@@ -258,10 +270,12 @@ export class ReservationComponent implements OnInit, OnDestroy {
       });
       this.diningCustomerStatus = 'EXISTING';
       this.diningExistingCustomer = cust;
+      this.cdr.markForCheck();
     }
   }
 
   clearDiningCustomer(): void {
+    this.selectedDiningCustomerId = '';
     this.form.patchValue({
       customerPhone: '',
       customerId: null,
@@ -272,6 +286,7 @@ export class ReservationComponent implements OnInit, OnDestroy {
     });
     this.diningCustomerStatus = 'IDLE';
     this.diningExistingCustomer = null;
+    this.cdr.markForCheck();
   }
 
   onHotelPhoneInput(phone: string): void {
@@ -279,7 +294,9 @@ export class ReservationComponent implements OnInit, OnDestroy {
     if (!trimmed || trimmed.length < 3) {
       this.hotelCustomerStatus = 'IDLE';
       this.hotelExistingCustomer = null;
+      this.selectedHotelCustomerId = '';
       this.hotelReservationForm.patchValue({ customerId: null, customerName: '', customerNic: '', customerEmail: '', customerAddress: '' });
+      this.cdr.markForCheck();
       return;
     }
 
@@ -287,6 +304,7 @@ export class ReservationComponent implements OnInit, OnDestroy {
     if (match) {
       this.hotelCustomerStatus = 'EXISTING';
       this.hotelExistingCustomer = match;
+      this.selectedHotelCustomerId = String(match.id);
       this.hotelReservationForm.patchValue({
         customerId: match.id,
         customerName: match.name,
@@ -297,17 +315,24 @@ export class ReservationComponent implements OnInit, OnDestroy {
     } else {
       this.hotelCustomerStatus = 'NEW';
       this.hotelExistingCustomer = null;
+      this.selectedHotelCustomerId = '';
       this.hotelReservationForm.patchValue({
         customerId: null
       });
     }
+    this.cdr.markForCheck();
   }
 
   onSelectHotelCustomer(custId: any): void {
-    const cust = this.customers.find(c => c.id === custId);
+    this.selectedHotelCustomerId = custId ? String(custId) : '';
+    if (!custId) {
+      this.clearHotelCustomer();
+      return;
+    }
+    const cust = this.customers.find(c => String(c.id) === String(custId) || c.id === Number(custId));
     if (cust) {
       this.hotelReservationForm.patchValue({
-        customerPhone: cust.phone,
+        customerPhone: cust.phone || '',
         customerId: cust.id,
         customerName: cust.name,
         customerNic: cust.nicPassport,
@@ -316,10 +341,12 @@ export class ReservationComponent implements OnInit, OnDestroy {
       });
       this.hotelCustomerStatus = 'EXISTING';
       this.hotelExistingCustomer = cust;
+      this.cdr.markForCheck();
     }
   }
 
   clearHotelCustomer(): void {
+    this.selectedHotelCustomerId = '';
     this.hotelReservationForm.patchValue({
       customerPhone: '',
       customerId: null,
@@ -330,6 +357,7 @@ export class ReservationComponent implements OnInit, OnDestroy {
     });
     this.hotelCustomerStatus = 'IDLE';
     this.hotelExistingCustomer = null;
+    this.cdr.markForCheck();
   }
 
   createBooking(): void {

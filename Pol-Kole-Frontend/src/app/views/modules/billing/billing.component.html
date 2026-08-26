@@ -14,7 +14,7 @@
         <ng-container [ngSwitch]="activeTab">
           <span *ngSwitchCase="'payments'">Audit settled bills history, check transaction references, and print official Jasper PDF receipts.</span>
           <span *ngSwitchCase="'vouchers'">Managers can configure promotional coupon codes, special discounts, spend conditions, validity dates, and redemption limits.</span>
-          <span *ngSwitchDefault>Generate invoices, apply validated promotional discount vouchers, calculate custom loyalty points deductions, and process checkout payments.</span>
+          <span *ngSwitchDefault>Generate invoices, apply validated promotional discount vouchers, review billing breakdowns, and process checkout payments.</span>
         </ng-container>
       </p>
     </div>
@@ -74,9 +74,13 @@
       </div>
 
       <div class="flex items-center gap-2 mt-4 md:mt-0">
+        <button (click)="printReceipt(activeInvoice)" class="flex items-center gap-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 font-bold px-3.5 py-2 rounded-xl text-[12px] cursor-pointer transition-all">
+          <mat-icon class="text-[16px] w-4 h-4">receipt</mat-icon>
+          Print Receipt
+        </button>
         <button (click)="printInvoice(activeInvoice)" class="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-750 font-bold px-3.5 py-2 rounded-xl text-[12px] cursor-pointer transition-all">
           <mat-icon class="text-[16px] w-4 h-4">picture_as_pdf</mat-icon>
-          Download Jasper Receipt
+          Download Jasper PDF
         </button>
       </div>
     </div>
@@ -105,7 +109,12 @@
         <div class="space-y-2">
           <div class="flex justify-between"><span class="text-slate-500">Subtotal:</span><span class="font-bold text-slate-800">Rs. {{ activeInvoice.orderSubtotal || activeInvoice.roomCharges || 0 }}</span></div>
           <div class="flex justify-between text-rose-500"><span class="text-slate-500">Applied Discount:</span><span class="font-bold">-Rs. {{ activeInvoice.discountAmount }}</span></div>
-          <div class="flex justify-between"><span class="text-slate-500">Taxes (VAT + Service):</span><span class="font-bold text-slate-800">+Rs. {{ activeInvoice.taxAmount }}</span></div>
+          <div class="flex justify-between">
+            <span class="text-slate-500">Service Charge (10%):</span>
+            <span class="font-bold" [ngClass]="activeInvoice.taxAmount && activeInvoice.taxAmount > 0 ? 'text-slate-800' : 'text-slate-400'">
+              {{ (activeInvoice.taxAmount && activeInvoice.taxAmount > 0) ? '+Rs. ' + activeInvoice.taxAmount : 'Rs. 0.00 (Takeaway)' }}
+            </span>
+          </div>
           <div class="flex justify-between border-t border-slate-200 pt-2 text-[15px] font-black text-slate-900">
             <span>Net Total:</span><span>Rs. {{ activeInvoice.totalAmount }}</span>
           </div>
@@ -243,11 +252,6 @@
               </p>
             </div>
           </div>
-        </div>
-
-        <div>
-          <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Redeem Loyalty Points (Rs. 0.10/point)</label>
-          <input type="number" [(ngModel)]="redeemPoints" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500" placeholder="0"/>
         </div>
 
         <button (click)="triggerGenerateInvoice()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-[13px] font-bold py-3 rounded-xl cursor-pointer transition-all shadow-md active:scale-[0.98] flex items-center justify-center gap-2">

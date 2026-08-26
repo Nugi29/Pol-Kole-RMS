@@ -89,7 +89,9 @@
             </div>
             
             <!-- Quick select existing guest dropdown -->
-            <select (change)="onSelectDiningCustomer($any($event.target).value)"
+            <select [(ngModel)]="selectedDiningCustomerId"
+                    [ngModelOptions]="{standalone: true}"
+                    (ngModelChange)="onSelectDiningCustomer($event)"
                     class="bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-[12px] text-slate-600 focus:outline-none focus:border-indigo-500 cursor-pointer">
               <option value="">Or pick existing guest...</option>
               <option *ngFor="let cust of customers" [value]="cust.id">{{ cust.name }} ({{ cust.phone }})</option>
@@ -409,7 +411,9 @@
             </div>
             
             <!-- Quick select existing guest dropdown -->
-            <select (change)="onSelectHotelCustomer($any($event.target).value)"
+            <select [(ngModel)]="selectedHotelCustomerId"
+                    [ngModelOptions]="{standalone: true}"
+                    (ngModelChange)="onSelectHotelCustomer($event)"
                     class="bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-[12px] text-slate-600 focus:outline-none focus:border-indigo-500 cursor-pointer">
               <option value="">Or pick existing guest...</option>
               <option *ngFor="let cust of customers" [value]="cust.id">{{ cust.name }} ({{ cust.phone }})</option>
@@ -549,7 +553,7 @@
           <div class="text-[12.5px] text-slate-600 leading-relaxed space-y-2">
             <p>🏨 <strong>Check-in Policy:</strong> Standard check-in is at 14:00 PM. Early check-in is subject to room availability.</p>
             <p>🔑 <strong>Checkout Policy:</strong> Standard checkout is at 12:00 PM. Late checkout may incur fee charges.</p>
-            <p>💳 <strong>Charges Breakdown:</strong> Nights stayed * room type price per night + tax amounts + any unpaid room orders settled at checkout.</p>
+            <p>💳 <strong>Charges Breakdown:</strong> Nights stayed * room type price per night + 10% service charge + any unpaid room orders settled at checkout.</p>
           </div>
         </div>
       </div>

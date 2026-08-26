@@ -46,7 +46,7 @@ export class BillingComponent implements OnInit {
   loading = false;
   successMessage = '';
   errorMessage = '';
-  activeTab = 'invoices'; // 'invoices' | 'payments' | 'vouchers'
+  activeTab: string = 'invoices';
 
   displayedColumns: string[] = ['invoiceNumber', 'category', 'totalAmount', 'paymentStatus', 'actions'];
   paymentDisplayedColumns: string[] = ['invoiceNumber', 'category', 'totalAmount', 'paymentMethodName', 'transactionReference', 'actions'];
@@ -588,6 +588,144 @@ export class BillingComponent implements OnInit {
     this.activeInvoiceOrder = null;
     this.activeInvoiceReservation = null;
     this.activeInvoiceTableReservation = null;
+  }
+
+  printReceipt(invoice: Invoice): void {
+    const printWindow = window.open('', '_blank', 'width=380,height=650');
+    if (!printWindow) {
+      this.dialogService.showError('Popup Blocked', 'Please allow popups in your browser to print receipts.');
+      return;
+    }
+
+    const isTakeaway = (!invoice.reservationId && !invoice.tableReservationId) || invoice.orderId !== undefined;
+    const isTable = !!invoice.tableReservationId;
+    const isRoom = !!invoice.reservationId;
+
+    const subtotal = invoice.orderSubtotal || invoice.roomCharges || 0;
+    const discount = invoice.discountAmount || 0;
+    const serviceCharge = invoice.taxAmount || 0;
+    const total = invoice.totalAmount;
+
+    const itemsHtml = (invoice.items || []).map(item => `
+      <tr style="border-bottom: 1px dashed #e2e8f0;">
+        <td style="padding: 6px 0; font-weight: 600; color: #1e293b;">${item.description}</td>
+        <td style="padding: 6px 0; text-align: center; color: #475569;">x${item.quantity}</td>
+        <td style="padding: 6px 0; text-align: right; font-weight: 600; color: #0f172a;">Rs. ${item.totalPrice.toFixed(2)}</td>
+      </tr>
+    `).join('');
+
+    const invoiceTitle = isTable 
+      ? 'Table Dining Receipt' 
+      : (isRoom ? 'Room Stay Receipt' : 'Takeaway Order Receipt');
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Receipt ${invoice.invoiceNumber} - Pol-Kole Resort</title>
+        <style>
+          body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            width: 320px; 
+            margin: 0 auto; 
+            padding: 16px; 
+            font-size: 12px; 
+            color: #1e293b; 
+            background: #fff;
+          }
+          .header { text-align: center; border-bottom: 2px dashed #94a3b8; padding-bottom: 12px; margin-bottom: 12px; }
+          .logo { font-size: 18px; font-weight: 900; letter-spacing: 1px; color: #0f172a; }
+          .sublogo { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; margin-top: 2px; }
+          .receipt-type { font-size: 13px; font-weight: 700; color: #2563eb; margin-top: 6px; }
+          .invoice-no { 
+            font-size: 16px; 
+            font-weight: 900; 
+            margin: 6px 0; 
+            font-family: monospace;
+            color: #0f172a;
+          }
+          .meta-box { margin-bottom: 12px; font-size: 11.5px; line-height: 1.5; color: #334155; }
+          table { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 12px; }
+          .breakdown { border-top: 2px dashed #94a3b8; border-bottom: 2px dashed #94a3b8; padding: 8px 0; margin-top: 10px; font-size: 12px; }
+          .row { display: flex; justify-content: space-between; padding: 2px 0; }
+          .total-row { display: flex; justify-content: space-between; font-size: 15px; font-weight: 900; color: #0f172a; margin-top: 4px; padding-top: 4px; border-top: 1px solid #e2e8f0; }
+          .footer { text-align: center; margin-top: 16px; font-size: 10.5px; color: #64748b; line-height: 1.4; border-top: 1px solid #f1f5f9; padding-top: 10px; }
+          .status-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 11px; }
+          .paid { background: #dcfce7; color: #15803d; }
+          .unpaid { background: #fee2e2; color: #b91c1c; }
+          @media print {
+            body { width: 100%; padding: 0; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="logo">POL-KOLE RESORT</div>
+          <div class="sublogo">Official Payment Receipt</div>
+          <div class="receipt-type">${invoiceTitle}</div>
+          <div class="invoice-no">${invoice.invoiceNumber}</div>
+          <div style="font-size: 11px; color: #64748b;">${new Date().toLocaleString()}</div>
+        </div>
+
+        <div class="meta-box">
+          <div><strong>Payment Status:</strong> <span class="status-badge ${invoice.paymentStatus === 'PAID' ? 'paid' : 'unpaid'}">${invoice.paymentStatus}</span></div>
+          ${invoice.paymentMethodName ? `<div><strong>Payment Method:</strong> ${invoice.paymentMethodName}</div>` : ''}
+          ${invoice.transactionReference ? `<div><strong>Ref:</strong> ${invoice.transactionReference}</div>` : ''}
+        </div>
+
+        <table>
+          <thead>
+            <tr style="border-bottom: 1.5px solid #0f172a;">
+              <th style="text-align: left; padding-bottom: 4px; font-size: 11px; text-transform: uppercase;">Description</th>
+              <th style="text-align: center; padding-bottom: 4px; font-size: 11px; text-transform: uppercase;">Qty</th>
+              <th style="text-align: right; font-size: 11px; text-transform: uppercase;">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsHtml || '<tr><td colspan="3" style="text-align:center; padding:8px 0; color:#94a3b8;">Line items processed</td></tr>'}
+          </tbody>
+        </table>
+
+        <div class="breakdown">
+          <div class="row">
+            <span style="color: #64748b;">Subtotal:</span>
+            <span style="font-weight: 600;">Rs. ${subtotal.toFixed(2)}</span>
+          </div>
+          ${discount > 0 ? `
+          <div class="row" style="color: #e11d48;">
+            <span>Discount Applied:</span>
+            <span style="font-weight: 600;">-Rs. ${discount.toFixed(2)}</span>
+          </div>` : ''}
+          <div class="row">
+            <span style="color: #64748b;">${serviceCharge > 0 ? 'Service Charge (10%):' : 'Service Charge:'}</span>
+            <span style="font-weight: 600; color: ${serviceCharge > 0 ? '#0d9488' : '#64748b'};">
+              ${(serviceCharge && serviceCharge > 0) ? '+Rs. ' + serviceCharge.toFixed(2) : 'Rs. 0.00 (Takeaway)'}
+            </span>
+          </div>
+          <div class="total-row">
+            <span>NET TOTAL:</span>
+            <span>Rs. ${total.toFixed(2)}</span>
+          </div>
+        </div>
+
+        <div class="footer">
+          <div>Thank you for choosing Pol-Kole Resort!</div>
+          <div style="margin-top: 4px; font-size: 10px; color: #94a3b8;">No Taxes/VAT • 10% Service Charge applies to Dine-in & Room Bookings</div>
+        </div>
+
+        <script>
+          window.onload = function() {
+            window.print();
+            window.onafterprint = function() { window.close(); };
+          };
+        </script>
+      </body>
+      </html>
+    `;
+
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
   }
 
   printInvoice(invoice: Invoice): void {

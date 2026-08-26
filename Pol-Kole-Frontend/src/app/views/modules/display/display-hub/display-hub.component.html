@@ -90,11 +90,9 @@
           (click)="openTableDisplay(table.id)"
           class="p-4 rounded-2xl border transition-all duration-200 cursor-pointer text-center group flex flex-col items-center justify-between"
           [ngClass]="table.status === 'OCCUPIED' ? 'bg-amber-50/50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/50 hover:border-amber-400' : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700/60 hover:border-indigo-500'">
-          <div class="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center font-black text-indigo-600 dark:text-indigo-400 text-sm group-hover:scale-110 transition">
-            {{ table.tableNumber || table.id }}
-          </div>
-          <div class="mt-2 font-bold text-xs text-slate-800 dark:text-slate-200 truncate max-w-full">
-            Table {{ table.tableNumber }}
+
+          <div class="mt-2 font-bold text-xs text-slate-800 dark:text-slate-200 truncate max-w-full group-hover:scale-110 transition text-black dark:text-white text-2xl">
+           {{ table.tableNumber }}
           </div>
           <div class="text-[10px] font-semibold mt-0.5" [ngClass]="table.status === 'OCCUPIED' ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400'">
             {{ table.status }} • {{ table.capacity }} Seats

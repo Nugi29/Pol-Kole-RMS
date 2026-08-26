@@ -201,15 +201,6 @@
               <!-- Card Header -->
               <div class="flex items-start justify-between">
                 <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm shadow-sm"
-                       [ngClass]="{
-                         'bg-emerald-100 text-emerald-800': tb.status.toUpperCase() === 'AVAILABLE',
-                         'bg-blue-100 text-blue-800': tb.status.toUpperCase() === 'RESERVED',
-                         'bg-indigo-600 text-white': tb.status.toUpperCase() === 'OCCUPIED',
-                         'bg-amber-100 text-amber-800': tb.status.toUpperCase() === 'CLEANING'
-                       }">
-                    {{ tb.tableNumber }}
-                  </div>
                   <div>
                     <h3 class="text-base font-extrabold text-slate-900 leading-tight">Table {{ tb.tableNumber }}</h3>
                     <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">
