@@ -11,6 +11,7 @@ export type WebSocketMessageType =
   | 'ORDER_STATUS_CHANGED'
   | 'KITCHEN_STATUS_CHANGED'
   | 'GUEST_CALL'
+  | 'SERVICE_REQUEST_UPDATED'
   | 'BILL_REQUEST'
   | 'TABLE_UPDATED'
   | 'ROOM_UPDATED'
@@ -23,14 +24,33 @@ export interface WebSocketMessage<T = any> {
   sender?: string;
 }
 
+export type GuestCallType =
+  | 'WAITER'
+  | 'BILL'
+  | 'WATER'
+  | 'CUTLERY'
+  | 'CLEANING'
+  | 'RECEPTION'
+  | 'HOUSEKEEPING'
+  | 'TOWELS'
+  | 'TOILETRIES'
+  | 'ASSISTANCE'
+  | 'CUSTOM';
+
+export type ServiceRequestStatus = 'WAITING' | 'ACCEPTED' | 'IN_PROGRESS' | 'COMPLETED';
+
 export interface GuestServiceCall {
-  id?: string;
+  id: string;
   locationType: 'TABLE' | 'ROOM';
+  locationId?: number;
   locationNumber: string;
-  callType: 'WAITER' | 'BILL' | 'WATER' | 'CLEANING' | 'CUSTOM';
+  callType: GuestCallType;
   message?: string;
-  status: 'PENDING' | 'ACKNOWLEDGED' | 'COMPLETED';
+  status: ServiceRequestStatus;
   timestamp: string;
+  acceptedBy?: string;
+  acceptedAt?: string;
+  completedAt?: string;
 }
 
 @Injectable({
@@ -48,6 +68,7 @@ export class WebsocketService implements OnDestroy {
   private reconnectTimeoutId: any = null;
   private heartbeatIntervalId: any = null;
   private fallbackPollingSub: Subscription | null = null;
+  private broadcastChannel: BroadcastChannel | null = null;
 
   // Realtime state observables
   public isConnected$ = new BehaviorSubject<boolean>(false);
@@ -63,12 +84,60 @@ export class WebsocketService implements OnDestroy {
   private audioCtx: AudioContext | null = null;
 
   constructor(private readonly http: HttpClient) {
+    this.initBroadcastChannel();
+    this.loadPersistedCalls();
     this.initRealtimeConnection();
     this.startFallbackPolling();
   }
 
   ngOnDestroy(): void {
     this.disconnect();
+    if (this.broadcastChannel) {
+      this.broadcastChannel.close();
+    }
+  }
+
+  private initBroadcastChannel(): void {
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      try {
+        this.broadcastChannel = new BroadcastChannel('pol_kole_rms_channel');
+        this.broadcastChannel.onmessage = (event) => {
+          if (event?.data) {
+            this.handleIncomingMessage(event.data, false);
+          }
+        };
+      } catch (e) {
+        console.warn('[WebsocketService] BroadcastChannel init error:', e);
+      }
+    }
+  }
+
+  private loadPersistedCalls(): void {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      try {
+        const saved = localStorage.getItem('pol_kole_guest_calls');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) {
+            // Keep only uncompleted or today's calls
+            const activeOnly = parsed.filter((c: GuestServiceCall) => c.status !== 'COMPLETED');
+            this.activeGuestCalls$.next(activeOnly);
+          }
+        }
+      } catch (e) {
+        console.warn('[WebsocketService] Could not parse stored guest calls:', e);
+      }
+    }
+  }
+
+  private saveCalls(calls: GuestServiceCall[]): void {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      try {
+        localStorage.setItem('pol_kole_guest_calls', JSON.stringify(calls));
+      } catch (e) {
+        // ignore
+      }
+    }
   }
 
   /**
@@ -76,7 +145,6 @@ export class WebsocketService implements OnDestroy {
    */
   public initRealtimeConnection(): void {
     if (typeof window === 'undefined' || !('WebSocket' in window)) {
-      console.warn('[WebsocketService] WebSockets not supported in this environment. Falling back to HTTP polling.');
       this.connectionMode$.next('POLLING_FALLBACK');
       return;
     }
@@ -85,7 +153,6 @@ export class WebsocketService implements OnDestroy {
       this.socket = new WebSocket(this.wsUrl);
 
       this.socket.onopen = () => {
-        console.log('[WebsocketService] Connected to Real-time WebSocket server.');
         this.isConnected$.next(true);
         this.connectionMode$.next('WEBSOCKET');
         this.reconnectAttempts = 0;
@@ -96,14 +163,13 @@ export class WebsocketService implements OnDestroy {
       this.socket.onmessage = (event: MessageEvent) => {
         try {
           const data: WebSocketMessage = JSON.parse(event.data);
-          this.handleIncomingMessage(data);
+          this.handleIncomingMessage(data, true);
         } catch (e) {
           console.warn('[WebsocketService] Received non-JSON WebSocket frame:', event.data);
         }
       };
 
       this.socket.onclose = (event) => {
-        console.warn('[WebsocketService] WebSocket closed:', event.reason || 'Normal/Server shutdown');
         this.isConnected$.next(false);
         this.connectionMode$.next('POLLING_FALLBACK');
         this.stopHeartbeat();
@@ -111,12 +177,10 @@ export class WebsocketService implements OnDestroy {
       };
 
       this.socket.onerror = (err) => {
-        console.warn('[WebsocketService] WebSocket connection error (backend might be using HTTP or offline):', err);
         this.isConnected$.next(false);
         this.connectionMode$.next('POLLING_FALLBACK');
       };
     } catch (err) {
-      console.warn('[WebsocketService] Could not establish WebSocket connection. Active polling will maintain real-time UI.', err);
       this.connectionMode$.next('POLLING_FALLBACK');
       this.scheduleReconnect();
     }
@@ -124,7 +188,6 @@ export class WebsocketService implements OnDestroy {
 
   private scheduleReconnect(): void {
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.log('[WebsocketService] Max reconnect attempts reached. Continuing in resilient HTTP Polling mode.');
       return;
     }
 
@@ -132,7 +195,6 @@ export class WebsocketService implements OnDestroy {
     this.reconnectAttempts++;
     clearTimeout(this.reconnectTimeoutId);
     this.reconnectTimeoutId = setTimeout(() => {
-      console.log(`[WebsocketService] Attempting WebSocket reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
       this.initRealtimeConnection();
     }, delay);
   }
@@ -155,7 +217,6 @@ export class WebsocketService implements OnDestroy {
 
   /**
    * Resilient HTTP polling fallback (running every 4 seconds) to guarantee real-time updates
-   * even if the backend WebSocket endpoint is unavailable or transitioning.
    */
   private startFallbackPolling(): void {
     this.refreshAllData();
@@ -199,12 +260,28 @@ export class WebsocketService implements OnDestroy {
       this.socket.send(JSON.stringify(message));
     }
 
+    if (this.broadcastChannel) {
+      try {
+        this.broadcastChannel.postMessage(message);
+      } catch (e) {
+        // ignore
+      }
+    }
+
     // Also trigger locally so active subscribers reflect change instantly
-    this.handleIncomingMessage(message);
+    this.handleIncomingMessage(message, false);
   }
 
-  private handleIncomingMessage(msg: WebSocketMessage): void {
+  private handleIncomingMessage(msg: WebSocketMessage, shouldForwardToBroadcast = true): void {
     this.messageStream$.next(msg);
+
+    if (shouldForwardToBroadcast && this.broadcastChannel) {
+      try {
+        this.broadcastChannel.postMessage(msg);
+      } catch (e) {
+        // ignore
+      }
+    }
 
     switch (msg.type) {
       case 'ORDER_STATUS_CHANGED':
@@ -217,10 +294,29 @@ export class WebsocketService implements OnDestroy {
       case 'BILL_REQUEST':
         if (msg.payload) {
           const calls = this.activeGuestCalls$.value;
-          const exists = calls.some(c => c.id === msg.payload.id);
-          if (!exists) {
-            this.activeGuestCalls$.next([msg.payload, ...calls]);
+          const existsIndex = calls.findIndex(c => c.id === msg.payload.id);
+          let updated: GuestServiceCall[];
+          if (existsIndex >= 0) {
+            updated = [...calls];
+            updated[existsIndex] = { ...updated[existsIndex], ...msg.payload };
+          } else {
+            updated = [msg.payload, ...calls];
             this.playChimeSound('alert');
+          }
+          this.activeGuestCalls$.next(updated);
+          this.saveCalls(updated);
+        }
+        break;
+
+      case 'SERVICE_REQUEST_UPDATED':
+        if (msg.payload && msg.payload.id) {
+          const calls = this.activeGuestCalls$.value;
+          const existsIndex = calls.findIndex(c => c.id === msg.payload.id);
+          if (existsIndex >= 0) {
+            const updated = [...calls];
+            updated[existsIndex] = { ...updated[existsIndex], ...msg.payload };
+            this.activeGuestCalls$.next(updated);
+            this.saveCalls(updated);
           }
         }
         break;
@@ -242,23 +338,68 @@ export class WebsocketService implements OnDestroy {
   // Guest Interaction API
   // ==========================================
 
-  public callWaiter(locationType: 'TABLE' | 'ROOM', locationNumber: string, callType: 'WAITER' | 'BILL' | 'WATER' | 'CLEANING' | 'CUSTOM' = 'WAITER', message?: string): void {
+  public callWaiter(
+    locationType: 'TABLE' | 'ROOM',
+    locationNumber: string,
+    callType: GuestCallType = 'WAITER',
+    message?: string,
+    locationId?: number
+  ): GuestServiceCall {
     const callPayload: GuestServiceCall = {
-      id: `${locationType}-${locationNumber}-${Date.now()}`,
+      id: `${locationType}-${locationNumber.replace(/\s+/g, '')}-${Date.now()}`,
       locationType,
+      locationId,
       locationNumber,
       callType,
-      message: message || (callType === 'BILL' ? 'Guest requested bill/invoice' : callType === 'WATER' ? 'Guest requested complimentary water' : 'Guest requested waiter assistance'),
-      status: 'PENDING',
+      message: message || this.getDefaultCallMessage(callType),
+      status: 'WAITING',
       timestamp: new Date().toISOString()
     };
 
     this.sendMessage('GUEST_CALL', callPayload);
+    return callPayload;
+  }
+
+  public updateServiceRequestStatus(
+    callId: string,
+    status: ServiceRequestStatus,
+    staffName: string = 'Staff'
+  ): void {
+    const calls = this.activeGuestCalls$.value;
+    const item = calls.find(c => c.id === callId);
+    if (!item) return;
+
+    const payload: Partial<GuestServiceCall> = {
+      id: callId,
+      status,
+      acceptedBy: status === 'ACCEPTED' || status === 'IN_PROGRESS' ? staffName : item.acceptedBy,
+      acceptedAt: status === 'ACCEPTED' ? new Date().toISOString() : item.acceptedAt,
+      completedAt: status === 'COMPLETED' ? new Date().toISOString() : item.completedAt,
+    };
+
+    this.sendMessage('SERVICE_REQUEST_UPDATED', payload);
   }
 
   public resolveGuestCall(callId: string): void {
+    this.updateServiceRequestStatus(callId, 'COMPLETED');
     const updated = this.activeGuestCalls$.value.filter(c => c.id !== callId);
     this.activeGuestCalls$.next(updated);
+    this.saveCalls(updated);
+  }
+
+  private getDefaultCallMessage(type: GuestCallType): string {
+    switch (type) {
+      case 'BILL': return 'Guest requested final invoice & bill';
+      case 'WATER': return 'Guest requested fresh ice water refill';
+      case 'CUTLERY': return 'Guest requested extra cutlery and plates';
+      case 'CLEANING': return 'Guest requested table cleaning / tidying';
+      case 'HOUSEKEEPING': return 'Guest requested housekeeping service';
+      case 'TOWELS': return 'Guest requested fresh towels';
+      case 'TOILETRIES': return 'Guest requested hotel amenities / toiletries';
+      case 'RECEPTION': return 'Guest requested reception assistance';
+      case 'ASSISTANCE': return 'Guest requested staff assistance';
+      default: return 'Guest requested waiter assistance';
+    }
   }
 
   // ==========================================

@@ -19,10 +19,11 @@ export class WaiterComponent implements OnInit {
   kitchenOrders: KitchenOrder[] = [];
   cleaningRooms: Room[] = [];
   cleaningTables: RestaurantTable[] = [];
+  activeGuestCalls: any[] = [];
   loading = false;
   successMessage = '';
   errorMessage = '';
-  activeTab = 'ready'; // ready / history
+  activeTab = 'ready'; // ready / requests / history / cleaning
 
   private readonly baseUrl = 'http://localhost:8080/api/kitchen';
 
@@ -37,6 +38,11 @@ export class WaiterComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.wsService.activeGuestCalls$.subscribe(calls => {
+      this.activeGuestCalls = calls || [];
+      this.cdr.markForCheck();
+    });
+
     this.syncBoard();
     this.route.queryParams.subscribe(params => {
       if (params['tab']) {
@@ -194,5 +200,17 @@ export class WaiterComponent implements OnInit {
         });
       }
     });
+  }
+
+  acceptServiceRequest(call: any): void {
+    if (!call?.id) return;
+    this.wsService.updateServiceRequestStatus(call.id, 'IN_PROGRESS', 'Waiter Staff');
+    this.dialogService.showSuccess('Request Accepted', `Attending to ${call.locationType} ${call.locationNumber} (${call.callType}).`);
+  }
+
+  completeServiceRequest(call: any): void {
+    if (!call?.id) return;
+    this.wsService.resolveGuestCall(call.id);
+    this.dialogService.showSuccess('Request Completed', `Completed ${call.callType} for ${call.locationType} ${call.locationNumber}.`);
   }
 }

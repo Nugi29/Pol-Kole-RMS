@@ -10,5 +10,5 @@ public interface OrderService {
     OrderDto getOrderById(Integer id);
     void cancelOrder(Integer id);
     OrderDto updateOrderStatus(Integer id, String statusName);
-    Page<OrderDto> filterOrders(Integer statusId, Integer tableId, Integer customerId, Instant startTime, Instant endTime, int page, int size);
+    Page<OrderDto> filterOrders(Integer statusId, Integer tableId, Integer roomId, Integer customerId, Instant startTime, Instant endTime, int page, int size);
 }

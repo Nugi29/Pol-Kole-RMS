@@ -190,10 +190,15 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<OrderDto> filterOrders(Integer statusId, Integer tableId, Integer customerId, Instant startTime, Instant endTime, int page, int size) {
+    public Page<OrderDto> filterOrders(Integer statusId, Integer tableId, Integer roomId, Integer customerId, Instant startTime, Instant endTime, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("orderTime").descending());
-        Page<OrderEntity> orders = orderRepository.filterOrders(statusId, tableId, customerId, startTime, endTime, pageable);
+        Page<OrderEntity> orders = orderRepository.filterOrders(statusId, tableId, roomId, customerId, startTime, endTime, pageable);
         return orders.map(this::mapToDto);
+
+
+
+
+
     }
 
     private OrderDto mapToDto(OrderEntity order) {

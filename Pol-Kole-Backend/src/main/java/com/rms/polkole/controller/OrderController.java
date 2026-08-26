@@ -58,12 +58,13 @@ public class OrderController {
     public ResponseEntity<ApiResponse<Page<OrderDto>>> filterOrders(
             @RequestParam(required = false) Integer statusId,
             @RequestParam(required = false) Integer tableId,
+            @RequestParam(required = false) Integer roomId,
             @RequestParam(required = false) Integer customerId,
             @RequestParam(required = false) Instant startTime,
             @RequestParam(required = false) Instant endTime,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "15") int size) {
-        Page<OrderDto> orders = orderService.filterOrders(statusId, tableId, customerId, startTime, endTime, page, size);
+        Page<OrderDto> orders = orderService.filterOrders(statusId, tableId, roomId, customerId, startTime, endTime, page, size);
         return ResponseEntity.ok(ApiResponse.success(orders));
     }
 }

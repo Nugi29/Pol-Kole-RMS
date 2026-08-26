@@ -12,19 +12,27 @@
     </div>
 
     <!-- Quick Nav Toggle -->
-    <div class="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200">
+    <div class="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200 overflow-x-auto">
       <a routerLink="/main/waiter" [queryParams]="{ tab: 'ready' }"
-         class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none"
+         class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none whitespace-nowrap"
          [ngClass]="activeTab === 'ready' ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:text-slate-800'">
         Ready to Serve
       </a>
+      <a routerLink="/main/waiter" [queryParams]="{ tab: 'requests' }"
+         class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none relative whitespace-nowrap"
+         [ngClass]="activeTab === 'requests' ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:text-slate-800'">
+        <span>Guest Calls</span>
+        <span *ngIf="activeGuestCalls.length > 0" class="ml-1 px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-[10px] font-black animate-pulse">
+          {{ activeGuestCalls.length }}
+        </span>
+      </a>
       <a routerLink="/main/waiter" [queryParams]="{ tab: 'history' }"
-         class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none"
+         class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none whitespace-nowrap"
          [ngClass]="activeTab === 'history' ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:text-slate-800'">
         Served History
       </a>
       <a routerLink="/main/waiter" [queryParams]="{ tab: 'cleaning' }"
-         class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none"
+         class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none whitespace-nowrap"
          [ngClass]="activeTab === 'cleaning' ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:text-slate-800'">
         Cleaning Tasks
       </a>
@@ -44,12 +52,70 @@
     <div class="flex items-center justify-between border-b border-slate-50 pb-3">
       <h2 class="text-[14px] font-bold text-slate-900 flex items-center gap-2">
         <span class="w-1.5 h-3.5 bg-indigo-600 rounded-full"></span>
-        {{ activeTab === 'ready' ? 'Ready for Collection' : (activeTab === 'history' ? 'Completed Deliveries' : 'Rooms & Tables Pending Clean') }}
+        {{ activeTab === 'ready' ? 'Ready for Collection' : (activeTab === 'requests' ? 'Live Guest Assistance & Service Calls' : (activeTab === 'history' ? 'Completed Deliveries' : 'Rooms & Tables Pending Clean')) }}
       </h2>
     </div>
 
+    <!-- GUEST REQUESTS TAB -->
+    <div *ngIf="activeTab === 'requests'">
+      <div *ngIf="activeGuestCalls.length > 0; else noCalls" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div *ngFor="let call of activeGuestCalls" class="relative bg-white hover:shadow-xl rounded-2xl border border-slate-200 hover:border-indigo-300 transition-all p-5 flex flex-col justify-between space-y-4">
+          <div class="space-y-3">
+            <div class="flex items-start justify-between">
+              <div>
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase"
+                      [ngClass]="call.locationType === 'ROOM' ? 'bg-purple-100 text-purple-700 border border-purple-200' : 'bg-indigo-100 text-indigo-700 border border-indigo-200'">
+                  {{ call.locationType }}
+                </span>
+                <h3 class="text-lg font-black text-slate-900 mt-1">{{ call.locationNumber }}</h3>
+              </div>
+              <span class="px-2.5 py-1 rounded-full text-[11px] font-extrabold uppercase"
+                    [ngClass]="{
+                      'bg-amber-100 text-amber-800 border border-amber-300 animate-pulse': call.status === 'WAITING',
+                      'bg-indigo-100 text-indigo-700 border border-indigo-300': call.status === 'IN_PROGRESS' || call.status === 'ACCEPTED',
+                      'bg-emerald-100 text-emerald-700 border border-emerald-300': call.status === 'COMPLETED'
+                    }">
+                {{ call.status }}
+              </span>
+            </div>
+
+            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-100">
+              <div class="text-xs font-black text-slate-800 flex items-center gap-1.5">
+                <span class="text-base">🛎️</span>
+                <span>{{ call.callType }}</span>
+              </div>
+              <p class="text-xs text-slate-600 font-medium mt-1">{{ call.message }}</p>
+              <p class="text-[10px] text-slate-400 mt-2 font-mono">Requested at: {{ call.timestamp | date:'HH:mm:ss' }}</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 pt-2 border-t border-slate-100">
+            <button
+              *ngIf="call.status === 'WAITING'"
+              (click)="acceptServiceRequest(call)"
+              class="flex-1 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm transition cursor-pointer">
+              Accept & Attend
+            </button>
+            <button
+              (click)="completeServiceRequest(call)"
+              class="flex-1 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition cursor-pointer">
+              Done / Complete
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <ng-template #noCalls>
+        <div class="text-center py-16 bg-slate-50/50 border border-dashed border-slate-200 rounded-2xl text-slate-400 space-y-2">
+          <div class="text-3xl">✨</div>
+          <p class="text-sm font-bold text-slate-700">No Pending Guest Service Calls</p>
+          <p class="text-xs text-slate-400">All guest tables and rooms are currently attended to.</p>
+        </div>
+      </ng-template>
+    </div>
+
     <!-- Ready to Serve / History Grid -->
-    <div *ngIf="activeTab !== 'cleaning'">
+    <div *ngIf="activeTab !== 'cleaning' && activeTab !== 'requests'">
       <div *ngIf="kitchenOrders.length > 0; else noOrders" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div *ngFor="let res of kitchenOrders" class="waiter-card relative bg-white hover:shadow-xl rounded-2xl border border-slate-100 hover:border-indigo-150 transition-all duration-350 flex flex-col justify-between overflow-hidden group">
           <!-- Status color indicator line at the top -->

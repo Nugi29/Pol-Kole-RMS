@@ -1,464 +1,795 @@
-<div class="guest-screen-root flex flex-col min-h-screen w-full bg-slate-950 text-white font-sans select-none">
+<div class="guest-screen-root flex flex-col h-screen max-h-screen w-full select-none overflow-hidden"
+     [class.dark]="isDarkMode"
+     [ngClass]="isDarkMode ? 'bg-[#080c14] text-slate-100' : 'bg-[#f8fafc] text-slate-800'">
 
-  <!-- TOP TABLE/ROOM BAR -->
-  <header class="bg-slate-900/95 border-b border-slate-800 px-6 py-4 flex items-center justify-between shadow-xl flex-shrink-0">
-    <div class="flex items-center gap-3.5">
-      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-violet-600 flex items-center justify-center shadow-md">
-        <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-        </svg>
+  <!-- ======================================================== -->
+  <!-- 1. TOP HEADER BAR (BOLD & PROMINENT)                    -->
+  <!-- ======================================================== -->
+  <header class="border-b px-4 sm:px-8 py-3 sm:py-3.5 flex items-center justify-between shadow-md flex-shrink-0 z-30 transition-colors"
+          [ngClass]="isDarkMode ? 'bg-slate-900/95 border-slate-800/90' : 'bg-white/95 border-slate-200 shadow-sm'">
+    
+    <!-- Left: Location Avatar & Title -->
+    <div class="flex items-center gap-3 sm:gap-4 min-w-0">
+      <div class="w-11 h-11 sm:w-13 sm:h-13 rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0"
+           [ngClass]="isRoom ? 'bg-gradient-to-tr from-emerald-500 via-teal-500 to-cyan-500 shadow-emerald-500/25' : 'bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 shadow-indigo-500/25'">
+        <span class="text-2xl sm:text-3xl">{{ isRoom ? '🏨' : '🍽️' }}</span>
       </div>
-      <div>
-        <div class="flex items-center gap-2">
-          <span class="text-lg font-black tracking-tight text-white uppercase">{{ locationLabel || 'POL-KOLE GUEST SCREEN' }}</span>
-          <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 uppercase tracking-wider">
-            {{ locationType }}
+
+      <div class="min-w-0">
+        <div class="flex items-center gap-2.5 flex-wrap">
+          <span class="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight uppercase truncate"
+                [ngClass]="isDarkMode ? 'text-white' : 'text-slate-900'">
+            {{ locationLabel || 'POL-KOLE' }}
+          </span>
+          <span class="px-3 py-1 rounded-full text-xs sm:text-sm font-black tracking-wider uppercase border"
+                [ngClass]="isRoom ? (isDarkMode ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : 'bg-emerald-50 text-emerald-700 border-emerald-200') : (isDarkMode ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' : 'bg-indigo-50 text-indigo-700 border-indigo-200')">
+            {{ isRoom ? 'GUEST ROOM' : 'DINING TABLE' }}
           </span>
         </div>
-        <p class="text-xs text-slate-400 font-medium">Pol-Kole Resort & Restaurant Smart Console</p>
+        <p class="text-xs sm:text-sm font-medium hidden xs:block"
+           [ngClass]="isDarkMode ? 'text-slate-400' : 'text-slate-500'">
+          Pol-Kole Luxury Resort & Restaurant Smart Console
+        </p>
       </div>
     </div>
 
-    <!-- Right Clock & Switch Device Link & Fullscreen -->
-    <div class="flex items-center gap-3.5">
+    <!-- Right Controls: Wi-Fi Pill, Theme Toggle, Fullscreen, Clock -->
+    <div class="flex items-center gap-2.5 sm:gap-4 flex-shrink-0">
+      
+      <!-- Wi-Fi Quick Copy Pill -->
+      <button
+        (click)="copyWifi()"
+        [title]="'Click to copy password: ' + wifiPass"
+        class="hidden sm:flex items-center gap-2 px-3.5 py-2 rounded-2xl border text-xs sm:text-sm font-semibold transition cursor-pointer active:scale-95 shadow-sm"
+        [ngClass]="isDarkMode ? 'bg-slate-800/80 hover:bg-slate-700 text-slate-200 border-slate-700' : 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-200'">
+        <svg class="w-4 h-4 text-indigo-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
+        </svg>
+        <span class="hidden md:inline font-mono">{{ wifiName }}</span>
+        <span *ngIf="copiedWifi" class="text-emerald-500 font-black text-xs">✓ Copied!</span>
+      </button>
+
+      <!-- Theme Switcher Button (Dark / Light Mode) -->
+      <button
+        (click)="toggleTheme()"
+        [title]="isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
+        class="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl border text-xs sm:text-sm font-black transition cursor-pointer active:scale-95 shadow-sm"
+        [ngClass]="isDarkMode ? 'bg-slate-800 hover:bg-slate-700 text-amber-300 border-slate-700' : 'bg-slate-100 hover:bg-slate-200 text-indigo-700 border-slate-300'">
+        <span class="text-base">{{ isDarkMode ? '☀️' : '🌙' }}</span>
+        <span class="hidden sm:inline">{{ isDarkMode ? 'Light Mode' : 'Dark Mode' }}</span>
+      </button>
+
+      <!-- Live Real-Time Badge -->
+      <div class="hidden md:flex items-center gap-2 border px-3.5 py-2 rounded-2xl text-xs sm:text-sm font-bold shadow-sm"
+           [ngClass]="isDarkMode ? 'bg-slate-800/80 border-slate-700/60' : 'bg-slate-100 border-slate-200'">
+        <span class="relative flex h-2.5 w-2.5">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+        </span>
+        <span class="text-emerald-500 font-extrabold text-xs">Live</span>
+      </div>
+
       <!-- Fullscreen Toggle -->
       <button
         (click)="toggleFullscreen()"
         [title]="isFullscreen ? 'Exit Fullscreen' : 'Enter Kiosk Fullscreen'"
-        class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-semibold transition cursor-pointer">
-        <svg *ngIf="!isFullscreen" class="w-3.5 h-3.5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        class="flex items-center gap-1.5 p-2 sm:px-3.5 sm:py-2 rounded-2xl border text-xs sm:text-sm font-bold transition cursor-pointer active:scale-95 shadow-sm"
+        [ngClass]="isDarkMode ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700' : 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-200'">
+        <svg *ngIf="!isFullscreen" class="w-4 h-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0 0l-5-5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
         </svg>
-        <svg *ngIf="isFullscreen" class="w-3.5 h-3.5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <svg *ngIf="isFullscreen" class="w-4 h-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
         </svg>
-        <span class="hidden sm:inline">{{ isFullscreen ? 'Exit Fullscreen' : 'Fullscreen' }}</span>
+        <span class="hidden lg:inline">{{ isFullscreen ? 'Exit Full' : 'Fullscreen' }}</span>
       </button>
 
-      <button
-        (click)="changeLocation()"
-        title="Switch Device / Table"
-        class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-semibold transition cursor-pointer">
-        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-        </svg>
-        <span>Change Table</span>
-      </button>
-
-      <div class="text-right pl-3 border-l border-slate-800">
-        <div class="text-base font-bold text-amber-400 font-mono">
+      <!-- Digital Clock -->
+      <div class="text-right pl-3 sm:pl-4 border-l"
+           [ngClass]="isDarkMode ? 'border-slate-800' : 'border-slate-200'">
+        <div class="text-lg sm:text-xl lg:text-2xl font-black font-mono leading-none"
+             [ngClass]="isDarkMode ? 'text-amber-400' : 'text-slate-900'">
           {{ currentTime | date:'HH:mm' }}
         </div>
-        <div class="text-[10px] text-slate-400 uppercase font-medium">
+        <div class="text-[10px] sm:text-xs uppercase font-bold mt-0.5"
+             [ngClass]="isDarkMode ? 'text-slate-400' : 'text-slate-500'">
           {{ currentTime | date:'EEE, MMM d' }}
         </div>
       </div>
     </div>
   </header>
 
-  <!-- NOTIFICATION BANNER (When guest taps Call Waiter / Bill) -->
-  <div *ngIf="callState.active" class="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-6 py-3 shadow-lg flex items-center justify-between animate-fadeIn flex-shrink-0">
+  <!-- ======================================================== -->
+  <!-- 2. POPUP TOAST FEEDBACK                                 -->
+  <!-- ======================================================== -->
+  <div *ngIf="callFeedback.active" class="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 text-white px-5 sm:px-8 py-2.5 shadow-lg flex items-center justify-between animate-fadeIn flex-shrink-0 z-20">
     <div class="flex items-center gap-3">
-      <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-        </svg>
-      </div>
-      <div>
-        <p class="font-bold text-sm leading-tight">{{ callState.message }}</p>
-        <p class="text-[11px] text-emerald-100 opacity-90">Our service team received your request at {{ callState.timestamp | date:'HH:mm:ss' }}</p>
-      </div>
+      <span class="font-black text-sm sm:text-base">✓ {{ callFeedback.title }}:</span>
+      <span class="text-xs sm:text-sm text-emerald-100 font-medium">{{ callFeedback.message }}</span>
     </div>
-    <button (click)="callState.active = false" class="text-white/80 hover:text-white p-1">
-      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+    <button (click)="callFeedback.active = false" class="text-white/80 hover:text-white p-1 cursor-pointer flex-shrink-0">
+      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
       </svg>
     </button>
   </div>
 
-  <!-- MAIN VIEWPORT -->
-  <main class="flex-1 p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 overflow-y-auto">
+  <!-- ======================================================== -->
+  <!-- 3. ACTIVE SERVICE REQUESTS LIVE STATUS TRACKER          -->
+  <!-- ======================================================== -->
+  <div *ngIf="myActiveCalls.length > 0" class="border-b px-4 sm:px-8 py-2 flex items-center gap-3 overflow-x-auto flex-shrink-0"
+       [ngClass]="isDarkMode ? 'bg-slate-900/95 border-indigo-900/50' : 'bg-indigo-50/90 border-indigo-100'">
+    <span class="text-xs sm:text-sm font-black uppercase tracking-wider flex-shrink-0 flex items-center gap-1.5"
+          [ngClass]="isDarkMode ? 'text-indigo-400' : 'text-indigo-700'">
+      <span class="w-2 h-2 rounded-full bg-indigo-500 animate-ping"></span>
+      Active Requests ({{ myActiveCalls.length }}):
+    </span>
 
-    <!-- LEFT 7/12: LIVE ORDER TRACKER & ITEMS -->
-    <div class="lg:col-span-7 flex flex-col space-y-6">
+    <div *ngFor="let call of myActiveCalls" class="flex items-center gap-2 px-3 py-1 rounded-xl border flex-shrink-0 text-xs sm:text-sm shadow-sm"
+         [ngClass]="isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'">
+      <span class="font-extrabold" [ngClass]="isDarkMode ? 'text-white' : 'text-slate-900'">{{ call.callType }}</span>
+      <span class="text-slate-400">•</span>
+      <span class="px-2 py-0.5 rounded-lg text-[10px] sm:text-xs font-black uppercase tracking-wider"
+            [ngClass]="{
+              'bg-amber-500/20 text-amber-500 border border-amber-500/30 animate-pulse': call.status === 'WAITING',
+              'bg-indigo-500/20 text-indigo-500 border border-indigo-500/30': call.status === 'ACCEPTED',
+              'bg-emerald-500/20 text-emerald-500 border border-emerald-500/30': call.status === 'IN_PROGRESS'
+            }">
+        {{ call.status === 'WAITING' ? 'Waiting' : (call.status === 'ACCEPTED' ? 'Accepted' : 'In Progress') }}
+      </span>
+      <span *ngIf="call.acceptedBy" class="text-xs text-indigo-400 font-semibold">({{ call.acceptedBy }})</span>
+    </div>
+  </div>
 
-      <!-- IF ACTIVE ORDERS EXIST (1 OR MORE ROUNDS) -->
-      <div *ngIf="activeOrders.length > 0" class="space-y-5">
+  <!-- ======================================================== -->
+  <!-- 4. MAIN NON-SCROLLING VIEWPORT (MAXIMIZED FULL-PAGE)    -->
+  <!-- ======================================================== -->
+  <main class="flex-1 flex flex-col min-h-0 overflow-hidden p-4 sm:p-6 lg:p-7 gap-3.5 sm:gap-4 w-full">
+
+    <!-- ======================================================== -->
+    <!-- SCENARIO A: ACTIVE ORDERS EXIST (LARGE BOLD DINE-IN UI) -->
+    <!-- ======================================================== -->
+    <div *ngIf="activeOrders.length > 0" class="flex-1 flex flex-col min-h-0 overflow-hidden gap-3.5 sm:gap-4 w-full animate-fadeIn">
+
+      <!-- TOP PROMINENT SUMMARY ROW -->
+      <div class="border rounded-3xl p-4 sm:p-5 lg:p-6 shadow-md flex items-center justify-between gap-4 flex-shrink-0 transition-colors"
+           [ngClass]="isDarkMode ? 'bg-gradient-to-r from-slate-900 via-indigo-950/80 to-slate-900 border-indigo-500/40 text-white' : 'bg-gradient-to-r from-white via-indigo-50/50 to-white border-indigo-200 text-slate-900 shadow-sm'">
         
-        <!-- TOP GRAND TOTAL SUMMARY BAR -->
-        <div class="bg-gradient-to-r from-slate-900 via-indigo-950/70 to-slate-900 border border-indigo-500/40 rounded-3xl p-5 shadow-xl backdrop-blur-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div class="flex items-center gap-3.5 min-w-0">
           <div>
-            <div class="flex items-center gap-2">
-              <span class="text-xs font-black text-indigo-400 uppercase tracking-widest">
-                {{ activeOrders.length === 1 ? 'CURRENT ACTIVE ORDER' : activeOrders.length + ' ACTIVE ORDER ROUNDS' }}
+            <div class="flex items-center gap-2.5 flex-wrap">
+              <span class="text-xs sm:text-sm font-black uppercase tracking-wider"
+                    [ngClass]="isDarkMode ? 'text-indigo-400' : 'text-indigo-600'">
+                {{ activeOrders.length === 1 ? 'CURRENT ACTIVE ORDER' : activeOrders.length + ' ACTIVE ROUNDS' }}
               </span>
-              <span *ngIf="activeOrders.length > 1" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                Multi-Order Dining
+              <span *ngIf="isAllOrdersDelivered" class="px-3 py-1 rounded-full text-xs font-black uppercase border"
+                    [ngClass]="isDarkMode ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : 'bg-emerald-100 text-emerald-800 border-emerald-200'">
+                🍽️ Bon Appétit • All Dishes Served
               </span>
             </div>
-            <div class="text-sm font-semibold text-slate-300 mt-0.5">
-              {{ totalItemsCount }} Total Items across {{ activeOrders.length }} {{ activeOrders.length === 1 ? 'ticket' : 'rounds' }}
-            </div>
-          </div>
-
-          <div class="text-left sm:text-right border-t sm:border-t-0 border-slate-800 pt-2 sm:pt-0 w-full sm:w-auto">
-            <span class="text-xs text-slate-400 font-medium uppercase tracking-wider">Grand Total Bill</span>
-            <div class="text-2xl sm:text-3xl font-black text-emerald-400 font-mono leading-none mt-0.5">
-              Rs. {{ grandTotalAmount | number:'1.2-2' }}
-            </div>
-          </div>
-        </div>
-
-        <!-- ENJOY YOUR MEAL BANNER (Shows when all active meals are served) -->
-        <div *ngIf="isAllOrdersDelivered"
-             class="bg-gradient-to-r from-emerald-950 via-emerald-900/90 to-teal-950 border-2 border-emerald-500/60 rounded-2xl p-4.5 shadow-xl shadow-emerald-950/40 flex items-center gap-4 animate-fadeIn">
-          <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-300 text-2xl flex-shrink-0 shadow-inner">
-            🍽️
-          </div>
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center gap-2">
-              <span class="text-xs font-black text-emerald-400 uppercase tracking-widest">BON APPÉTIT</span>
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/30 text-emerald-200 uppercase">All Dishes Served</span>
-            </div>
-            <h3 class="text-lg font-black text-white leading-tight mt-0.5">Enjoy Your Meal!</h3>
-            <p class="text-xs text-emerald-200/90 font-medium mt-0.5">
-              Your meal has been served. We hope you enjoy dining at Pol-Kole Resort! Please let us know if you need additional refills, desserts, or service.
+            <p class="text-sm sm:text-base font-bold truncate mt-1" [ngClass]="isDarkMode ? 'text-slate-300' : 'text-slate-700'">
+              {{ totalItemsCount }} Total Items across {{ activeOrders.length }} order ticket(s)
             </p>
           </div>
         </div>
 
-        <!-- ORDER ROUNDS FILTER TABS (When multiple orders exist) -->
-        <div *ngIf="activeOrders.length > 1" class="flex items-center gap-2 overflow-x-auto pb-1">
-          <button
-            (click)="selectedOrderTab = 0"
-            class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex-shrink-0"
-            [ngClass]="selectedOrderTab === 0 ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-800 text-slate-400 hover:text-white'">
-            All Rounds ({{ activeOrders.length }})
-          </button>
-          <button
-            *ngFor="let ord of activeOrders; let idx = index"
-            (click)="selectedOrderTab = idx + 1"
-            class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 flex-shrink-0"
-            [ngClass]="selectedOrderTab === idx + 1 ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-800 text-slate-400 hover:text-white'">
-            <span>Round {{ ord.roundNumber }} (#{{ ord.order.id }})</span>
-            <span class="w-2 h-2 rounded-full"
-                  [ngClass]="{
-                    'bg-amber-400 animate-pulse': ord.kitchenStatus === 'PREPARING',
-                    'bg-emerald-400 animate-bounce': ord.kitchenStatus === 'READY',
-                    'bg-teal-400': ord.kitchenStatus === 'DELIVERED',
-                    'bg-slate-400': ord.kitchenStatus === 'RECEIVED'
-                  }"></span>
-          </button>
+        <div class="text-right flex-shrink-0">
+          <span class="text-xs sm:text-sm font-bold uppercase block tracking-wider" [ngClass]="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Total Bill</span>
+          <span class="text-2xl sm:text-3xl lg:text-4xl font-black font-mono leading-none mt-0.5 block" [ngClass]="isDarkMode ? 'text-emerald-400' : 'text-emerald-600'">
+            Rs. {{ grandTotalAmount | number:'1.2-2' }}
+          </span>
         </div>
+      </div>
 
-        <!-- EACH ACTIVE ORDER ROUND CARD -->
-        <div
-          *ngFor="let ord of displayedOrders; trackBy: trackByOrderRound"
-          class="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 shadow-2xl backdrop-blur-md space-y-5">
+      <!-- ROUNDS TABS (IF MULTIPLE ORDERS) -->
+      <div *ngIf="activeOrders.length > 1" class="flex items-center gap-2.5 overflow-x-auto flex-shrink-0 pb-0.5">
+        <button
+          (click)="selectedOrderTab = 0"
+          class="px-4 py-2 rounded-2xl text-xs sm:text-sm font-black transition cursor-pointer flex-shrink-0"
+          [ngClass]="selectedOrderTab === 0 ? 'bg-indigo-600 text-white shadow-md' : (isDarkMode ? 'bg-slate-800 text-slate-300 hover:text-white border border-slate-700' : 'bg-white text-slate-700 hover:text-slate-900 border border-slate-200 shadow-sm')">
+          All Orders ({{ activeOrders.length }})
+        </button>
+        <button
+          *ngFor="let ord of activeOrders; let idx = index"
+          (click)="selectedOrderTab = idx + 1"
+          class="px-4 py-2 rounded-2xl text-xs sm:text-sm font-black transition cursor-pointer flex items-center gap-2 flex-shrink-0"
+          [ngClass]="selectedOrderTab === idx + 1 ? 'bg-indigo-600 text-white shadow-md' : (isDarkMode ? 'bg-slate-800 text-slate-300 hover:text-white border border-slate-700' : 'bg-white text-slate-700 hover:text-slate-900 border border-slate-200 shadow-sm')">
+          <span>Round {{ ord.roundNumber }} (Order #{{ ord.order.id }})</span>
+          <span class="text-sm">{{ ord.icon }}</span>
+        </button>
+      </div>
+
+      <!-- MAIN ORDER CARD (FLEX-1 PROMINENT DISHES & PROGRESS) -->
+      <div *ngFor="let ord of displayedOrders; trackBy: trackByOrderRound"
+           class="flex-1 flex flex-col min-h-0 overflow-hidden border rounded-3xl p-4 sm:p-6 gap-3 sm:gap-4 transition-colors shadow-md"
+           [ngClass]="isDarkMode ? 'bg-slate-900/85 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'">
+
+        <!-- Order Header & Friendly Live Status Bar -->
+        <div class="p-4 sm:p-5 rounded-2xl border flex-shrink-0 space-y-3"
+             [ngClass]="isDarkMode ? 'bg-slate-800/60 border-slate-700/60' : 'bg-slate-50 border-slate-200'">
           
-          <!-- Order Card Header -->
-          <div class="flex items-center justify-between pb-4 border-b border-slate-800">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 font-black text-sm flex items-center justify-center border border-indigo-500/30">
-                R{{ ord.roundNumber }}
-              </div>
-              <div>
-                <div class="flex items-center gap-2">
-                  <h3 class="text-xl font-black text-white leading-tight">Order #{{ ord.order.id }}</h3>
-                  <span *ngIf="activeOrders.length > 1" class="text-xs font-bold text-slate-400">(Round {{ ord.roundNumber }})</span>
+          <div class="flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3 sm:gap-4 min-w-0">
+              <span class="text-3xl sm:text-4xl flex-shrink-0">{{ ord.icon }}</span>
+              <div class="min-w-0">
+                <div class="flex items-center gap-2.5">
+                  <h4 class="text-base sm:text-xl lg:text-2xl font-black truncate" [ngClass]="isDarkMode ? 'text-white' : 'text-slate-900'">
+                    {{ ord.customerStatusTitle }}
+                  </h4>
+                  <span class="text-xs sm:text-sm text-slate-400 font-mono font-bold hidden sm:inline">(Order #{{ ord.order.id }})</span>
                 </div>
-                <p class="text-xs text-slate-400 font-medium mt-0.5">
-                  Guest: {{ ord.order.customerName || 'Dine-in Guest' }} • {{ ord.order.items.length || 0 }} Items
+                <p class="text-xs sm:text-sm font-semibold truncate mt-1" [ngClass]="isDarkMode ? 'text-slate-300' : 'text-slate-600'">
+                  {{ ord.customerStatusSubtitle }}
                 </p>
               </div>
             </div>
 
-            <div class="text-right">
-              <span class="text-[11px] text-slate-400 font-medium">Subtotal</span>
-              <div class="text-xl font-black text-emerald-400 font-mono">
-                Rs. {{ ord.order.totalAmount | number:'1.2-2' }}
-              </div>
-            </div>
-          </div>
-
-          <!-- 3-STAGE LIVE ORDER STATUS TRACKER FOR THIS ROUND -->
-          <div class="py-2 px-2">
-            <div class="grid grid-cols-3 gap-2 relative">
-              <!-- Connecting Progress Bar -->
-              <div class="absolute top-1/2 left-[16%] right-[16%] -translate-y-1/2 h-1 bg-slate-800 z-0">
-                <div
-                  class="h-full bg-gradient-to-r from-amber-500 to-emerald-500 transition-all duration-700"
-                  [style.width]="ord.kitchenStatus === 'RECEIVED' ? '0%' : (ord.kitchenStatus === 'PREPARING' ? '50%' : '100%')">
-                </div>
-              </div>
-
-              <!-- Step 1: Placed -->
-              <div class="relative z-10 flex flex-col items-center text-center">
-                <div
-                  class="w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-md text-xs"
-                  [ngClass]="ord.kitchenStatus ? 'bg-amber-500 text-slate-950 font-bold' : 'bg-slate-800 text-slate-500'">
-                  <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                </div>
-                <span class="text-xs font-bold text-white mt-1.5">Confirmed</span>
-                <span class="text-[10px] text-slate-400">Order Placed</span>
-              </div>
-
-              <!-- Step 2: Preparing -->
-              <div class="relative z-10 flex flex-col items-center text-center">
-                <div
-                  class="w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-md text-xs"
-                  [ngClass]="ord.kitchenStatus === 'PREPARING' || ord.kitchenStatus === 'READY' || ord.kitchenStatus === 'DELIVERED' ? 'bg-amber-500 text-slate-950 font-bold' : 'bg-slate-800 text-slate-500'"
-                  [class.animate-pulse]="ord.kitchenStatus === 'PREPARING'">
-                  <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
-                  </svg>
-                </div>
-                <span class="text-xs font-bold text-white mt-1.5">In Kitchen</span>
-                <span class="text-[10px] text-slate-400">Chef Cooking</span>
-              </div>
-
-              <!-- Step 3: Ready / Served -->
-              <div class="relative z-10 flex flex-col items-center text-center">
-                <div
-                  class="w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-md text-xs"
-                  [ngClass]="ord.kitchenStatus === 'READY' || ord.kitchenStatus === 'DELIVERED' ? 'bg-emerald-500 text-slate-950 font-bold' : 'bg-slate-800 text-slate-500'">
-                  <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-                <span class="text-xs font-bold text-white mt-1.5">{{ ord.kitchenStatus === 'DELIVERED' ? 'Served' : 'Ready' }}</span>
-                <span class="text-[10px] text-slate-400">{{ ord.kitchenStatus === 'DELIVERED' ? 'Served at table' : 'Waiter on way' }}</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- ITEMS BREAKDOWN LIST FOR THIS ROUND -->
-          <div class="border-t border-slate-800 pt-3">
-            <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5">Round {{ ord.roundNumber }} Dishes</h4>
-            <div class="space-y-2 max-h-[200px] overflow-y-auto pr-1">
-              <div
-                *ngFor="let item of ord.order.items; trackBy: trackByItemId"
-                class="flex items-center justify-between p-3 rounded-xl bg-slate-800/60 border border-slate-700/50">
-                <div class="flex items-center gap-3">
-                  <span class="w-7 h-7 rounded-lg bg-indigo-500/20 text-indigo-400 font-bold text-xs flex items-center justify-center">
-                    {{ item.quantity }}x
-                  </span>
-                  <div>
-                    <p class="font-bold text-sm text-white">{{ item.menuItemName }}</p>
-                    <p *ngIf="item.notes" class="text-xs text-amber-300/90 italic">Note: {{ item.notes }}</p>
-                  </div>
-                </div>
-                <div class="font-mono font-bold text-sm text-slate-200">
-                  Rs. {{ (item.price * item.quantity) | number:'1.2-2' }}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- IF RESERVED TABLE (VIP RESERVATION WELCOME STATE - WHEN NO ORDERS YET) -->
-      <div *ngIf="activeOrders.length === 0 && (activeReservation || locationDetail?.status === 'RESERVED')"
-           class="bg-gradient-to-br from-slate-900 via-indigo-950/80 to-slate-900 border-2 border-indigo-500/50 rounded-3xl p-7 shadow-2xl backdrop-blur-md relative overflow-hidden space-y-6">
-        
-        <!-- Glow accents -->
-        <div class="absolute -top-12 -right-12 w-48 h-48 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none"></div>
-
-        <!-- VIP Badge & Table Banner -->
-        <div class="flex items-center justify-between border-b border-indigo-500/30 pb-4">
-          <div class="flex items-center gap-3">
-            <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-400 to-amber-600 flex items-center justify-center text-slate-950 font-black shadow-lg shadow-amber-500/20">
-              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-              </svg>
-            </div>
-            <div>
-              <span class="text-xs font-black text-amber-400 uppercase tracking-widest flex items-center gap-1.5">
-                <span>⭐</span> RESERVED DINING TABLE
+            <div class="flex items-center gap-2 flex-shrink-0">
+              <span class="px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-black uppercase border {{ ord.badgeClass }}">
+                {{ ord.backendStatus }}
               </span>
-              <h2 class="text-2xl font-black text-white">
-                {{ activeReservation?.customerName ? 'Welcome, ' + activeReservation?.customerName : 'Reserved for VIP Guests' }}
-              </h2>
             </div>
           </div>
 
-          <div class="px-3.5 py-1.5 rounded-xl bg-indigo-500/20 border border-indigo-400/40 text-indigo-300 font-bold text-xs">
-            {{ locationLabel }}
-          </div>
-        </div>
-
-        <!-- Reservation Booking Details Card -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div class="p-4 rounded-2xl bg-slate-800/80 border border-slate-700/60">
-            <div class="text-[11px] font-bold text-slate-400 uppercase">Reservation Time</div>
-            <div class="text-lg font-black text-amber-400 font-mono mt-0.5">
-              {{ activeReservation?.reservationTime || 'Scheduled for Today' }}
+          <!-- Progress Stepper Track (THICKER & HIGHER CONTRAST) -->
+          <div class="pt-1">
+            <div class="w-full h-3 sm:h-3.5 rounded-full overflow-hidden" [ngClass]="isDarkMode ? 'bg-slate-700/60' : 'bg-slate-200'">
+              <div class="h-full bg-gradient-to-r from-amber-500 via-indigo-500 to-emerald-500 transition-all duration-700 rounded-full"
+                   [style.width.%]="ord.progressPercent">
+              </div>
             </div>
-          </div>
-
-          <div class="p-4 rounded-2xl bg-slate-800/80 border border-slate-700/60">
-            <div class="text-[11px] font-bold text-slate-400 uppercase">Party Size</div>
-            <div class="text-lg font-black text-white font-mono mt-0.5">
-              {{ activeReservation?.guestsCount || 4 }} Guests
+            <div class="flex justify-between text-xs sm:text-sm font-black uppercase mt-1.5 px-1"
+                 [ngClass]="isDarkMode ? 'text-slate-300' : 'text-slate-600'">
+              <span [class.text-amber-500]="ord.progressPercent >= 25">1. Received</span>
+              <span [class.text-amber-500]="ord.progressPercent >= 50">2. Preparing</span>
+              <span [class.text-emerald-500]="ord.progressPercent >= 80">3. Ready</span>
+              <span [class.text-teal-500]="ord.progressPercent >= 100">4. Served</span>
             </div>
           </div>
         </div>
 
-        <!-- Special Request Note (if provided) -->
-        <div *ngIf="activeReservation?.specialRequests" class="p-3.5 rounded-xl bg-indigo-950/40 border border-indigo-800/60 text-xs text-indigo-200 italic">
-          <strong>Special Arrangement:</strong> "{{ activeReservation?.specialRequests }}"
+        <!-- DISHES LIST (BIG FONT & PROMINENT TILES) -->
+        <div class="flex-1 flex flex-col min-h-0 overflow-hidden">
+          <div class="flex items-center justify-between text-xs sm:text-sm font-extrabold uppercase tracking-wider mb-2 px-1 flex-shrink-0"
+               [ngClass]="isDarkMode ? 'text-slate-400' : 'text-slate-500'">
+            <span>Ordered Dishes ({{ (ord.order.items && ord.order.items.length) ? ord.order.items.length : 0 }})</span>
+            <span>Price</span>
+          </div>
+
+          <div class="flex-1 min-h-0 overflow-y-auto pr-1 grid grid-cols-1 md:grid-cols-2 gap-2.5 content-start">
+            <div
+              *ngFor="let item of ord.order.items; trackBy: trackByItemId"
+              class="flex items-center justify-between p-3.5 sm:p-4 rounded-2xl border transition-colors shadow-sm"
+              [ngClass]="isDarkMode ? 'bg-slate-800/50 border-slate-800 hover:border-slate-700' : 'bg-slate-50 border-slate-200 hover:border-slate-300'">
+              <div class="flex items-center gap-3 sm:gap-3.5 min-w-0">
+                <span class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl font-black text-sm sm:text-base flex items-center justify-center border flex-shrink-0 shadow-inner"
+                      [ngClass]="isDarkMode ? 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30' : 'bg-indigo-100 text-indigo-700 border-indigo-200'">
+                  {{ item.quantity }}×
+                </span>
+                <div class="min-w-0">
+                  <p class="font-black text-sm sm:text-base lg:text-lg truncate" [ngClass]="isDarkMode ? 'text-white' : 'text-slate-900'">{{ item.menuItemName }}</p>
+                  <p *ngIf="item.notes" class="text-xs sm:text-sm italic truncate mt-0.5" [ngClass]="isDarkMode ? 'text-amber-300/90' : 'text-amber-600'">Note: {{ item.notes }}</p>
+                </div>
+              </div>
+              <div class="font-mono font-black text-sm sm:text-base lg:text-lg flex-shrink-0 pl-3" [ngClass]="isDarkMode ? 'text-slate-200' : 'text-slate-900'">
+                Rs. {{ (item.price * item.quantity) | number:'1.2-2' }}
+              </div>
+            </div>
+          </div>
         </div>
 
-        <!-- Arrival & Seating Button -->
-        <div class="pt-2 flex flex-col sm:flex-row items-center gap-3">
-          <button
-            (click)="arriveAndSeatGuest()"
-            class="w-full sm:flex-1 py-3.5 px-6 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-slate-950 font-black text-sm tracking-wider uppercase transition-all shadow-xl shadow-emerald-500/25 flex items-center justify-center gap-2 cursor-pointer">
-            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
-            <span>We Have Arrived / Seat Table</span>
-          </button>
-
-          <button
-            (click)="callWaiter()"
-            class="w-full sm:w-auto py-3.5 px-5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs tracking-wider uppercase border border-slate-700 transition cursor-pointer flex items-center justify-center gap-2">
-            <svg class="w-4 h-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-            </svg>
-            <span>Notify Waiter</span>
-          </button>
-        </div>
       </div>
 
-      <!-- IF NO ACTIVE ORDER & NOT RESERVED (GENERAL WELCOME STATE) -->
-      <div *ngIf="activeOrders.length === 0 && !activeReservation && locationDetail?.status !== 'RESERVED'"
-           class="bg-slate-900/80 border border-slate-800 rounded-3xl p-8 shadow-2xl backdrop-blur-md flex flex-col items-center justify-center text-center">
-        <div class="w-16 h-16 rounded-3xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 mb-4">
-          <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-          </svg>
-        </div>
-        <h2 class="text-2xl font-black text-white">Welcome to Pol-Kole Resort</h2>
-        <p class="text-sm text-slate-400 max-w-md mt-2">
-          Your order status and live kitchen updates will appear here automatically as soon as your waiter or room service places your order.
-        </p>
-        <div class="mt-6 flex items-center gap-3">
-          <button
-            (click)="callWaiter()"
-            class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white font-bold text-xs tracking-wider uppercase transition shadow-lg shadow-indigo-500/25 flex items-center gap-2 cursor-pointer">
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-            </svg>
-            <span>Call Waiter to Order</span>
-          </button>
-        </div>
+      <!-- BOTTOM TOUCH ACTION BAR (LARGE TOUCH TARGETS) -->
+      <div class="border rounded-3xl p-3 sm:p-4 shadow-md grid grid-cols-2 sm:grid-cols-4 gap-3 flex-shrink-0 transition-colors"
+           [ngClass]="isDarkMode ? 'bg-slate-900/85 border-slate-800' : 'bg-white border-slate-200 shadow-sm'">
+        <button
+          (click)="openMenuModal()"
+          class="py-4 px-4 rounded-2xl border font-black text-sm sm:text-base tracking-wider uppercase transition flex items-center justify-center gap-2 cursor-pointer active:scale-95 shadow-sm relative overflow-hidden"
+          [ngClass]="isDarkMode ? 'bg-slate-800 hover:bg-slate-700 border-indigo-500/30 text-white' : 'bg-indigo-50 hover:bg-indigo-100 border-indigo-200 text-indigo-700'">
+          <span *ngIf="hasSpecialDeals" class="w-2 h-2 rounded-full bg-rose-500 animate-ping absolute top-2 right-2"></span>
+          <span>📖 View Menu</span>
+          <span *ngIf="hasSpecialDeals" class="text-xs text-amber-400">🔥</span>
+        </button>
+
+        <button
+          (click)="isRoom ? callReception() : callWaiter()"
+          class="py-4 px-4 rounded-2xl border font-black text-sm sm:text-base tracking-wider uppercase transition flex items-center justify-center gap-2 cursor-pointer active:scale-95 shadow-sm"
+          [ngClass]="isDarkMode ? 'bg-slate-800 hover:bg-slate-700 border-amber-500/30 text-white' : 'bg-amber-50 hover:bg-amber-100 border-amber-200 text-amber-800'">
+          <span>{{ isRoom ? '🛎️ Reception' : '👨‍🍳 Call Waiter' }}</span>
+        </button>
+
+        <button
+          (click)="showServiceModal = true"
+          class="py-4 px-4 rounded-2xl border font-black text-sm sm:text-base tracking-wider uppercase transition flex items-center justify-center gap-2 cursor-pointer active:scale-95 shadow-sm"
+          [ngClass]="isDarkMode ? 'bg-slate-800 hover:bg-slate-700 border-cyan-500/30 text-white' : 'bg-cyan-50 hover:bg-cyan-100 border-cyan-200 text-cyan-800'">
+          <span>✨ {{ isRoom ? 'Room Amenities' : 'Table Service' }}</span>
+        </button>
+
+        <button
+          (click)="showBillModal = true"
+          class="py-4 px-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-sm sm:text-base tracking-wider uppercase transition shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 cursor-pointer active:scale-95">
+          <span>🧾 Request Bill</span>
+        </button>
       </div>
 
     </div>
 
-    <!-- RIGHT 5/12: GUEST QUICK ACTIONS & RESORT AMENITIES -->
-    <div class="lg:col-span-5 flex flex-col space-y-6">
+    <!-- ======================================================== -->
+    <!-- SCENARIO B: VIP RESERVED TABLE (PROMINENT LARGE CARD)   -->
+    <!-- ======================================================== -->
+    <div *ngIf="activeOrders.length === 0 && locationDetail?.status === 'RESERVED' && activeReservation"
+         class="flex-1 flex flex-col justify-center items-center p-6 sm:p-10 border-2 rounded-3xl shadow-xl w-full animate-fadeIn transition-colors"
+         [ngClass]="isDarkMode ? 'bg-gradient-to-br from-slate-900 via-indigo-950/80 to-slate-900 border-indigo-500/50 text-white' : 'bg-gradient-to-br from-white via-indigo-50/60 to-white border-indigo-300 text-slate-900 shadow-md'">
 
-      <!-- GUEST QUICK ACTION BUTTONS -->
-      <div class="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 shadow-2xl backdrop-blur-md">
-        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Guest Instant Actions</h3>
+      <div class="max-w-3xl w-full space-y-6 text-center">
+        <div class="w-20 h-20 rounded-3xl bg-gradient-to-tr from-amber-400 to-amber-600 flex items-center justify-center text-slate-950 font-black shadow-xl shadow-amber-500/20 text-4xl mx-auto">
+          ⭐
+        </div>
+        <div>
+          <span class="text-xs sm:text-sm font-black uppercase tracking-widest"
+                [ngClass]="isDarkMode ? 'text-amber-400' : 'text-amber-600'">
+            RESERVED DINING TABLE
+          </span>
+          <h2 class="text-3xl sm:text-4xl lg:text-5xl font-black mt-2" [ngClass]="isDarkMode ? 'text-white' : 'text-slate-900'">
+            {{ (activeReservation && activeReservation.customerName) ? 'Welcome, ' + activeReservation.customerName : 'Reserved for VIP Guests' }}
+          </h2>
+        </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-          <!-- Call Waiter Button -->
-          <button
-            (click)="callWaiter()"
-            class="p-4 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-indigo-500/30 hover:border-indigo-400 text-left transition-all duration-200 group cursor-pointer">
-            <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center mb-3 group-hover:scale-110 transition">
-              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-              </svg>
+        <div class="grid grid-cols-2 gap-4 text-left">
+          <div class="p-5 rounded-3xl border"
+               [ngClass]="isDarkMode ? 'bg-slate-800/80 border-slate-700/60' : 'bg-slate-50 border-slate-200'">
+            <div class="text-xs font-bold uppercase" [ngClass]="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Reservation Time</div>
+            <div class="text-2xl font-black font-mono mt-1" [ngClass]="isDarkMode ? 'text-amber-400' : 'text-amber-600'">
+              {{ (activeReservation && activeReservation.reservationTime) ? activeReservation.reservationTime : 'Scheduled Today' }}
             </div>
-            <div class="font-bold text-white text-sm">Call Waiter</div>
-            <div class="text-[11px] text-slate-400 mt-0.5">Assistance at your table</div>
+          </div>
+
+          <div class="p-5 rounded-3xl border"
+               [ngClass]="isDarkMode ? 'bg-slate-800/80 border-slate-700/60' : 'bg-slate-50 border-slate-200'">
+            <div class="text-xs font-bold uppercase" [ngClass]="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Party Size</div>
+            <div class="text-2xl font-black font-mono mt-1" [ngClass]="isDarkMode ? 'text-white' : 'text-slate-900'">
+              {{ (activeReservation && activeReservation.guestsCount) ? activeReservation.guestsCount : 4 }} Guests
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-3 flex flex-col sm:flex-row items-center gap-4">
+          <button
+            (click)="arriveAndSeatGuest()"
+            class="w-full sm:flex-1 py-4 px-6 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-black text-sm sm:text-base tracking-wider uppercase transition-all shadow-xl shadow-emerald-500/25 flex items-center justify-center gap-2 cursor-pointer active:scale-95">
+            <span>✓ We Have Arrived / Seat Table</span>
           </button>
 
-          <!-- Request Bill Button -->
           <button
-            (click)="requestBill()"
-            class="p-4 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-emerald-500/30 hover:border-emerald-400 text-left transition-all duration-200 group cursor-pointer">
-            <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center mb-3 group-hover:scale-110 transition">
-              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z" />
-              </svg>
-            </div>
-            <div class="font-bold text-white text-sm">Request Bill</div>
-            <div class="text-[11px] text-slate-400 mt-0.5">Pay at table / invoice</div>
-          </button>
-
-          <!-- Request Water Button -->
-          <button
-            (click)="requestWater()"
-            class="p-4 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-cyan-500/30 hover:border-cyan-400 text-left transition-all duration-200 group cursor-pointer">
-            <div class="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center mb-3 group-hover:scale-110 transition">
-              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-              </svg>
-            </div>
-            <div class="font-bold text-white text-sm">Refill Water</div>
-            <div class="text-[11px] text-slate-400 mt-0.5">Complimentary ice water</div>
-          </button>
-
-          <!-- Refresh Status -->
-          <button
-            (click)="wsService.refreshAllData()"
-            class="p-4 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 text-left transition-all duration-200 group cursor-pointer">
-            <div class="w-10 h-10 rounded-xl bg-slate-700 text-slate-300 flex items-center justify-center mb-3 group-hover:rotate-180 transition duration-300">
-              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-            </div>
-            <div class="font-bold text-white text-sm">Refresh Status</div>
-            <div class="text-[11px] text-slate-400 mt-0.5">Sync with kitchen queue</div>
+            (click)="openMenuModal()"
+            class="w-full sm:w-auto py-4 px-6 rounded-2xl border font-black text-sm tracking-wider uppercase transition cursor-pointer flex items-center justify-center gap-2 active:scale-95"
+            [ngClass]="isDarkMode ? 'bg-slate-800 hover:bg-slate-700 text-white border-slate-700' : 'bg-white hover:bg-slate-100 text-slate-800 border-slate-300 shadow-sm'">
+            <span>📖 View Menu</span>
           </button>
         </div>
       </div>
+    </div>
 
-      <!-- RESORT WI-FI & AMENITIES CARD -->
-      <div class="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 shadow-2xl backdrop-blur-md space-y-4">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2.5">
-            <svg class="w-5 h-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
-            </svg>
-            <span class="text-xs font-bold text-white uppercase tracking-wider">High-Speed Guest Wi-Fi</span>
-          </div>
-          <span class="text-[10px] font-bold text-emerald-400 bg-emerald-500/20 px-2 py-0.5 rounded-full">FREE</span>
+    <!-- ======================================================== -->
+    <!-- SCENARIO C: IDLE WELCOME STATE (LARGE BOLD TILES)       -->
+    <!-- ======================================================== -->
+    <div *ngIf="activeOrders.length === 0 && (!activeReservation || locationDetail?.status !== 'RESERVED')"
+         class="flex-1 flex flex-col justify-between items-center p-6 sm:p-8 lg:p-10 border rounded-3xl shadow-lg w-full animate-fadeIn transition-colors overflow-hidden"
+         [ngClass]="isDarkMode ? 'bg-gradient-to-b from-slate-900/90 via-slate-900/70 to-slate-950 border-slate-800 text-white' : 'bg-gradient-to-b from-white via-slate-50 to-white border-slate-200 text-slate-900 shadow-sm'">
+
+      <!-- Top Hero Section -->
+      <div class="flex flex-col items-center text-center space-y-3 pt-2">
+        <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl flex items-center justify-center text-4xl sm:text-5xl shadow-lg border"
+             [ngClass]="isRoom ? (isDarkMode ? 'bg-gradient-to-tr from-emerald-500/20 via-teal-500/20 to-cyan-500/20 border-emerald-500/30' : 'bg-emerald-50 border-emerald-200') : (isDarkMode ? 'bg-gradient-to-tr from-indigo-500/20 via-purple-500/20 to-pink-500/20 border-indigo-500/30' : 'bg-indigo-50 border-indigo-200')">
+          {{ isRoom ? '🏨' : '🍽️' }}
         </div>
 
-        <div class="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-between">
-          <div>
-            <div class="text-[10px] text-slate-400 uppercase font-semibold">Network SSID</div>
-            <div class="text-sm font-bold text-white font-mono">{{ wifiName }}</div>
+        <div class="space-y-1.5">
+          <div class="inline-block px-4 py-1 rounded-full text-xs sm:text-sm font-black uppercase tracking-widest border"
+               [ngClass]="isRoom ? (isDarkMode ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : 'bg-emerald-100 text-emerald-800 border-emerald-200') : (isDarkMode ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' : 'bg-indigo-100 text-indigo-800 border-indigo-200')">
+            {{ locationLabel }}
           </div>
-          <div class="text-right">
-            <div class="text-[10px] text-slate-400 uppercase font-semibold">Password</div>
-            <div class="text-sm font-bold text-amber-400 font-mono">{{ wifiPass }}</div>
+          <h2 class="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight" [ngClass]="isDarkMode ? 'text-white' : 'text-slate-900'">
+            Welcome! How can we help you?
+          </h2>
+          <p class="text-sm sm:text-base font-semibold leading-relaxed max-w-xl" [ngClass]="isDarkMode ? 'text-slate-400' : 'text-slate-600'">
+            {{ isRoom ? 'Your room service orders and guest requests will appear here automatically.' : 'Your live order progress and kitchen updates will appear here automatically once your order is placed.' }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Middle 4 Large Touch Action Cards (2x2 Grid) -->
+      <div *ngIf="isTable" class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 w-full max-w-3xl py-2">
+        <button
+          (click)="openMenuModal()"
+          class="p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white text-left transition shadow-xl shadow-indigo-600/25 flex items-center gap-4 cursor-pointer group active:scale-95">
+          <div class="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center text-3xl flex-shrink-0 group-hover:scale-110 transition">
+            📖
+          </div>
+          <div>
+            <div class="font-black text-lg sm:text-xl">View Menu</div>
+            <div class="text-xs sm:text-sm text-indigo-100 font-medium mt-0.5">Explore starters, mains & drinks</div>
+          </div>
+        </button>
+
+        <button
+          (click)="callWaiter()"
+          class="p-5 sm:p-6 rounded-3xl border text-left transition flex items-center gap-4 cursor-pointer group active:scale-95 shadow-sm"
+          [ngClass]="isDarkMode ? 'bg-slate-800/90 hover:bg-slate-700/90 border-slate-700 text-white' : 'bg-white hover:bg-amber-50/50 border-slate-200 text-slate-900'">
+          <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0 group-hover:scale-110 transition"
+               [ngClass]="isDarkMode ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-700'">
+            👨‍🍳
+          </div>
+          <div>
+            <div class="font-black text-lg sm:text-xl">Call Waiter</div>
+            <div class="text-xs sm:text-sm font-medium mt-0.5" [ngClass]="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Staff assistance at your table</div>
+          </div>
+        </button>
+
+        <button
+          (click)="showServiceModal = true"
+          class="p-5 sm:p-6 rounded-3xl border text-left transition flex items-center gap-4 cursor-pointer group active:scale-95 shadow-sm"
+          [ngClass]="isDarkMode ? 'bg-slate-800/90 hover:bg-slate-700/90 border-slate-700 text-white' : 'bg-white hover:bg-cyan-50/50 border-slate-200 text-slate-900'">
+          <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0 group-hover:scale-110 transition"
+               [ngClass]="isDarkMode ? 'bg-cyan-500/20 text-cyan-400' : 'bg-cyan-100 text-cyan-700'">
+            🛎️
+          </div>
+          <div>
+            <div class="font-black text-lg sm:text-xl">Table Services</div>
+            <div class="text-xs sm:text-sm font-medium mt-0.5" [ngClass]="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Water, cutlery, table cleaning</div>
+          </div>
+        </button>
+
+        <button
+          (click)="showBillModal = true"
+          class="p-5 sm:p-6 rounded-3xl border text-left transition flex items-center gap-4 cursor-pointer group active:scale-95 shadow-sm"
+          [ngClass]="isDarkMode ? 'bg-slate-800/90 hover:bg-slate-700/90 border-slate-700 text-white' : 'bg-white hover:bg-emerald-50/50 border-slate-200 text-slate-900'">
+          <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0 group-hover:scale-110 transition"
+               [ngClass]="isDarkMode ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-700'">
+            🧾
+          </div>
+          <div>
+            <div class="font-black text-lg sm:text-xl">Request Bill</div>
+            <div class="text-xs sm:text-sm font-medium mt-0.5" [ngClass]="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Cashier will prepare your invoice</div>
+          </div>
+        </button>
+      </div>
+
+      <div *ngIf="isRoom" class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 w-full max-w-3xl py-2">
+        <button
+          (click)="openMenuModal()"
+          class="p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-left transition shadow-xl shadow-emerald-600/25 flex items-center gap-4 cursor-pointer group active:scale-95">
+          <div class="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center text-3xl flex-shrink-0 group-hover:scale-110 transition">
+            🍽️
+          </div>
+          <div>
+            <div class="font-black text-lg sm:text-xl">Room Service Menu</div>
+            <div class="text-xs sm:text-sm text-emerald-100 font-medium mt-0.5">Order in-room dining & drinks</div>
+          </div>
+        </button>
+
+        <button
+          (click)="callReception()"
+          class="p-5 sm:p-6 rounded-3xl border text-left transition flex items-center gap-4 cursor-pointer group active:scale-95 shadow-sm"
+          [ngClass]="isDarkMode ? 'bg-slate-800/90 hover:bg-slate-700/90 border-slate-700 text-white' : 'bg-white hover:bg-amber-50/50 border-slate-200 text-slate-900'">
+          <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0 group-hover:scale-110 transition"
+               [ngClass]="isDarkMode ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-700'">
+            🛎️
+          </div>
+          <div>
+            <div class="font-black text-lg sm:text-xl">Call Reception</div>
+            <div class="text-xs sm:text-sm font-medium mt-0.5" [ngClass]="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Front desk & concierge (Ext 100)</div>
+          </div>
+        </button>
+
+        <button
+          (click)="showServiceModal = true"
+          class="p-5 sm:p-6 rounded-3xl border text-left transition flex items-center gap-4 cursor-pointer group active:scale-95 shadow-sm"
+          [ngClass]="isDarkMode ? 'bg-slate-800/90 hover:bg-slate-700/90 border-slate-700 text-white' : 'bg-white hover:bg-purple-50/50 border-slate-200 text-slate-900'">
+          <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0 group-hover:scale-110 transition"
+               [ngClass]="isDarkMode ? 'bg-purple-500/20 text-purple-400' : 'bg-purple-100 text-purple-700'">
+            ✨
+          </div>
+          <div>
+            <div class="font-black text-lg sm:text-xl">Housekeeping & Amenities</div>
+            <div class="text-xs sm:text-sm font-medium mt-0.5" [ngClass]="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Fresh towels, toiletries, water</div>
+          </div>
+        </button>
+
+        <button
+          (click)="showBillModal = true"
+          class="p-5 sm:p-6 rounded-3xl border text-left transition flex items-center gap-4 cursor-pointer group active:scale-95 shadow-sm"
+          [ngClass]="isDarkMode ? 'bg-slate-800/90 hover:bg-slate-700/90 border-slate-700 text-white' : 'bg-white hover:bg-cyan-50/50 border-slate-200 text-slate-900'">
+          <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0 group-hover:scale-110 transition"
+               [ngClass]="isDarkMode ? 'bg-cyan-500/20 text-cyan-400' : 'bg-cyan-100 text-cyan-700'">
+            🧾
+          </div>
+          <div>
+            <div class="font-black text-lg sm:text-xl">Request Room Bill</div>
+            <div class="text-xs sm:text-sm font-medium mt-0.5" [ngClass]="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Checkout invoice & bill request</div>
+          </div>
+        </button>
+      </div>
+
+      <!-- Bottom Contacts Bar -->
+      <div class="pt-3 border-t w-full max-w-3xl flex flex-wrap items-center justify-between gap-3 text-xs sm:text-sm"
+           [ngClass]="isDarkMode ? 'border-slate-800 text-slate-400' : 'border-slate-200 text-slate-600'">
+        <span>Reception: <strong class="font-mono" [ngClass]="isDarkMode ? 'text-slate-200' : 'text-slate-900'">Ext. 100</strong></span>
+        <span>Room Service: <strong class="font-mono" [ngClass]="isDarkMode ? 'text-slate-200' : 'text-slate-900'">Ext. 102</strong></span>
+        <button (click)="copyWifi()" class="hover:underline cursor-pointer font-bold"
+                [ngClass]="isDarkMode ? 'text-indigo-400' : 'text-indigo-600'">
+          Guest Wi-Fi: {{ wifiName }}
+        </button>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- ======================================================== -->
+  <!-- MODALS OVERLAY (ON TOP OF 1-PAGE VIEWPORT)              -->
+  <!-- ======================================================== -->
+  
+  <!-- MODAL 1: DIGITAL MENU -->
+  <div *ngIf="showMenuModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-950/80 backdrop-blur-xl animate-fadeIn">
+    <div class="border rounded-3xl w-full max-w-5xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden transition-colors"
+         [ngClass]="isDarkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'">
+      
+      <!-- Modal Header -->
+      <div class="px-6 py-4 border-b flex items-center justify-between"
+           [ngClass]="isDarkMode ? 'bg-slate-900/95 border-slate-800' : 'bg-slate-50 border-slate-200'">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-xl"
+               [ngClass]="isDarkMode ? 'bg-indigo-500/20 text-indigo-400' : 'bg-indigo-100 text-indigo-700'">
+            📖
+          </div>
+          <div>
+            <h3 class="text-lg sm:text-xl font-black" [ngClass]="isDarkMode ? 'text-white' : 'text-slate-900'">Pol-Kole Dining Menu</h3>
+            <p class="text-xs sm:text-sm font-medium" [ngClass]="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Browse dishes, beverages & desserts</p>
           </div>
         </div>
 
         <button
-          (click)="copyWifi()"
-          class="w-full py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 border border-slate-700 transition cursor-pointer flex items-center justify-center gap-2">
-          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+          (click)="closeMenuModal()"
+          class="w-9 h-9 rounded-xl border flex items-center justify-center cursor-pointer active:scale-95"
+          [ngClass]="isDarkMode ? 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-300' : 'bg-white hover:bg-slate-100 border-slate-200 text-slate-700'">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
           </svg>
-          <span>{{ copiedWifi ? 'Password Copied!' : 'Copy Wi-Fi Password' }}</span>
         </button>
+      </div>
 
-        <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
-          <span>Reception Extension: <strong>Ext. 100</strong></span>
-          <span>Room Service: <strong>Ext. 102</strong></span>
+      <!-- Search & Filters -->
+      <div class="p-4 sm:p-5 border-b space-y-3"
+           [ngClass]="isDarkMode ? 'bg-slate-900/50 border-slate-800' : 'bg-slate-50/50 border-slate-200'">
+        <div class="relative">
+          <input
+            type="text"
+            [(ngModel)]="menuSearchTerm"
+            placeholder="Search menu items (e.g. Burger, Rice, Curry, Coffee)..."
+            class="w-full border rounded-2xl px-4 py-2.5 sm:py-3 text-sm sm:text-base focus:outline-none focus:border-indigo-500 transition-colors"
+            [ngClass]="isDarkMode ? 'bg-slate-800/90 border-slate-700 text-white placeholder-slate-400' : 'bg-white border-slate-300 text-slate-900 placeholder-slate-500'">
+        </div>
+
+        <div class="flex items-center gap-2 overflow-x-auto pb-0.5">
+          <!-- Special Deals Filter Pill (if any deals exist) -->
+          <button
+            *ngIf="hasSpecialDeals"
+            (click)="selectedCategory = -1"
+            class="px-4 py-1.5 rounded-xl text-xs sm:text-sm font-black transition cursor-pointer flex items-center gap-1.5 flex-shrink-0 shadow-md"
+            [ngClass]="selectedCategory === -1 ? 'bg-gradient-to-r from-amber-500 to-rose-500 text-white ring-2 ring-amber-400' : 'bg-gradient-to-r from-amber-500/20 to-rose-500/20 text-amber-500 border border-amber-500/40 hover:from-amber-500 hover:to-rose-500 hover:text-white'">
+            <span>🔥</span>
+            <span>Special Deals ({{ specialDealsCount }})</span>
+          </button>
+
+          <button
+            (click)="selectedCategory = null"
+            class="px-4 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer flex-shrink-0"
+            [ngClass]="selectedCategory === null ? 'bg-indigo-600 text-white shadow-sm' : (isDarkMode ? 'bg-slate-800 text-slate-400 hover:text-white' : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100')">
+            All Items ({{ menuItems.length }})
+          </button>
+          <button
+            *ngFor="let cat of menuCategories"
+            (click)="selectedCategory = cat.id || null"
+            class="px-4 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer flex items-center gap-1.5 flex-shrink-0"
+            [ngClass]="selectedCategory === cat.id ? 'bg-indigo-600 text-white shadow-sm' : (isDarkMode ? 'bg-slate-800 text-slate-400 hover:text-white' : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100')">
+            <span>{{ getCategoryIcon(cat.name) }}</span>
+            <span>{{ cat.name }}</span>
+          </button>
         </div>
       </div>
 
+      <!-- Menu Items Grid -->
+      <div class="flex-1 p-4 sm:p-6 overflow-y-auto">
+        <div *ngIf="filteredMenuItems.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
+          <div
+            *ngFor="let item of filteredMenuItems"
+            class="p-4 rounded-2xl border transition flex flex-col justify-between space-y-2.5 relative overflow-hidden"
+            [ngClass]="getItemDiscount(item) ? (isDarkMode ? 'bg-gradient-to-br from-amber-500/10 via-slate-800/80 to-rose-500/10 border-amber-500/60 shadow-lg shadow-amber-500/10' : 'bg-gradient-to-br from-amber-50 via-white to-rose-50 border-amber-400 shadow-md shadow-amber-100') : (isDarkMode ? 'bg-slate-800/60 border-slate-700/60 hover:border-slate-600' : 'bg-slate-50 border-slate-200 hover:border-indigo-300 shadow-sm')">
+            
+            <!-- Special Deal Ribbon / Badge -->
+            <div *ngIf="getItemDiscount(item)" class="flex items-center justify-between gap-2 pb-1.5 border-b"
+                 [ngClass]="isDarkMode ? 'border-amber-500/30' : 'border-amber-200'">
+              <div class="flex items-center gap-1.5 min-w-0">
+                <span class="px-2 py-0.5 rounded-md text-[10px] sm:text-xs font-black uppercase tracking-wider bg-gradient-to-r from-amber-500 to-rose-500 text-white shadow-sm flex-shrink-0">
+                  🔥 {{ getDiscountBadgeText(getItemDiscount(item)!) }}
+                </span>
+                <span *ngIf="getItemDiscount(item)?.title" class="text-[11px] font-bold truncate"
+                      [ngClass]="isDarkMode ? 'text-amber-300' : 'text-amber-700'">
+                  {{ getItemDiscount(item)?.title }}
+                </span>
+              </div>
+              <span class="text-[10px] font-black uppercase tracking-wider text-rose-500 animate-pulse flex-shrink-0">Deal</span>
+            </div>
+
+            <div>
+              <div class="flex items-start justify-between gap-2">
+                <h4 class="font-black text-base sm:text-lg" [ngClass]="isDarkMode ? 'text-white' : 'text-slate-900'">{{ item.name }}</h4>
+                
+                <!-- Price Display: Strikethrough Original + Discounted Price -->
+                <div class="text-right flex-shrink-0">
+                  <div *ngIf="getItemDiscount(item)" class="text-xs line-through font-mono font-bold"
+                       [ngClass]="isDarkMode ? 'text-slate-400' : 'text-slate-500'">
+                    Rs. {{ item.price | number:'1.2-2' }}
+                  </div>
+                  <div class="font-mono font-black"
+                       [ngClass]="getItemDiscount(item) ? 'text-emerald-400 font-black text-lg sm:text-xl' : (isDarkMode ? 'text-emerald-400 text-base sm:text-lg' : 'text-emerald-600 text-base sm:text-lg')">
+                    Rs. {{ getItemFinalPrice(item) | number:'1.2-2' }}
+                  </div>
+                </div>
+              </div>
+
+              <p *ngIf="item.description" class="text-xs sm:text-sm mt-1 line-clamp-2"
+                 [ngClass]="isDarkMode ? 'text-slate-400' : 'text-slate-600'">
+                {{ item.description }}
+              </p>
+            </div>
+
+            <div class="flex items-center justify-between text-xs pt-2 border-t"
+                 [ngClass]="isDarkMode ? 'border-slate-700/50 text-slate-400' : 'border-slate-200 text-slate-500'">
+              <span class="flex items-center gap-1 font-bold">
+                <span>{{ getCategoryIcon(item.categoryName) }}</span>
+                <span>{{ item.categoryName || 'Dishes' }}</span>
+              </span>
+              <span *ngIf="item.preparationTime" class="flex items-center gap-1 font-mono">
+                ⏱️ ~{{ item.preparationTime }}m
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="filteredMenuItems.length === 0" class="text-center py-16"
+             [ngClass]="isDarkMode ? 'text-slate-400' : 'text-slate-500'">
+          <p class="text-base sm:text-lg font-bold">No menu dishes found</p>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="px-6 py-3.5 border-t flex flex-col sm:flex-row items-center justify-between gap-3"
+           [ngClass]="isDarkMode ? 'bg-slate-900/95 border-slate-800' : 'bg-slate-50 border-slate-200'">
+        <p class="text-xs sm:text-sm font-medium" [ngClass]="isDarkMode ? 'text-slate-400' : 'text-slate-600'">
+          To order, tap <strong>{{ isRoom ? 'Call Room Service' : 'Call Waiter' }}</strong>.
+        </p>
+        <button
+          (click)="isRoom ? callReception() : callWaiter(); closeMenuModal()"
+          class="w-full sm:w-auto px-6 py-2.5 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-black text-xs sm:text-sm tracking-wider uppercase transition cursor-pointer active:scale-95 shadow-md">
+          {{ isRoom ? 'Call Room Service' : 'Call Waiter to Order' }}
+        </button>
+      </div>
+
     </div>
-  </main>
+  </div>
+
+  <!-- MODAL 2: CUSTOMER SERVICE REQUESTS -->
+  <div *ngIf="showServiceModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xl animate-fadeIn">
+    <div class="border rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden space-y-4 p-5 sm:p-6 transition-colors"
+         [ngClass]="isDarkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'">
+      
+      <div class="flex items-center justify-between pb-3 border-b"
+           [ngClass]="isDarkMode ? 'border-slate-800' : 'border-slate-100'">
+        <div>
+          <h3 class="text-lg sm:text-xl font-black" [ngClass]="isDarkMode ? 'text-white' : 'text-slate-900'">
+            {{ isRoom ? 'Room Guest Services' : 'Table Service Requests' }}
+          </h3>
+          <p class="text-xs sm:text-sm mt-0.5" [ngClass]="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Select a service option to notify staff immediately</p>
+        </div>
+        <button (click)="showServiceModal = false" class="cursor-pointer p-1"
+                [ngClass]="isDarkMode ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-slate-900'">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Service Options Grid -->
+      <div class="grid grid-cols-2 gap-3" *ngIf="isTable">
+        <button
+          *ngFor="let opt of tableServiceOptions"
+          (click)="requestService(opt.type)"
+          class="p-4 rounded-2xl border text-left transition cursor-pointer group active:scale-95"
+          [ngClass]="isDarkMode ? 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-white' : 'bg-slate-50 hover:bg-indigo-50 border-slate-200 text-slate-900'">
+          <div class="text-2xl mb-1.5">{{ opt.icon }}</div>
+          <div class="font-black text-sm sm:text-base">{{ opt.title }}</div>
+          <div class="text-xs mt-0.5" [ngClass]="isDarkMode ? 'text-slate-400' : 'text-slate-500'">{{ opt.desc }}</div>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3" *ngIf="isRoom">
+        <button
+          *ngFor="let opt of roomServiceOptions"
+          (click)="requestService(opt.type)"
+          class="p-4 rounded-2xl border text-left transition cursor-pointer group active:scale-95"
+          [ngClass]="isDarkMode ? 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-white' : 'bg-slate-50 hover:bg-emerald-50 border-slate-200 text-slate-900'">
+          <div class="text-2xl mb-1.5">{{ opt.icon }}</div>
+          <div class="font-black text-sm sm:text-base">{{ opt.title }}</div>
+          <div class="text-xs mt-0.5" [ngClass]="isDarkMode ? 'text-slate-400' : 'text-slate-500'">{{ opt.desc }}</div>
+        </button>
+      </div>
+
+      <div class="pt-1 text-right">
+        <button
+          (click)="showServiceModal = false"
+          class="px-5 py-2.5 rounded-2xl border text-xs sm:text-sm font-black cursor-pointer"
+          [ngClass]="isDarkMode ? 'bg-slate-800 text-slate-300 hover:bg-slate-700 border-slate-700' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border-slate-200'">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 3: BILL REQUEST CONFIRMATION -->
+  <div *ngIf="showBillModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xl animate-fadeIn">
+    <div class="border rounded-3xl w-full max-w-md shadow-2xl p-6 space-y-5 transition-colors"
+         [ngClass]="isDarkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'">
+      
+      <div class="text-center space-y-2">
+        <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl mx-auto border"
+             [ngClass]="isDarkMode ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-emerald-100 text-emerald-700 border-emerald-200'">
+          🧾
+        </div>
+        <h3 class="text-xl sm:text-2xl font-black" [ngClass]="isDarkMode ? 'text-white' : 'text-slate-900'">Request Bill</h3>
+        <p class="text-xs sm:text-sm" [ngClass]="isDarkMode ? 'text-slate-400' : 'text-slate-500'">
+          Would you like to request the bill for <strong>{{ locationLabel }}</strong>?
+        </p>
+      </div>
+
+      <div *ngIf="activeOrders.length > 0" class="p-4 rounded-2xl border space-y-2"
+           [ngClass]="isDarkMode ? 'bg-slate-800/80 border-slate-700/60' : 'bg-slate-50 border-slate-200'">
+        <div class="flex items-center justify-between text-xs sm:text-sm" [ngClass]="isDarkMode ? 'text-slate-400' : 'text-slate-500'">
+          <span>Active Orders:</span>
+          <span class="font-bold" [ngClass]="isDarkMode ? 'text-white' : 'text-slate-900'">{{ activeOrders.length }} Order(s)</span>
+        </div>
+        <div class="flex items-center justify-between text-xs sm:text-sm" [ngClass]="isDarkMode ? 'text-slate-400' : 'text-slate-500'">
+          <span>Total Dishes:</span>
+          <span class="font-bold" [ngClass]="isDarkMode ? 'text-white' : 'text-slate-900'">{{ totalItemsCount }} Items</span>
+        </div>
+        <div class="flex items-center justify-between text-sm sm:text-base font-black border-t pt-2"
+             [ngClass]="isDarkMode ? 'border-slate-700 text-emerald-400' : 'border-slate-200 text-emerald-600'">
+          <span>Estimated Total:</span>
+          <span class="font-mono text-lg sm:text-xl">Rs. {{ grandTotalAmount | number:'1.2-2' }}</span>
+        </div>
+      </div>
+
+      <div class="p-3.5 rounded-2xl border text-xs sm:text-sm"
+           [ngClass]="isDarkMode ? 'bg-indigo-950/40 border-indigo-800/50 text-indigo-200' : 'bg-indigo-50 border-indigo-200 text-indigo-900'">
+        💡 The cashier will prepare and bring your printed receipt directly to your {{ isRoom ? 'room' : 'table' }}.
+      </div>
+
+      <div class="flex items-center gap-3 pt-1">
+        <button
+          (click)="showBillModal = false"
+          class="flex-1 py-3.5 rounded-2xl border font-bold text-xs sm:text-sm tracking-wider uppercase transition cursor-pointer active:scale-95"
+          [ngClass]="isDarkMode ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300'">
+          Cancel
+        </button>
+        <button
+          (click)="requestBill()"
+          class="flex-1 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-black text-xs sm:text-sm tracking-wider uppercase transition shadow-md shadow-emerald-500/25 cursor-pointer active:scale-95">
+          Confirm Bill
+        </button>
+      </div>
+    </div>
+  </div>
+
 </div>

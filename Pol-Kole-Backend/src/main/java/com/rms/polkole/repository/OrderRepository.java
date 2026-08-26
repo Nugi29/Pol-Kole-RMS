@@ -15,12 +15,14 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Integer> {
     @Query("SELECT o FROM OrderEntity o WHERE o.isDeleted = false " +
            "AND (:statusId IS NULL OR o.status.id = :statusId) " +
            "AND (:tableId IS NULL OR o.table.id = :tableId) " +
+           "AND (:roomId IS NULL OR o.room.id = :roomId) " +
            "AND (:customerId IS NULL OR o.customer.id = :customerId) " +
            "AND (:startTime IS NULL OR o.orderTime >= :startTime) " +
            "AND (:endTime IS NULL OR o.orderTime <= :endTime)")
     Page<OrderEntity> filterOrders(
             @Param("statusId") Integer statusId,
             @Param("tableId") Integer tableId,
+            @Param("roomId") Integer roomId,
             @Param("customerId") Integer customerId,
             @Param("startTime") Instant startTime,
             @Param("endTime") Instant endTime,
