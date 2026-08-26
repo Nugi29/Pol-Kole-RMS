@@ -211,6 +211,42 @@ export class OrdersComponent implements OnInit {
     this.showSpecialsOnly = false;
   }
 
+  showTodayOnly = false;
+
+  get todayOrdersCount(): number {
+    return this.orders.filter(o => this.isToday(o)).length;
+  }
+
+  isToday(orderOrDate?: any): boolean {
+    if (!orderOrDate) return true;
+    let dateVal: any = orderOrDate;
+    if (typeof orderOrDate === 'object' && !(orderOrDate instanceof Date)) {
+      dateVal = orderOrDate.orderTime || orderOrDate.orderDate || orderOrDate.createdAt || orderOrDate.createdDate || orderOrDate.date;
+    }
+    if (!dateVal) return true;
+    try {
+      const today = new Date();
+      const todayYear = today.getFullYear();
+      const todayMonth = today.getMonth() + 1;
+      const todayDay = today.getDate();
+      const todayFormatted = `${todayYear}-${String(todayMonth).padStart(2, '0')}-${String(todayDay).padStart(2, '0')}`;
+      if (typeof dateVal === 'string' && dateVal.trim().startsWith(todayFormatted)) {
+        return true;
+      }
+      const d = new Date(dateVal);
+      if (!isNaN(d.getTime())) {
+        return (
+          d.getFullYear() === todayYear &&
+          (d.getMonth() + 1) === todayMonth &&
+          d.getDate() === todayDay
+        );
+      }
+      return false;
+    } catch {
+      return true;
+    }
+  }
+
   get pendingOrdersCount(): number {
     return this.orders.filter(o => o.statusName?.toUpperCase() === 'PENDING').length;
   }
@@ -232,11 +268,15 @@ export class OrdersComponent implements OnInit {
   }
 
   get hasActiveOrderFilters(): boolean {
-    return !!this.orderSearchQuery.trim() || this.selectedOrderStatus !== 'ALL' || this.selectedOrderServiceType !== 'ALL';
+    return !!this.orderSearchQuery.trim() || this.selectedOrderStatus !== 'ALL' || this.selectedOrderServiceType !== 'ALL' || this.showTodayOnly;
   }
 
   applyOrderFilters(): void {
     const filtered = this.orders.filter(order => {
+      // Today date filter
+      if (this.showTodayOnly && !this.isToday(order)) {
+        return false;
+      }
       // Status filter
       if (this.selectedOrderStatus !== 'ALL') {
         const status = order.statusName?.toUpperCase();
@@ -288,6 +328,7 @@ export class OrdersComponent implements OnInit {
     this.orderSearchQuery = '';
     this.selectedOrderStatus = 'ALL';
     this.selectedOrderServiceType = 'ALL';
+    this.showTodayOnly = false;
     this.applyOrderFilters();
   }
 

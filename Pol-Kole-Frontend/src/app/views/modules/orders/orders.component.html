@@ -438,10 +438,19 @@
 
       <!-- Quick Status Filter Pills for Fast 1-Click Filtering -->
       <div class="flex items-center gap-1.5 flex-wrap pt-1 border-t border-slate-200/60">
-        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1">Quick Status:</span>
+        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1">Quick Filters:</span>
+        <button type="button" (click)="showTodayOnly = !showTodayOnly; applyOrderFilters()"
+                class="px-2.5 py-1 rounded-lg text-[11.5px] font-bold transition-all cursor-pointer flex items-center gap-1"
+                [ngClass]="showTodayOnly ? 'bg-indigo-600 text-white shadow-xs' : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'">
+          <span>📅 Today Only</span>
+          <span *ngIf="todayOrdersCount > 0" class="text-[10px] px-1.5 py-0.2 rounded-full font-black"
+                [ngClass]="showTodayOnly ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'">
+            {{ todayOrdersCount }}
+          </span>
+        </button>
         <button type="button" (click)="selectedOrderStatus = 'ALL'; applyOrderFilters()"
                 class="px-2.5 py-1 rounded-lg text-[11.5px] font-bold transition-all cursor-pointer"
-                [ngClass]="selectedOrderStatus === 'ALL' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'">
+                [ngClass]="selectedOrderStatus === 'ALL' ? 'bg-slate-800 text-white shadow-xs' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'">
           All ({{ orders.length }})
         </button>
         <button type="button" (click)="selectedOrderStatus = 'PENDING'; applyOrderFilters()"

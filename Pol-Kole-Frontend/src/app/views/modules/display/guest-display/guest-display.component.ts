@@ -176,12 +176,13 @@ export class GuestDisplayComponent implements OnInit, OnDestroy {
       }
     });
 
-    // Filter non-cancelled and non-paid orders (can be 1 or multiple rounds)
+    // Filter non-cancelled and non-paid orders from today (can be 1 or multiple rounds)
     const activeList = matching
       .filter(o => {
         const s = (o.statusName || '').toUpperCase();
         return !s.includes('CANCEL') && !s.includes('PAID');
       })
+      .filter(o => this.isToday(o.orderTime))
       .sort((a, b) => (a.id || 0) - (b.id || 0)); // Ascending by order round
 
     const rounds: DisplayOrderRound[] = activeList.map((ord, idx) => {
@@ -255,6 +256,36 @@ export class GuestDisplayComponent implements OnInit, OnDestroy {
 
   trackByOrderRound(index: number, round: DisplayOrderRound): any {
     return round.order.id || index;
+  }
+
+  private isToday(orderOrDate?: any): boolean {
+    if (!orderOrDate) return true;
+    let dateVal: any = orderOrDate;
+    if (typeof orderOrDate === 'object' && !(orderOrDate instanceof Date)) {
+      dateVal = orderOrDate.orderTime || orderOrDate.orderDate || orderOrDate.createdAt || orderOrDate.createdDate || orderOrDate.date;
+    }
+    if (!dateVal) return true;
+    try {
+      const today = new Date();
+      const todayYear = today.getFullYear();
+      const todayMonth = today.getMonth() + 1;
+      const todayDay = today.getDate();
+      const todayFormatted = `${todayYear}-${String(todayMonth).padStart(2, '0')}-${String(todayDay).padStart(2, '0')}`;
+      if (typeof dateVal === 'string' && dateVal.trim().startsWith(todayFormatted)) {
+        return true;
+      }
+      const d = new Date(dateVal);
+      if (!isNaN(d.getTime())) {
+        return (
+          d.getFullYear() === todayYear &&
+          (d.getMonth() + 1) === todayMonth &&
+          d.getDate() === todayDay
+        );
+      }
+      return false;
+    } catch {
+      return true;
+    }
   }
 
   trackByItemId(index: number, item: any): any {

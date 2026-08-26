@@ -133,6 +133,36 @@ export class TablesComponent implements OnInit, OnDestroy {
     return this.tables.filter(t => t.status?.toUpperCase() === this.statusFilter.toUpperCase());
   }
 
+  isToday(orderOrDate?: any): boolean {
+    if (!orderOrDate) return true;
+    let dateVal: any = orderOrDate;
+    if (typeof orderOrDate === 'object' && !(orderOrDate instanceof Date)) {
+      dateVal = orderOrDate.orderTime || orderOrDate.orderDate || orderOrDate.createdAt || orderOrDate.createdDate || orderOrDate.date;
+    }
+    if (!dateVal) return true;
+    try {
+      const today = new Date();
+      const todayYear = today.getFullYear();
+      const todayMonth = today.getMonth() + 1;
+      const todayDay = today.getDate();
+      const todayFormatted = `${todayYear}-${String(todayMonth).padStart(2, '0')}-${String(todayDay).padStart(2, '0')}`;
+      if (typeof dateVal === 'string' && dateVal.trim().startsWith(todayFormatted)) {
+        return true;
+      }
+      const d = new Date(dateVal);
+      if (!isNaN(d.getTime())) {
+        return (
+          d.getFullYear() === todayYear &&
+          (d.getMonth() + 1) === todayMonth &&
+          d.getDate() === todayDay
+        );
+      }
+      return false;
+    } catch {
+      return true;
+    }
+  }
+
   getActiveOrdersForTable(tableId?: number): Order[] {
     if (!tableId || !this.orders) return [];
     return this.orders
@@ -141,6 +171,7 @@ export class TablesComponent implements OnInit, OnDestroy {
         const s = (o.statusName || '').toUpperCase();
         return !s.includes('CANCEL') && !s.includes('PAID');
       })
+      .filter(o => this.isToday(o))
       .sort((a, b) => (a.id || 0) - (b.id || 0));
   }
 

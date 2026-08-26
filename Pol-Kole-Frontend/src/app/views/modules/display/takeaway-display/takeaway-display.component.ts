@@ -116,6 +116,9 @@ export class TakeawayDisplayComponent implements OnInit, OnDestroy {
       targetOrders = takeawayOnly.length > 0 ? takeawayOnly : orders;
     }
 
+    // Filter to only today's orders
+    targetOrders = targetOrders.filter(o => this.isToday(o.orderTime));
+
     const preparing: TakeawayTicket[] = [];
     const ready: TakeawayTicket[] = [];
     const currentReadyIds = new Set<number>();
@@ -205,5 +208,35 @@ export class TakeawayDisplayComponent implements OnInit, OnDestroy {
 
   testChime(): void {
     this.wsService.playChimeSound('ready');
+  }
+
+  private isToday(orderOrDate?: any): boolean {
+    if (!orderOrDate) return true;
+    let dateVal: any = orderOrDate;
+    if (typeof orderOrDate === 'object' && !(orderOrDate instanceof Date)) {
+      dateVal = orderOrDate.orderTime || orderOrDate.orderDate || orderOrDate.createdAt || orderOrDate.createdDate || orderOrDate.date;
+    }
+    if (!dateVal) return true;
+    try {
+      const today = new Date();
+      const todayYear = today.getFullYear();
+      const todayMonth = today.getMonth() + 1;
+      const todayDay = today.getDate();
+      const todayFormatted = `${todayYear}-${String(todayMonth).padStart(2, '0')}-${String(todayDay).padStart(2, '0')}`;
+      if (typeof dateVal === 'string' && dateVal.trim().startsWith(todayFormatted)) {
+        return true;
+      }
+      const d = new Date(dateVal);
+      if (!isNaN(d.getTime())) {
+        return (
+          d.getFullYear() === todayYear &&
+          (d.getMonth() + 1) === todayMonth &&
+          d.getDate() === todayDay
+        );
+      }
+      return false;
+    } catch {
+      return true;
+    }
   }
 }
