@@ -1,5 +1,6 @@
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { DashboardService, DashboardStats } from '../../services/dashboard.service';
+import { StaffAssignmentService, DailyStaffAssignment } from '../../services/staff-assignment.service';
 
 @Component({
   selector: 'app-home',
@@ -26,13 +27,42 @@ export class HomeComponent implements OnInit {
   revenueValues: number[] = [];
   maxRevenue = 1000;
 
+  myAssignments: DailyStaffAssignment[] = [];
+  isNonAdmin = false;
+  currentUserName = '';
+  currentUserId: number | null = null;
+
   constructor(
     private readonly dashboardService: DashboardService,
+    private readonly staffAssignmentService: StaffAssignmentService,
     private readonly cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
+    const role = (localStorage.getItem('role') || '').toUpperCase();
+    const isManagerOrAdmin = role.includes('ADMIN') || role.includes('MANAGER');
+    this.isNonAdmin = !isManagerOrAdmin;
+    this.currentUserName = localStorage.getItem('name') || 'Staff';
+
+    const idStr = localStorage.getItem('userId') || localStorage.getItem('id');
+    if (idStr && !isNaN(Number(idStr))) {
+      this.currentUserId = Number(idStr);
+      this.loadMyAssignments();
+    }
+
     this.loadStats();
+  }
+
+  loadMyAssignments(): void {
+    if (!this.currentUserId) return;
+    const today = new Date().toISOString().split('T')[0];
+    this.staffAssignmentService.getAssignmentsForUser(this.currentUserId, today).subscribe({
+      next: (assignments) => {
+        this.myAssignments = assignments || [];
+        this.cdr.markForCheck();
+      },
+      error: () => {}
+    });
   }
 
   loadStats(): void {

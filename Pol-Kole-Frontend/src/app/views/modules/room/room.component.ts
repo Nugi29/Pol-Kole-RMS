@@ -1,11 +1,14 @@
-import { ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatTableDataSource } from '@angular/material/table';
 import { ActivatedRoute } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { Room, RoomService, RoomType } from '../../../services/room.service';
 import { CodeService } from '../../../services/code.service';
 import { DialogService } from '../../../services/dialog.service';
+import { WebsocketService, GuestServiceCall } from '../../../services/websocket.service';
+import { StaffAssignmentService, DailyStaffAssignment } from '../../../services/staff-assignment.service';
 
 @Component({
   selector: 'app-room',
@@ -13,7 +16,7 @@ import { DialogService } from '../../../services/dialog.service';
   templateUrl: './room.component.html',
   styleUrl: './room.component.css'
 })
-export class RoomComponent implements OnInit {
+export class RoomComponent implements OnInit, OnDestroy {
   private paginator: MatPaginator | null = null;
   @ViewChild(MatPaginator) set matPaginator(mp: MatPaginator) {
     this.paginator = mp;
@@ -22,6 +25,8 @@ export class RoomComponent implements OnInit {
 
   rooms: Room[] = [];
   roomTypes: RoomType[] = [];
+  myAssignments: DailyStaffAssignment[] = [];
+  activeGuestCalls: GuestServiceCall[] = [];
   displayedColumns = ['roomNumber', 'roomTypeName', 'capacity', 'status', 'actions'];
   dataSource = new MatTableDataSource<Room>([]);
 
@@ -34,13 +39,20 @@ export class RoomComponent implements OnInit {
   errorMessage = '';
   typeErrorMessage = '';
   activeTab = 'directory';
-  viewMode: 'grid' | 'table' = 'table';
+  viewMode: 'grid' | 'table' = 'grid';
+  statusFilter = 'ALL';
+  isNonAdmin = false;
+  currentUserId: number | null = null;
 
   floors = [1, 2, 3, 4, 5];
+
+  private wsSub: Subscription | null = null;
 
   constructor(
     private readonly fb: FormBuilder,
     private readonly roomService: RoomService,
+    private readonly staffAssignmentService: StaffAssignmentService,
+    public readonly wsService: WebsocketService,
     private readonly route: ActivatedRoute,
     private readonly codeService: CodeService,
     private readonly cdr: ChangeDetectorRef,
@@ -64,8 +76,27 @@ export class RoomComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    const role = (localStorage.getItem('role') || '').toUpperCase();
+    const isManagerOrAdmin = role.includes('ADMIN') || role.includes('MANAGER');
+    this.isNonAdmin = !isManagerOrAdmin;
+    if (this.isNonAdmin) {
+      this.statusFilter = 'MY_ASSIGNED';
+    }
+
+    const idStr = localStorage.getItem('userId') || localStorage.getItem('id');
+    if (idStr && !isNaN(Number(idStr))) {
+      this.currentUserId = Number(idStr);
+      this.loadMyAssignments();
+    }
+
     this.loadRoomTypes();
     this.loadRooms();
+
+    this.wsSub = this.wsService.activeGuestCalls$.subscribe(calls => {
+      this.activeGuestCalls = calls || [];
+      this.cdr.markForCheck();
+    });
+
     this.route.queryParams.subscribe(params => {
       if (params['tab']) {
         this.activeTab = params['tab'];
@@ -82,6 +113,120 @@ export class RoomComponent implements OnInit {
     });
 
     this.suggestRoomNumber(1);
+  }
+
+  loadMyAssignments(): void {
+    if (!this.currentUserId) return;
+    const today = new Date().toISOString().split('T')[0];
+    this.staffAssignmentService.getAssignmentsForUser(this.currentUserId, today).subscribe({
+      next: (assignments) => {
+        this.myAssignments = assignments || [];
+        this.dataSource.data = this.filteredRooms;
+        this.cdr.markForCheck();
+      },
+      error: () => {}
+    });
+  }
+
+  setStatusFilter(status: string): void {
+    this.statusFilter = status;
+    this.dataSource.data = this.filteredRooms;
+    this.cdr.markForCheck();
+  }
+
+  private normalizeNum(val: any): string {
+    if (!val) return '';
+    return String(val).toLowerCase().replace(/table/g, '').replace(/room/g, '').replace(/t-/g, '').replace(/t/g, '').replace(/#/g, '').replace(/\s+/g, '').trim();
+  }
+
+  get myAssignedRoomsCount(): number {
+    return this.rooms.filter(r => {
+      const rNorm = this.normalizeNum(r.roomNumber);
+      return this.myAssignments.some(a =>
+        a.assignmentType === 'ROOM' && (
+          (a.roomId && r.id && Number(a.roomId) === Number(r.id)) ||
+          (this.normalizeNum(a.roomNumber) === rNorm)
+        )
+      );
+    }).length;
+  }
+
+  get filteredRooms(): Room[] {
+    if (this.statusFilter === 'MY_ASSIGNED') {
+      if (this.myAssignments.length === 0) {
+        return this.rooms;
+      }
+      return this.rooms.filter(r => {
+        const rNorm = this.normalizeNum(r.roomNumber);
+        return this.myAssignments.some(a =>
+          a.assignmentType === 'ROOM' && (
+            (a.roomId && r.id && Number(a.roomId) === Number(r.id)) ||
+            (this.normalizeNum(a.roomNumber) === rNorm)
+          )
+        );
+      });
+    }
+    if (this.statusFilter === 'ALL') {
+      return this.rooms;
+    }
+    return this.rooms.filter(r => r.status?.toUpperCase() === this.statusFilter.toUpperCase());
+  }
+
+  getGuestCallForRoom(roomId?: number, roomNumber?: string): GuestServiceCall | undefined {
+    if (!this.activeGuestCalls || this.activeGuestCalls.length === 0) return undefined;
+    const rNorm = this.normalizeNum(roomNumber);
+    return this.activeGuestCalls.find(c => {
+      if (c.status === 'COMPLETED') return false;
+      const isRoom = (c.locationType || '').toUpperCase() === 'ROOM';
+      if (!isRoom) return false;
+      const callNorm = this.normalizeNum(c.locationNumber);
+      return (
+        (c.locationId && roomId && Number(c.locationId) === Number(roomId)) ||
+        (callNorm === rNorm)
+      );
+    });
+  }
+
+  get urgentRoomCalls(): GuestServiceCall[] {
+    return this.activeGuestCalls.filter(c => {
+      if ((c.locationType || '').toUpperCase() !== 'ROOM') return false;
+      if (c.status !== 'WAITING') return false;
+      if (!this.isNonAdmin || this.myAssignments.length === 0) return true;
+      const callNorm = this.normalizeNum(c.locationNumber);
+      return this.myAssignments.some(a =>
+        a.assignmentType === 'ROOM' && (
+          (a.roomId && c.locationId && Number(a.roomId) === Number(c.locationId)) ||
+          (this.normalizeNum(a.roomNumber) === callNorm)
+        )
+      );
+    });
+  }
+
+  acceptRoomCall(call: any): void {
+    if (!call?.id) return;
+    const staffName = localStorage.getItem('name') || 'Staff';
+    this.wsService.updateServiceRequestStatus(call.id, 'IN_PROGRESS', staffName);
+    this.dialogService.showSuccess('Room Call Accepted', `Attending to Room ${call.locationNumber} (${call.callType || 'Service'}).`);
+  }
+
+  resolveRoomCall(call: any): void {
+    if (!call) return;
+    this.activeGuestCalls = (this.activeGuestCalls || []).filter(c => {
+      if (call.id && c.id === call.id) return false;
+      if (call.locationNumber && c.locationNumber && this.normalizeNum(call.locationNumber) === this.normalizeNum(c.locationNumber)) {
+        return false;
+      }
+      return true;
+    });
+    this.wsService.resolveGuestCall(call);
+    this.dialogService.showSuccess('Room Call Resolved', `Resolved request for Room ${call.locationNumber}.`);
+    this.cdr.markForCheck();
+  }
+
+  ngOnDestroy(): void {
+    if (this.wsSub) {
+      this.wsSub.unsubscribe();
+    }
   }
 
   loadRoomTypes(): void {
@@ -118,12 +263,12 @@ export class RoomComponent implements OnInit {
     this.roomService.filterRooms(undefined, undefined, 0, 1000).subscribe({
       next: (page) => {
         this.rooms = page.content;
-        this.dataSource.data = page.content;
+        this.dataSource.data = this.filteredRooms;
         this.loading = false;
         this.cdr.markForCheck();
       },
       error: () => {
-        this.errorMessage = 'Failed to load hotel rooms directory.';
+        this.errorMessage = 'Failed to load rooms directory';
         this.loading = false;
         this.cdr.markForCheck();
       }

@@ -17,7 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -29,15 +31,21 @@ public class StaffNotificationServiceImpl implements StaffNotificationService {
     private final UserRepository userRepository;
     private final SimpMessagingTemplate messagingTemplate;
 
+    // -----------------------------------------------------------------------
+    // Send / Broadcast
+    // -----------------------------------------------------------------------
+
     @Override
     @Transactional
     public StaffNotificationDto sendTargetedNotification(StaffNotificationDto dto) {
         if (dto.getRecipientId() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Recipient ID is required for targeted notification.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Recipient ID is required for targeted notification.");
         }
 
         UserEntity recipient = userRepository.findById(dto.getRecipientId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipient user not found with ID: " + dto.getRecipientId()));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Recipient user not found with ID: " + dto.getRecipientId()));
 
         UserEntity sender = null;
         if (dto.getSenderId() != null) {
@@ -63,12 +71,13 @@ public class StaffNotificationServiceImpl implements StaffNotificationService {
         entity = notificationRepository.save(entity);
         StaffNotificationDto result = mapToDto(entity);
 
-        // Real-time broadcast to the specific staff member's destination
+        // Push only to the specific staff member's personal topic — NOT to /topic/guest-calls.
+        // Callers that want a shared broadcast (broadcastToRole, broadcastToTopic) will
+        // send to /topic/guest-calls themselves, preventing duplicate messages.
         try {
             messagingTemplate.convertAndSend("/topic/staff/" + recipient.getId(), result);
-            messagingTemplate.convertAndSend("/topic/guest-calls", result);
         } catch (Exception e) {
-            log.warn("Failed to push STOMP message for staff {}: {}", recipient.getId(), e.getMessage());
+            log.warn("[Notification] Failed to push STOMP to staff/{}: {}", recipient.getId(), e.getMessage());
         }
 
         return result;
@@ -78,16 +87,34 @@ public class StaffNotificationServiceImpl implements StaffNotificationService {
     @Transactional
     public void broadcastToRole(String roleName, StaffNotificationDto dto) {
         List<UserEntity> staffWithRole = userRepository.findByRoleNameIgnoreCase(roleName);
+        StaffNotificationDto lastSaved = dto;
+
         for (UserEntity u : staffWithRole) {
-            dto.setRecipientId(u.getId());
-            dto.setRecipientName(u.getName());
-            sendTargetedNotification(dto);
+            StaffNotificationDto perUser = StaffNotificationDto.builder()
+                    .recipientId(u.getId())
+                    .recipientName(u.getName())
+                    .senderId(dto.getSenderId())
+                    .senderName(dto.getSenderName())
+                    .type(dto.getType())
+                    .title(dto.getTitle())
+                    .message(dto.getMessage())
+                    .targetType(dto.getTargetType())
+                    .targetId(dto.getTargetId())
+                    .targetLabel(dto.getTargetLabel())
+                    .priority(dto.getPriority())
+                    .isFallback(dto.isFallback())
+                    .fallbackNote(dto.getFallbackNote())
+                    .build();
+            lastSaved = sendTargetedNotification(perUser);
         }
 
+        // Single shared broadcast so all clients monitoring /topic/guest-calls get one update,
+        // regardless of how many staff members belong to this role.
         try {
-            messagingTemplate.convertAndSend("/topic/role/" + roleName.toUpperCase(), dto);
+            messagingTemplate.convertAndSend("/topic/guest-calls", lastSaved);
+            messagingTemplate.convertAndSend("/topic/role/" + roleName.toUpperCase(), lastSaved);
         } catch (Exception e) {
-            log.warn("Failed to push STOMP message for role {}: {}", roleName, e.getMessage());
+            log.warn("[Notification] Failed to broadcast to role {}: {}", roleName, e.getMessage());
         }
     }
 
@@ -96,9 +123,13 @@ public class StaffNotificationServiceImpl implements StaffNotificationService {
         try {
             messagingTemplate.convertAndSend(topic, payload);
         } catch (Exception e) {
-            log.warn("Failed to broadcast to topic {}: {}", topic, e.getMessage());
+            log.warn("[Notification] Failed to broadcast to topic {}: {}", topic, e.getMessage());
         }
     }
+
+    // -----------------------------------------------------------------------
+    // Read
+    // -----------------------------------------------------------------------
 
     @Override
     @Transactional(readOnly = true)
@@ -119,12 +150,25 @@ public class StaffNotificationServiceImpl implements StaffNotificationService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public long getUnreadCount(Integer userId) {
+        return notificationRepository.countByRecipientIdAndStatus(userId, "UNREAD");
+    }
+
+    // -----------------------------------------------------------------------
+    // Status mutations
+    // -----------------------------------------------------------------------
+
+    @Override
     @Transactional
     public StaffNotificationDto markAsRead(Long notificationId) {
         StaffNotificationEntity entity = notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Notification not found with ID: " + notificationId));
-        entity.setStatus("READ");
-        entity = notificationRepository.save(entity);
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Notification not found with ID: " + notificationId));
+        if (!"RESOLVED".equals(entity.getStatus()) && !"DISMISSED".equals(entity.getStatus())) {
+            entity.setStatus("READ");
+            entity = notificationRepository.save(entity);
+        }
         return mapToDto(entity);
     }
 
@@ -132,28 +176,88 @@ public class StaffNotificationServiceImpl implements StaffNotificationService {
     @Transactional
     public StaffNotificationDto resolveNotification(Long notificationId) {
         StaffNotificationEntity entity = notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Notification not found with ID: " + notificationId));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Notification not found with ID: " + notificationId));
         entity.setStatus("RESOLVED");
         entity.setResolvedAt(Instant.now());
         entity = notificationRepository.save(entity);
-        return mapToDto(entity);
+        StaffNotificationDto result = mapToDto(entity);
+
+        // Real-time push: tell all connected clients this notification is gone so they
+        // don't have to wait for the next 3-second polling cycle.
+        try {
+            Map<String, Object> event = new HashMap<>();
+            event.put("type", "NOTIFICATION_RESOLVED");
+            event.put("notificationId", result.getId());
+            event.put("targetType", result.getTargetType());
+            event.put("targetLabel", result.getTargetLabel());
+            event.put("targetId", result.getTargetId());
+            messagingTemplate.convertAndSend("/topic/guest-calls", (Object) event);
+        } catch (Exception e) {
+            log.warn("[Notification] Failed to broadcast resolve event for ID {}: {}", notificationId, e.getMessage());
+        }
+
+        return result;
     }
 
     @Override
     @Transactional
     public void markAllAsRead(Integer userId) {
-        List<StaffNotificationEntity> unread = notificationRepository.findByRecipientIdAndStatusOrderByCreatedAtDesc(userId, "UNREAD");
+        List<StaffNotificationEntity> unread =
+                notificationRepository.findByRecipientIdAndStatusOrderByCreatedAtDesc(userId, "UNREAD");
         for (StaffNotificationEntity n : unread) {
             n.setStatus("READ");
         }
         notificationRepository.saveAll(unread);
     }
 
+    // -----------------------------------------------------------------------
+    // Bulk resolve by target — replaces the N+1 frontend loop
+    // -----------------------------------------------------------------------
+
     @Override
-    @Transactional(readOnly = true)
-    public long getUnreadCount(Integer userId) {
-        return notificationRepository.countByRecipientIdAndStatus(userId, "UNREAD");
+    @Transactional
+    public int resolveByTarget(String targetType, String targetLabel, Integer targetId) {
+        if (targetLabel == null && targetId == null) {
+            log.warn("[Notification] resolveByTarget called with no targetLabel or targetId — skipped.");
+            return 0;
+        }
+
+        Instant now = Instant.now();
+        int resolved = 0;
+
+        if (targetLabel != null && !targetLabel.isBlank()) {
+            resolved += notificationRepository.bulkResolveByTargetLabel(targetLabel, targetType, now);
+        }
+        if (targetId != null && resolved == 0) {
+            // Only fall back to ID-based resolution if label matched nothing
+            resolved += notificationRepository.bulkResolveByTargetId(targetId, targetType, now);
+        }
+
+        if (resolved > 0) {
+            log.info("[Notification] Bulk-resolved {} notification(s) for target type={} label={} id={}",
+                    resolved, targetType, targetLabel, targetId);
+
+            // Broadcast resolution event so all connected clients remove these cards immediately
+            try {
+                Map<String, Object> event = new HashMap<>();
+                event.put("type", "NOTIFICATION_RESOLVED");
+                event.put("targetType", targetType);
+                event.put("targetLabel", targetLabel);
+                event.put("targetId", targetId);
+                event.put("resolvedCount", resolved);
+                messagingTemplate.convertAndSend("/topic/guest-calls", (Object) event);
+            } catch (Exception e) {
+                log.warn("[Notification] Failed to broadcast bulk-resolve event: {}", e.getMessage());
+            }
+        }
+
+        return resolved;
     }
+
+    // -----------------------------------------------------------------------
+    // Mapping
+    // -----------------------------------------------------------------------
 
     private StaffNotificationDto mapToDto(StaffNotificationEntity entity) {
         return StaffNotificationDto.builder()
@@ -177,3 +281,4 @@ public class StaffNotificationServiceImpl implements StaffNotificationService {
                 .build();
     }
 }
+

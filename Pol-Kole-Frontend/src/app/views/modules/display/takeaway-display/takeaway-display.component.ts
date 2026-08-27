@@ -26,8 +26,6 @@ export class TakeawayDisplayComponent implements OnInit, OnDestroy {
   isFullscreen = false;
   connectionMode: 'WEBSOCKET' | 'POLLING_FALLBACK' = 'POLLING_FALLBACK';
   isConnected = false;
-  filterMode: 'TAKEAWAY' | 'ALL' = 'ALL'; // 'ALL' ensures all unserved tokens show up
-
   preparingOrders: TakeawayTicket[] = [];
   readyOrders: TakeawayTicket[] = [];
   recentCompleted: TakeawayTicket[] = [];
@@ -93,13 +91,6 @@ export class TakeawayDisplayComponent implements OnInit, OnDestroy {
     if (this.kitchenSub) this.kitchenSub.unsubscribe();
   }
 
-  setFilterMode(mode: 'TAKEAWAY' | 'ALL'): void {
-    this.filterMode = mode;
-    const allOrders = this.wsService.allOrders$.value || [];
-    const kOrders = this.wsService.kitchenOrders$.value || [];
-    this.processTakeawayOrders(allOrders, kOrders);
-  }
-
   get pendingCount(): number {
     return this.preparingOrders.filter(t => t.status === 'PENDING').length;
   }
@@ -116,13 +107,8 @@ export class TakeawayDisplayComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Filter by mode
-    let targetOrders = orders;
-    if (this.filterMode === 'TAKEAWAY') {
-      const takeawayOnly = orders.filter(o => !o.tableId && !o.roomId);
-      // If takeaway specific orders exist, use them; otherwise show active orders so board is never blank
-      targetOrders = takeawayOnly.length > 0 ? takeawayOnly : orders;
-    }
+    // The public board is dedicated to takeaway orders.
+    let targetOrders = orders.filter(o => !o.tableId && !o.roomId);
 
     // Filter to only today's orders
     targetOrders = targetOrders.filter(o => this.isToday(o.orderTime));

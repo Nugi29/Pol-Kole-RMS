@@ -12,6 +12,7 @@ import { Reservation, ReservationService } from '../../../services/reservation.s
 import { DialogService } from '../../../services/dialog.service';
 import { ItemDiscount, ItemDiscountService } from '../../../services/item-discount.service';
 import { WebsocketService } from '../../../services/websocket.service';
+import { StaffAssignmentService, DailyStaffAssignment } from '../../../services/staff-assignment.service';
 
 @Component({
   selector: 'app-orders',
@@ -32,6 +33,7 @@ export class OrdersComponent implements OnInit {
   menuItems: MenuItem[] = [];
   categories: MenuCategory[] = [];
   itemDiscounts: ItemDiscount[] = [];
+  myAssignments: DailyStaffAssignment[] = [];
   displayedColumns = ['id', 'customer', 'table', 'totalAmount', 'status', 'actions'];
   dataSource = new MatTableDataSource<Order>([]);
 
@@ -39,6 +41,9 @@ export class OrdersComponent implements OnInit {
   loading = false;
   errorMessage = '';
   successMessage = '';
+  filterMyAssignedOnly = false;
+  isNonAdmin = false;
+  currentUserId: number | null = null;
 
   // POS Menu Filters
   dishSearchQuery: string = '';
@@ -68,6 +73,7 @@ export class OrdersComponent implements OnInit {
     private readonly itemDiscountService: ItemDiscountService,
     private readonly reservationService: HotelReservationService,
     private readonly tableReservationService: ReservationService,
+    private readonly staffAssignmentService: StaffAssignmentService,
     private readonly route: ActivatedRoute,
     private readonly cdr: ChangeDetectorRef,
     private readonly dialogService: DialogService,
@@ -75,6 +81,17 @@ export class OrdersComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    const role = (localStorage.getItem('role') || '').toUpperCase();
+    const isManagerOrAdmin = role.includes('ADMIN') || role.includes('MANAGER');
+    this.isNonAdmin = !isManagerOrAdmin;
+    this.filterMyAssignedOnly = this.isNonAdmin;
+
+    const idStr = localStorage.getItem('userId') || localStorage.getItem('id');
+    if (idStr && !isNaN(Number(idStr))) {
+      this.currentUserId = Number(idStr);
+      this.loadMyAssignments();
+    }
+
     this.loadAll();
     this.route.queryParams.subscribe(params => {
       if (params['tab']) {
@@ -83,6 +100,24 @@ export class OrdersComponent implements OnInit {
       this.loadAll();
       this.cdr.markForCheck();
     });
+  }
+
+  loadMyAssignments(): void {
+    if (!this.currentUserId) return;
+    const today = new Date().toISOString().split('T')[0];
+    this.staffAssignmentService.getAssignmentsForUser(this.currentUserId, today).subscribe({
+      next: (assignments) => {
+        this.myAssignments = assignments || [];
+        this.applyOrderFilters();
+        this.cdr.markForCheck();
+      },
+      error: () => {}
+    });
+  }
+
+  private normalizeNum(val: any): string {
+    if (!val) return '';
+    return String(val).toLowerCase().replace(/table/g, '').replace(/room/g, '').replace(/t-/g, '').replace(/t/g, '').replace(/#/g, '').replace(/\s+/g, '').trim();
   }
 
   loadAll(): void {
@@ -268,11 +303,33 @@ export class OrdersComponent implements OnInit {
   }
 
   get hasActiveOrderFilters(): boolean {
-    return !!this.orderSearchQuery.trim() || this.selectedOrderStatus !== 'ALL' || this.selectedOrderServiceType !== 'ALL' || this.showTodayOnly;
+    return !!this.orderSearchQuery.trim() || this.selectedOrderStatus !== 'ALL' || this.selectedOrderServiceType !== 'ALL' || this.showTodayOnly || this.filterMyAssignedOnly;
   }
 
   applyOrderFilters(): void {
     const filtered = this.orders.filter(order => {
+      // My Assigned filter
+      if (this.filterMyAssignedOnly && this.myAssignments.length > 0) {
+        const orderTableNorm = this.normalizeNum(order.tableNumber);
+        const orderRoomNorm = this.normalizeNum(order.roomNumber);
+
+        const tableMatch = this.myAssignments.some(a =>
+          a.assignmentType === 'TABLE' && (
+            (a.tableId && order.tableId && Number(a.tableId) === Number(order.tableId)) ||
+            (this.normalizeNum(a.tableNumber) === orderTableNorm)
+          )
+        );
+        const roomMatch = this.myAssignments.some(a =>
+          a.assignmentType === 'ROOM' && (
+            (a.roomId && order.roomId && Number(a.roomId) === Number(order.roomId)) ||
+            (this.normalizeNum(a.roomNumber) === orderRoomNorm)
+          )
+        );
+        if (!tableMatch && !roomMatch) {
+          return false;
+        }
+      }
+
       // Today date filter
       if (this.showTodayOnly && !this.isToday(order)) {
         return false;

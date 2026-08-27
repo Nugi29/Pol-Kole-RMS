@@ -21,9 +21,9 @@
       <a routerLink="/main/waiter" [queryParams]="{ tab: 'requests' }"
          class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none relative whitespace-nowrap"
          [ngClass]="activeTab === 'requests' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-600' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'">
-        <span>Guest Calls</span>
-        <span *ngIf="activeGuestCalls.length > 0" class="ml-1 px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-[10px] font-black animate-pulse">
-          {{ activeGuestCalls.length }}
+        <span>Guest & Room Calls</span>
+        <span *ngIf="filteredGuestCalls.length > 0" class="ml-1 px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-[10px] font-black animate-pulse">
+          {{ filteredGuestCalls.length }}
         </span>
       </a>
       <a routerLink="/main/waiter" [queryParams]="{ tab: 'history' }"
@@ -82,12 +82,12 @@
         <span class="p-2 bg-white/20 rounded-xl text-lg">🛎️</span>
         <div>
           <h3 class="font-extrabold text-sm tracking-tight flex items-center gap-2">
-            <span>Incoming Guest Assistance Calls</span>
+            <span>Incoming Guest Assistance & Room Calls</span>
             <span class="px-2 py-0.5 rounded-full bg-white text-rose-600 text-[10px] font-black animate-pulse">
               {{ urgentGuestCalls.length }} WAITING
             </span>
           </h3>
-          <p class="text-xs text-rose-100">Guest at table is waiting for immediate assistance</p>
+          <p class="text-xs text-rose-100">Guest at table or hotel room is waiting for immediate assistance</p>
         </div>
       </div>
     </div>
@@ -95,21 +95,28 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
       <div *ngFor="let call of urgentGuestCalls" class="p-3 bg-white/10 hover:bg-white/15 backdrop-blur-xs border border-white/20 rounded-xl flex items-center justify-between gap-3">
         <div class="space-y-0.5 min-w-0">
-          <p class="font-black text-sm text-white truncate">{{ call.locationNumber }} &bull; {{ call.callType }}</p>
+          <p class="font-black text-sm text-white truncate">
+            <span *ngIf="(call.locationType || '').toUpperCase() === 'ROOM'">🏨 Room {{ call.locationNumber }}</span>
+            <span *ngIf="(call.locationType || '').toUpperCase() !== 'ROOM'">🍽️ Table {{ call.locationNumber }}</span>
+            &bull; {{ call.callType }}
+          </p>
           <p class="text-xs text-rose-100 truncate">{{ call.message }}</p>
         </div>
         <div class="flex items-center gap-1.5 flex-shrink-0">
           <button
             type="button"
+            *ngIf="call.status === 'WAITING'"
             (click)="acceptServiceRequest(call)"
-            class="px-2.5 py-1.5 bg-white text-rose-600 hover:bg-rose-50 font-bold rounded-lg text-xs shadow-xs transition cursor-pointer">
-            Accept
+            title="Acknowledge you are heading to the table"
+            class="px-2.5 py-1.5 bg-white/20 hover:bg-white/30 text-white font-bold rounded-lg text-xs transition cursor-pointer">
+            🏃 On My Way
           </button>
           <button
             type="button"
             (click)="completeServiceRequest(call)"
-            class="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs shadow-xs transition cursor-pointer">
-            Done
+            title="Complete task and clear alert in 1 click"
+            class="px-3 py-1.5 bg-white text-rose-700 hover:bg-emerald-600 hover:text-white font-black rounded-lg text-xs shadow-md transition cursor-pointer flex items-center gap-1">
+            <span>✓ Complete</span>
           </button>
         </div>
       </div>
@@ -146,14 +153,19 @@
                 </span>
                 <h3 class="text-lg font-black text-slate-900 dark:text-white mt-1">{{ call.locationNumber }}</h3>
               </div>
-              <span class="px-2.5 py-1 rounded-full text-[11px] font-extrabold uppercase"
-                    [ngClass]="{
-                      'bg-amber-100 text-amber-800 border border-amber-300 animate-pulse dark:bg-amber-950/40 dark:text-amber-300': call.status === 'WAITING',
-                      'bg-indigo-100 text-indigo-700 border border-indigo-300 dark:bg-indigo-950/40 dark:text-indigo-300': call.status === 'IN_PROGRESS' || call.status === 'ACCEPTED',
-                      'bg-emerald-100 text-emerald-700 border border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-300': call.status === 'COMPLETED'
-                    }">
-                {{ call.status }}
-              </span>
+              <div class="flex flex-col items-end gap-1">
+                <span class="px-2.5 py-1 rounded-full text-[11px] font-extrabold uppercase"
+                      [ngClass]="{
+                        'bg-amber-100 text-amber-800 border border-amber-300 animate-pulse dark:bg-amber-950/40 dark:text-amber-300': call.status === 'WAITING',
+                        'bg-indigo-100 text-indigo-700 border border-indigo-300 dark:bg-indigo-950/40 dark:text-indigo-300': call.status === 'IN_PROGRESS' || call.status === 'ACCEPTED',
+                        'bg-emerald-100 text-emerald-700 border border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-300': call.status === 'COMPLETED'
+                      }">
+                  {{ call.status === 'WAITING' ? '⏳ WAITING' : (call.status === 'IN_PROGRESS' ? '🏃 ATTENDING' : '✓ DONE') }}
+                </span>
+                <span *ngIf="call.acceptedBy" class="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">
+                  By: {{ call.acceptedBy }}
+                </span>
+              </div>
             </div>
 
             <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-700">
@@ -169,14 +181,16 @@
           <div class="flex items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-700">
             <button
               *ngIf="call.status === 'WAITING'"
+              type="button"
               (click)="acceptServiceRequest(call)"
-              class="flex-1 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm transition cursor-pointer">
-              Accept & Attend
+              class="px-3 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 font-bold text-xs transition cursor-pointer flex items-center justify-center gap-1">
+              <span>🏃 On My Way</span>
             </button>
             <button
+              type="button"
               (click)="completeServiceRequest(call)"
-              class="flex-1 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition cursor-pointer">
-              Mark Completed
+              class="flex-1 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition cursor-pointer flex items-center justify-center gap-1.5">
+              <span>✓ {{ call.status === 'WAITING' ? '1-Click Complete' : 'Mark Completed' }}</span>
             </button>
           </div>
         </div>
@@ -259,8 +273,8 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- Tables to clean -->
         <div class="space-y-3">
-          <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Tables Requiring Cleaning ({{ cleaningTables.length }})</h3>
-          <div *ngFor="let t of cleaningTables" class="p-4 bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/60 rounded-xl flex items-center justify-between">
+          <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Tables Requiring Cleaning ({{ filteredCleaningTables.length }})</h3>
+          <div *ngFor="let t of filteredCleaningTables" class="p-4 bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/60 rounded-xl flex items-center justify-between">
             <div>
               <p class="font-bold text-sm text-slate-900 dark:text-white">Table {{ t.tableNumber }}</p>
               <p class="text-[11px] text-slate-500">{{ t.locationName || 'Dining Area' }} &bull; {{ t.capacity }} seats</p>
@@ -269,13 +283,13 @@
               Mark Cleaned
             </button>
           </div>
-          <p *ngIf="cleaningTables.length === 0" class="text-xs text-slate-400 italic">No tables pending cleaning.</p>
+          <p *ngIf="filteredCleaningTables.length === 0" class="text-xs text-slate-400 italic">No tables pending cleaning.</p>
         </div>
 
         <!-- Rooms to clean -->
         <div class="space-y-3">
-          <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Rooms Requiring Housekeeping ({{ cleaningRooms.length }})</h3>
-          <div *ngFor="let r of cleaningRooms" class="p-4 bg-indigo-50/60 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-800/60 rounded-xl flex items-center justify-between">
+          <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Rooms Requiring Housekeeping ({{ filteredCleaningRooms.length }})</h3>
+          <div *ngFor="let r of filteredCleaningRooms" class="p-4 bg-indigo-50/60 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-800/60 rounded-xl flex items-center justify-between">
             <div>
               <p class="font-bold text-sm text-slate-900 dark:text-white">Room {{ r.roomNumber }}</p>
               <p class="text-[11px] text-slate-500">{{ r.roomTypeName || 'Standard' }}</p>
@@ -284,7 +298,7 @@
               Mark Cleaned
             </button>
           </div>
-          <p *ngIf="cleaningRooms.length === 0" class="text-xs text-slate-400 italic">No rooms pending cleaning.</p>
+          <p *ngIf="filteredCleaningRooms.length === 0" class="text-xs text-slate-400 italic">No rooms pending cleaning.</p>
         </div>
       </div>
     </div>

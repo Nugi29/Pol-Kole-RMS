@@ -34,6 +34,8 @@ export class WaiterComponent implements OnInit {
   filterMyTablesOnly = false;
   currentUserId: number | null = null;
   currentUserName: string = '';
+  currentUserRole: string = '';
+  isManagerOrAdmin: boolean = false;
 
   private readonly baseUrl = 'http://localhost:8080/api/kitchen';
 
@@ -58,7 +60,7 @@ export class WaiterComponent implements OnInit {
     });
 
     this.wsService.staffNotifications$.subscribe(notifs => {
-      this.myNotifications = notifs || [];
+      this.myNotifications = (notifs || []).filter(n => n.status !== 'RESOLVED' && n.status !== 'DISMISSED');
       this.cdr.markForCheck();
     });
 
@@ -82,6 +84,11 @@ export class WaiterComponent implements OnInit {
       this.currentUserId = Number(idStr);
     }
     this.currentUserName = localStorage.getItem('name') || 'Waiter Staff';
+    this.currentUserRole = (localStorage.getItem('role') || '').toUpperCase();
+    this.isManagerOrAdmin = this.currentUserRole.includes('ADMIN') || this.currentUserRole.includes('MANAGER');
+    
+    // Default to showing assigned work only for non-admin/non-manager staff
+    this.filterMyTablesOnly = !this.isManagerOrAdmin;
 
     if (!this.currentUserId) {
       const email = localStorage.getItem('email');
@@ -122,7 +129,7 @@ export class WaiterComponent implements OnInit {
     if (!this.currentUserId) return;
     this.notificationService.getUserNotifications(this.currentUserId, true).subscribe({
       next: (notifs) => {
-        this.myNotifications = notifs || [];
+        this.myNotifications = (notifs || []).filter(n => n.status !== 'RESOLVED' && n.status !== 'DISMISSED');
         this.cdr.markForCheck();
       },
       error: () => {}
@@ -253,9 +260,9 @@ export class WaiterComponent implements OnInit {
     });
   }
 
+  /** Delegates to WebsocketService.normalizeNum — single source of truth for location normalisation. */
   private normalizeNum(val: any): string {
-    if (!val) return '';
-    return String(val).toLowerCase().replace(/table/g, '').replace(/room/g, '').replace(/t-/g, '').replace(/t/g, '').replace(/#/g, '').replace(/\s+/g, '').trim();
+    return this.wsService.normalizeNum(val);
   }
 
   get filteredKitchenOrders(): KitchenOrder[] {
@@ -280,18 +287,19 @@ export class WaiterComponent implements OnInit {
   }
 
   get filteredGuestCalls(): any[] {
+    const list = (this.activeGuestCalls || []).filter(c => c.status !== 'COMPLETED');
     if (!this.filterMyTablesOnly || this.myAssignments.length === 0) {
-      return this.activeGuestCalls;
+      return list;
     }
 
-    return this.activeGuestCalls.filter(call => {
+    return list.filter(call => {
       // 1. Direct staff assignment ID match
       if (call.assignedStaffId && this.currentUserId && Number(call.assignedStaffId) === Number(this.currentUserId)) {
         return true;
       }
 
       // 2. Table location match
-      if (call.locationType === 'TABLE') {
+      if ((call.locationType || '').toUpperCase() === 'TABLE') {
         const callNorm = this.normalizeNum(call.locationNumber);
         const match = this.myAssignments.some(a => 
           a.assignmentType === 'TABLE' && (
@@ -304,7 +312,7 @@ export class WaiterComponent implements OnInit {
       }
 
       // 3. Room location match
-      if (call.locationType === 'ROOM') {
+      if ((call.locationType || '').toUpperCase() === 'ROOM') {
         const callNorm = this.normalizeNum(call.locationNumber);
         const match = this.myAssignments.some(a => 
           a.assignmentType === 'ROOM' && (
@@ -322,6 +330,36 @@ export class WaiterComponent implements OnInit {
 
   get urgentGuestCalls(): any[] {
     return this.filteredGuestCalls.filter(c => c.status === 'WAITING');
+  }
+
+  get filteredCleaningTables(): RestaurantTable[] {
+    if (!this.filterMyTablesOnly || this.myAssignments.length === 0) {
+      return this.cleaningTables;
+    }
+    return this.cleaningTables.filter(t => {
+      const tNorm = this.normalizeNum(t.tableNumber);
+      return this.myAssignments.some(a =>
+        a.assignmentType === 'TABLE' && (
+          (a.tableId && t.id && Number(a.tableId) === Number(t.id)) ||
+          (this.normalizeNum(a.tableNumber) === tNorm)
+        )
+      );
+    });
+  }
+
+  get filteredCleaningRooms(): Room[] {
+    if (!this.filterMyTablesOnly || this.myAssignments.length === 0) {
+      return this.cleaningRooms;
+    }
+    return this.cleaningRooms.filter(r => {
+      const rNorm = this.normalizeNum(r.roomNumber);
+      return this.myAssignments.some(a =>
+        a.assignmentType === 'ROOM' && (
+          (a.roomId && r.id && Number(a.roomId) === Number(r.id)) ||
+          (this.normalizeNum(a.roomNumber) === rNorm)
+        )
+      );
+    });
   }
 
   deliverOrder(id?: number): void {
@@ -356,9 +394,17 @@ export class WaiterComponent implements OnInit {
   }
 
   completeServiceRequest(call: any): void {
-    if (!call?.id) return;
-    this.wsService.resolveGuestCall(call.id);
-    this.dialogService.showSuccess('Request Completed', `Completed ${call.callType} for ${call.locationType} ${call.locationNumber}.`);
+    if (!call) return;
+    this.activeGuestCalls = (this.activeGuestCalls || []).filter(c => {
+      if (call.id && c.id === call.id) return false;
+      if (call.locationNumber && c.locationNumber && this.normalizeNum(call.locationNumber) === this.normalizeNum(c.locationNumber)) {
+        return false;
+      }
+      return true;
+    });
+    this.wsService.resolveGuestCall(call);
+    this.dialogService.showSuccess('Request Completed', `Completed ${call.callType || 'Service'} for ${call.locationType || 'Location'} ${call.locationNumber}.`);
+    this.cdr.markForCheck();
   }
 
   dismissNotification(notif: StaffNotification): void {

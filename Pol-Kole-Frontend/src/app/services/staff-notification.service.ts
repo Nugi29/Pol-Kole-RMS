@@ -72,4 +72,17 @@ export class StaffNotificationService {
   sendNotification(notif: Partial<StaffNotification>): Observable<StaffNotification> {
     return this.http.post<StaffNotification>(`${this.baseUrl}/send`, notif);
   }
+
+  /**
+   * Bulk-resolve ALL unresolved notifications for a given target location across all users
+   * in a single database operation. Replaces the previous N+1 loop that fetched every
+   * user's notifications individually and resolved them one by one.
+   */
+  resolveByTarget(targetType: string | undefined, targetLabel: string | undefined, targetId?: number): Observable<{ resolvedCount: number }> {
+    return this.http.put<{ resolvedCount: number }>(`${this.baseUrl}/resolve-by-target`, {
+      targetType: targetType ?? null,
+      targetLabel: targetLabel ?? null,
+      targetId: targetId ?? null,
+    });
+  }
 }

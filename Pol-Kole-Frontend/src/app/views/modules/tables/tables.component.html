@@ -154,6 +154,13 @@
           <!-- State Filter Buttons -->
           <div class="flex flex-wrap items-center gap-1.5 bg-slate-50 p-1 rounded-xl border border-slate-200/70">
             <button
+              *ngIf="myAssignments.length > 0 || isNonAdmin"
+              (click)="statusFilter = 'MY_ASSIGNED'"
+              class="px-3 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1"
+              [ngClass]="statusFilter === 'MY_ASSIGNED' ? 'bg-indigo-600 text-white shadow-sm' : 'text-indigo-600 hover:bg-indigo-50'">
+              <span>⭐ My Assigned ({{ myAssignedTablesCount }})</span>
+            </button>
+            <button
               (click)="statusFilter = 'ALL'"
               class="px-3 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer"
               [ngClass]="statusFilter === 'ALL' ? 'bg-white text-slate-900 shadow-sm border border-slate-200' : 'text-slate-500 hover:text-slate-800'">

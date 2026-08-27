@@ -10,6 +10,7 @@ import { DialogService } from '../../../services/dialog.service';
 import { Order, OrderService } from '../../../services/order.service';
 import { Reservation, ReservationService } from '../../../services/reservation.service';
 import { WebsocketService } from '../../../services/websocket.service';
+import { StaffAssignmentService, DailyStaffAssignment } from '../../../services/staff-assignment.service';
 import { KitchenOrder } from '../kitchen/kitchen.component';
 
 @Component({
@@ -30,6 +31,7 @@ export class TablesComponent implements OnInit, OnDestroy {
   orders: Order[] = [];
   kitchenTickets: KitchenOrder[] = [];
   reservations: Reservation[] = [];
+  myAssignments: DailyStaffAssignment[] = [];
   displayedColumns = ['tableNumber', 'capacity', 'location', 'status', 'actions'];
   dataSource = new MatTableDataSource<RestaurantTable>([]);
 
@@ -39,6 +41,8 @@ export class TablesComponent implements OnInit, OnDestroy {
   errorMessage = '';
   activeTab = 'grid';
   statusFilter = 'ALL';
+  isNonAdmin = false;
+  currentUserId: number | null = null;
 
   // Table Location Management
   locations: TableLocation[] = [];
@@ -59,6 +63,7 @@ export class TablesComponent implements OnInit, OnDestroy {
     private readonly tableService: TableService,
     private readonly orderService: OrderService,
     private readonly reservationService: ReservationService,
+    private readonly staffAssignmentService: StaffAssignmentService,
     public readonly wsService: WebsocketService,
     private readonly route: ActivatedRoute,
     private readonly router: Router,
@@ -81,6 +86,19 @@ export class TablesComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    const role = (localStorage.getItem('role') || '').toUpperCase();
+    const isManagerOrAdmin = role.includes('ADMIN') || role.includes('MANAGER');
+    this.isNonAdmin = !isManagerOrAdmin;
+    if (this.isNonAdmin) {
+      this.statusFilter = 'MY_ASSIGNED';
+    }
+
+    const idStr = localStorage.getItem('userId') || localStorage.getItem('id');
+    if (idStr && !isNaN(Number(idStr))) {
+      this.currentUserId = Number(idStr);
+      this.loadMyAssignments();
+    }
+
     this.loadLocations();
     this.loadTables();
     this.loadReservations();
@@ -95,6 +113,23 @@ export class TablesComponent implements OnInit, OnDestroy {
       this.loadReservations();
       this.cdr.markForCheck();
     });
+  }
+
+  loadMyAssignments(): void {
+    if (!this.currentUserId) return;
+    const today = new Date().toISOString().split('T')[0];
+    this.staffAssignmentService.getAssignmentsForUser(this.currentUserId, today).subscribe({
+      next: (assignments) => {
+        this.myAssignments = assignments || [];
+        this.cdr.markForCheck();
+      },
+      error: () => {}
+    });
+  }
+
+  private normalizeNum(val: any): string {
+    if (!val) return '';
+    return String(val).toLowerCase().replace(/table/g, '').replace(/room/g, '').replace(/t-/g, '').replace(/t/g, '').replace(/#/g, '').replace(/\s+/g, '').trim();
   }
 
   ngOnDestroy(): void {
@@ -126,7 +161,33 @@ export class TablesComponent implements OnInit, OnDestroy {
     });
   }
 
+  get myAssignedTablesCount(): number {
+    return this.tables.filter(t => {
+      const tNorm = this.normalizeNum(t.tableNumber);
+      return this.myAssignments.some(a =>
+        a.assignmentType === 'TABLE' && (
+          (a.tableId && t.id && Number(a.tableId) === Number(t.id)) ||
+          (this.normalizeNum(a.tableNumber) === tNorm)
+        )
+      );
+    }).length;
+  }
+
   get filteredTables(): RestaurantTable[] {
+    if (this.statusFilter === 'MY_ASSIGNED') {
+      if (this.myAssignments.length === 0) {
+        return this.tables;
+      }
+      return this.tables.filter(t => {
+        const tNorm = this.normalizeNum(t.tableNumber);
+        return this.myAssignments.some(a =>
+          a.assignmentType === 'TABLE' && (
+            (a.tableId && t.id && Number(a.tableId) === Number(t.id)) ||
+            (this.normalizeNum(a.tableNumber) === tNorm)
+          )
+        );
+      });
+    }
     if (this.statusFilter === 'ALL') {
       return this.tables;
     }

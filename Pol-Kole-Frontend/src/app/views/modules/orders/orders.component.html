@@ -447,6 +447,12 @@
       <!-- Quick Status Filter Pills for Fast 1-Click Filtering -->
       <div class="flex items-center gap-1.5 flex-wrap pt-1 border-t border-slate-200/60">
         <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1">Quick Filters:</span>
+        <button *ngIf="myAssignments.length > 0 || isNonAdmin"
+                type="button" (click)="filterMyAssignedOnly = !filterMyAssignedOnly; applyOrderFilters()"
+                class="px-2.5 py-1 rounded-lg text-[11.5px] font-bold transition-all cursor-pointer flex items-center gap-1"
+                [ngClass]="filterMyAssignedOnly ? 'bg-indigo-600 text-white shadow-xs' : 'bg-white border border-slate-200 text-indigo-700 hover:bg-indigo-50'">
+          <span>⭐ My Assigned</span>
+        </button>
         <button type="button" (click)="showTodayOnly = !showTodayOnly; applyOrderFilters()"
                 class="px-2.5 py-1 rounded-lg text-[11.5px] font-bold transition-all cursor-pointer flex items-center gap-1"
                 [ngClass]="showTodayOnly ? 'bg-indigo-600 text-white shadow-xs' : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'">

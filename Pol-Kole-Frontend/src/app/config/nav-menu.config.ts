@@ -22,12 +22,12 @@ export const NAV_MENU = [
   {
     name: 'Live Displays',
     icon: 'tv',
-    roles: ['ADMIN', 'MANAGER', 'WAITER', 'CASHIER', 'CHEF'],
+    roles: ['ADMIN', 'MANAGER', 'WAITER', 'CASHIER', 'CHEF', 'DISPLAY'],
     children: [
-      { name: 'Displays Hub', route: '/main/displays', roles: ['ADMIN', 'MANAGER', 'WAITER', 'CASHIER', 'CHEF'] },
-      { name: 'Takeaway Big Screen', route: '/display/takeaway', roles: ['ADMIN', 'MANAGER', 'WAITER', 'CASHIER'] },
-      { name: 'Table Displays', route: '/main/displays?tab=tables', roles: ['ADMIN', 'MANAGER', 'WAITER'] },
-      { name: 'Guest Calls', route: '/main/displays?tab=calls', roles: ['ADMIN', 'MANAGER', 'WAITER'] },
+      { name: 'Displays Hub', route: '/main/displays', roles: ['ADMIN', 'MANAGER', 'WAITER', 'CASHIER', 'CHEF', 'DISPLAY'] },
+      { name: 'Takeaway Big Screen', route: '/display/takeaway', roles: ['ADMIN', 'MANAGER', 'WAITER', 'CASHIER', 'DISPLAY'] },
+      { name: 'Table Displays', route: '/main/displays?tab=tables', roles: ['ADMIN', 'MANAGER', 'WAITER', 'DISPLAY'] },
+      { name: 'Room Displays', route: '/main/displays?tab=rooms', roles: ['ADMIN', 'MANAGER', 'WAITER', 'DISPLAY'] },
     ],
   },
   {
@@ -97,6 +97,7 @@ export const NAV_MENU = [
     roles: ['ADMIN', 'MANAGER', 'WAITER'],
     children: [
       { name: 'Ready to Serve', route: '/main/waiter?tab=ready', roles: ['ADMIN', 'MANAGER', 'WAITER'] },
+      { name: 'Guest & Room Calls', route: '/main/waiter?tab=requests', roles: ['ADMIN', 'MANAGER', 'WAITER'] },
       { name: 'Served History', route: '/main/waiter?tab=history', roles: ['ADMIN', 'MANAGER', 'WAITER'] },
       { name: 'Cleaning Tasks', route: '/main/waiter?tab=cleaning', roles: ['ADMIN', 'MANAGER', 'WAITER'] },
     ],

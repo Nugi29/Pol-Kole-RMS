@@ -66,12 +66,14 @@ const routes: Routes = [
       {
         path: 'dashboard',
         component: HomeComponent,
+        canActivate: [AuthGuard],
+        data: { roles: ['ADMIN', 'MANAGER', 'WAITER', 'CASHIER', 'CHEF'] },
       },
       {
         path: 'displays',
         component: DisplayHubComponent,
         canActivate: [AuthGuard],
-        data: { roles: ['ADMIN', 'MANAGER', 'WAITER', 'CASHIER', 'CHEF'] }
+        data: { roles: ['ADMIN', 'MANAGER', 'WAITER', 'CASHIER', 'CHEF', 'DISPLAY'] }
       },
       {
         path: 'rooms',

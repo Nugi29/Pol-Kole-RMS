@@ -1,7 +1,7 @@
 <div class="takeaway-screen-root flex flex-col h-screen w-screen bg-[#0b0f19] text-white font-sans overflow-hidden select-none">
 
   <!-- TOP HEADER BAR -->
-  <header class="h-20 bg-slate-900/90 border-b border-slate-800/80 px-8 flex items-center justify-between backdrop-blur-md shadow-2xl flex-shrink-0 z-20">
+  <header class="relative h-20 bg-slate-900/90 border-b border-slate-800/80 px-8 flex items-center justify-between backdrop-blur-md shadow-2xl flex-shrink-0 z-20">
     <!-- Brand & Title -->
     <div class="flex items-center gap-4">
       <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 via-orange-500 to-rose-500 flex items-center justify-center shadow-lg shadow-orange-500/20">
@@ -12,46 +12,18 @@
       <div>
         <div class="flex items-center gap-2.5">
           <h1 class="text-2xl font-black tracking-tight text-white uppercase">POL-KOLE RESORT</h1>
-          <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 tracking-wider">
-            TAKEAWAY ORDERS BOARD
-          </span>
         </div>
         <p class="text-xs text-slate-400 font-medium">Please watch for your order number to collect at the counter</p>
       </div>
     </div>
 
-    <!-- Center Live Connection Badge & Token Filter Switcher -->
-    <div class="hidden md:flex items-center gap-3">
-      <div class="flex items-center gap-3 bg-slate-800/80 border border-slate-700/60 px-4 py-2 rounded-xl backdrop-blur-sm">
-        <div class="relative flex h-3 w-3">
-          <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
-                [ngClass]="connectionMode === 'WEBSOCKET' ? 'bg-emerald-400' : 'bg-amber-400'"></span>
-          <span class="relative inline-flex rounded-full h-3 w-3"
-                [ngClass]="connectionMode === 'WEBSOCKET' ? 'bg-emerald-500' : 'bg-amber-500'"></span>
-        </div>
-        <div class="text-xs">
-          <span class="font-bold tracking-wider" [ngClass]="connectionMode === 'WEBSOCKET' ? 'text-emerald-400' : 'text-amber-400'">
-            {{ connectionMode === 'WEBSOCKET' ? 'WEBSOCKET LIVE' : 'REALTIME SYNC' }}
-          </span>
-          <span class="text-slate-400 ml-1 text-[11px]">Active</span>
-        </div>
-      </div>
-
-      <!-- Mode Toggle -->
-      <div class="flex items-center bg-slate-900 border border-slate-800 p-0.5 rounded-xl text-xs">
-        <button
-          (click)="setFilterMode('ALL')"
-          class="px-3 py-1.5 rounded-lg font-bold transition cursor-pointer"
-          [ngClass]="filterMode === 'ALL' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'">
-          All Tokens
-        </button>
-        <button
-          (click)="setFilterMode('TAKEAWAY')"
-          class="px-3 py-1.5 rounded-lg font-bold transition cursor-pointer"
-          [ngClass]="filterMode === 'TAKEAWAY' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'">
-          Takeaway Only
-        </button>
-      </div>
+    <!-- Centered board title -->
+    <div class="pointer-events-none absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 text-center sm:block">
+      <p class="text-[10px] font-bold uppercase tracking-[0.35em] text-amber-400/80">Live Counter Status</p>
+      <h2 class="mt-0.5 whitespace-nowrap text-xl font-black uppercase tracking-[0.12em] text-white drop-shadow-[0_0_12px_rgba(251,191,36,0.35)] lg:text-2xl">
+        Takeaway Orders Board
+      </h2>
+      <div class="mx-auto mt-1 h-0.5 w-16 rounded-full bg-gradient-to-r from-transparent via-amber-400 to-transparent"></div>
     </div>
 
     <!-- Right: Audio Control, Fullscreen & Real-time Digital Clock -->

@@ -24,6 +24,55 @@
 </div>
 
 <div *ngIf="!loading" class="space-y-6">
+  <!-- Staff My Assigned Shift & Responsibilities Card (Shown for Non-Admin) -->
+  <div *ngIf="isNonAdmin || myAssignments.length > 0"
+       class="bg-gradient-to-r from-indigo-900 via-slate-900 to-indigo-950 text-white p-6 rounded-3xl shadow-sm border border-indigo-800/40 space-y-4">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-2xl bg-indigo-500/20 text-indigo-300 border border-indigo-400/30 flex items-center justify-center text-lg">
+          👤
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h2 class="text-base font-bold text-white">My Assigned Work &amp; Floor Responsibilities Today</h2>
+            <span class="px-2 py-0.5 rounded-md bg-indigo-500/30 border border-indigo-400/40 text-[10px] font-bold uppercase tracking-wider text-indigo-200">
+              Active Shift
+            </span>
+          </div>
+          <p class="text-xs text-slate-300">Staff Member: <strong>{{ currentUserName }}</strong></p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <a routerLink="/main/waiter" [queryParams]="{ tab: 'ready' }"
+           class="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition shadow cursor-pointer">
+          Waiter Service Hub
+        </a>
+        <a routerLink="/main/tables"
+           class="px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition border border-white/20 cursor-pointer">
+          My Tables Floor
+        </a>
+      </div>
+    </div>
+
+    <!-- Assigned Items Chips -->
+    <div class="pt-2 border-t border-indigo-800/50 flex flex-wrap items-center gap-2">
+      <span class="text-xs text-slate-300 font-medium">Your Assigned Tables &amp; Rooms Today:</span>
+      <div class="flex flex-wrap items-center gap-2">
+        <span
+          *ngFor="let a of myAssignments"
+          class="px-3 py-1 rounded-xl text-xs font-bold bg-white/15 hover:bg-white/25 border border-white/20 text-white transition">
+          <span *ngIf="a.assignmentType === 'TABLE'">🍽️ Table {{ a.tableNumber }}</span>
+          <span *ngIf="a.assignmentType === 'ROOM'">🏨 Room {{ a.roomNumber }}</span>
+          <span *ngIf="a.assignmentType === 'TAKEAWAY_ZONE'">📦 {{ a.zoneOrStation || 'Takeaway Station' }}</span>
+        </span>
+        <span *ngIf="myAssignments.length === 0" class="text-xs text-slate-400 italic">
+          No specific tables or rooms assigned yet for today's shift.
+        </span>
+      </div>
+    </div>
+  </div>
+
   <!-- 4 Core Hospitality Cards -->
   <div class="grid grid-cols-4 gap-4">
     <!-- Card: Total Tables -->

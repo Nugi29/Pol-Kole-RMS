@@ -9,7 +9,7 @@ export class AuthGuard implements CanActivate {
 
   canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean {
     const token = localStorage.getItem('token');
-    const role = localStorage.getItem('role');
+    const role = (localStorage.getItem('role') || '').replace(/^ROLE_/i, '').toUpperCase();
 
     if (!token) {
       this.router.navigate(['/login']);
@@ -19,9 +19,9 @@ export class AuthGuard implements CanActivate {
     // Role checking
     const expectedRoles = route.data['roles'] as string[];
     if (expectedRoles && expectedRoles.length > 0) {
-      if (!role || !expectedRoles.includes(role.toUpperCase())) {
+      if (!role || !expectedRoles.some((expectedRole) => expectedRole.toUpperCase() === role)) {
         // User role is unauthorized
-        this.router.navigate(['/main/dashboard']);
+        this.router.navigate([role === 'DISPLAY' ? '/main/displays' : '/main/dashboard']);
         return false;
       }
     }

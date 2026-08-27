@@ -120,7 +120,10 @@ export class LoginComponent implements OnInit {
   }
 
   private redirectToMainWindow() {
-    this.router.navigate(['/main', 'dashboard']).then(
+    const role = (localStorage.getItem('role') || '').replace(/^ROLE_/i, '').toUpperCase();
+    const target = role === 'DISPLAY' ? ['/main', 'displays'] : ['/main', 'dashboard'];
+
+    this.router.navigate(target).then(
       (success) => {
         if (!success) {
           this.handleRedirectFailure();

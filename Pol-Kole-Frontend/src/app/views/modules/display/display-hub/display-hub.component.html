@@ -1,5 +1,42 @@
 <div class="display-hub-container space-y-6 max-w-7xl mx-auto p-4 sm:p-6 select-none">
 
+  <!-- My Assigned Responsibilities Banner -->
+  <div *ngIf="myAssignments.length > 0 || isNonAdmin"
+       class="bg-gradient-to-r from-indigo-900 via-slate-900 to-indigo-950 text-white p-5 rounded-2xl shadow-sm border border-indigo-800/40 flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div class="space-y-1.5">
+      <div class="flex items-center gap-2">
+        <span class="px-2 py-0.5 rounded-md bg-indigo-500/30 border border-indigo-400/40 text-[10px] font-bold uppercase tracking-wider text-indigo-200">
+          Staff Display View
+        </span>
+        <span class="text-xs font-semibold text-slate-300">Staff: <strong class="text-white">{{ currentUserName }}</strong></span>
+      </div>
+      <div class="flex items-center gap-2 flex-wrap">
+        <span class="text-xs text-slate-300 font-medium">My Assigned Displays Today:</span>
+        <div class="flex items-center gap-1.5 flex-wrap">
+          <span
+            *ngFor="let a of myAssignments"
+            class="px-2.5 py-0.5 rounded-lg text-xs font-bold bg-white/10 hover:bg-white/20 border border-white/20 text-white">
+            <span *ngIf="a.assignmentType === 'TABLE'">🍽️ Table {{ a.tableNumber }}</span>
+            <span *ngIf="a.assignmentType === 'ROOM'">🏨 Room {{ a.roomNumber }}</span>
+            <span *ngIf="a.assignmentType === 'TAKEAWAY_ZONE'">📦 {{ a.zoneOrStation || 'Takeaway' }}</span>
+          </span>
+          <span *ngIf="myAssignments.length === 0" class="text-xs text-slate-400 italic">No specific tables/rooms assigned yet</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter Toggle -->
+    <div class="flex items-center gap-2">
+      <button
+        type="button"
+        (click)="filterMyAssignedOnly = !filterMyAssignedOnly"
+        class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all border cursor-pointer"
+        [ngClass]="filterMyAssignedOnly ? 'bg-emerald-500 text-white border-emerald-400 shadow-xs' : 'bg-white/10 hover:bg-white/20 text-slate-200 border-white/20'">
+        {{ filterMyAssignedOnly ? 'Showing: My Assigned Displays Only' : 'Showing: All Live Displays' }}
+      </button>
+    </div>
+  </div>
+
   <!-- SECTION 1: SCREENS LAUNCHER -->
   <div *ngIf="activeTab === 'screens'" class="space-y-6">
     
@@ -13,7 +50,7 @@
             </svg>
           </div>
           <div>
-            <h3 class="text-base font-bold text-slate-900 dark:text-white">Dining Table Displays (Small Screens)</h3>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white">Dining Table Displays (Small Screens) ({{ filteredTables.length }})</h3>
             <p class="text-xs text-slate-500 dark:text-slate-400">Click any table to open or mount its dedicated guest tablet display</p>
           </div>
         </div>
@@ -22,7 +59,7 @@
       <!-- Tables Grid -->
       <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3.5 pt-2">
         <div
-          *ngFor="let table of tables"
+          *ngFor="let table of filteredTables"
           (click)="openTableDisplay(table.id)"
           class="p-4 rounded-2xl border transition-all duration-200 cursor-pointer text-center group flex flex-col items-center justify-between"
           [ngClass]="table.status === 'OCCUPIED' ? 'bg-amber-50/50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/50 hover:border-amber-400' : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700/60 hover:border-indigo-500'">
@@ -47,7 +84,7 @@
             </svg>
           </div>
           <div>
-            <h3 class="text-base font-bold text-slate-900 dark:text-white">Guest Room Displays</h3>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white">Guest Room Displays ({{ filteredRooms.length }})</h3>
             <p class="text-xs text-slate-500 dark:text-slate-400">Click any room to open its dedicated room service tablet screen</p>
           </div>
         </div>
@@ -56,7 +93,7 @@
       <!-- Rooms Grid -->
       <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3.5 pt-2">
         <div
-          *ngFor="let room of rooms"
+          *ngFor="let room of filteredRooms"
           (click)="openRoomDisplay(room.id)"
           class="p-4 rounded-2xl border transition-all duration-200 cursor-pointer text-center group flex flex-col items-center justify-between"
           [ngClass]="room.status === 'OCCUPIED' ? 'bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/50 hover:border-emerald-400' : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700/60 hover:border-emerald-500'">
@@ -74,72 +111,4 @@
     </div>
   </div>
 
-  <!-- SECTION 2: REAL-TIME GUEST CALLS LOG -->
-  <div *ngIf="activeTab === 'calls'" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-4">
-    <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
-      <div>
-        <h3 class="text-base font-bold text-slate-900 dark:text-white">Active Guest Assistance Calls</h3>
-        <p class="text-xs text-slate-500 dark:text-slate-400">Real-time alerts sent from Table and Room small displays</p>
-      </div>
-      <button
-        (click)="activeGuestCalls = []"
-        *ngIf="activeGuestCalls.length > 0"
-        class="text-xs font-bold text-slate-500 hover:text-slate-800 dark:hover:text-slate-200">
-        Clear All
-      </button>
-    </div>
-
-    <div *ngIf="activeGuestCalls.length === 0" class="py-12 text-center text-slate-400">
-      <svg class="w-12 h-12 mx-auto mb-2 text-slate-300 dark:text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-      </svg>
-      <p class="text-sm font-semibold">No pending guest calls</p>
-      <p class="text-xs text-slate-500">Incoming requests will sound a chime and appear here instantly.</p>
-    </div>
-
-    <div class="space-y-3">
-      <div
-        *ngFor="let call of activeGuestCalls"
-        class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div class="flex items-center gap-3.5">
-          <div class="w-11 h-11 rounded-2xl bg-amber-500/20 text-amber-500 flex items-center justify-center font-bold text-xl flex-shrink-0">
-            🛎️
-          </div>
-          <div>
-            <div class="flex items-center gap-2">
-              <span class="font-bold text-base text-slate-900 dark:text-white">{{ call.locationNumber }}</span>
-              <span class="px-2 py-0.5 rounded-md text-[10px] font-black uppercase"
-                    [ngClass]="call.locationType === 'ROOM' ? 'bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300' : 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300'">
-                {{ call.locationType }}
-              </span>
-              <span class="px-2 py-0.5 rounded-md text-[10px] font-black uppercase"
-                    [ngClass]="{
-                      'bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 animate-pulse': call.status === 'WAITING',
-                      'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300': call.status === 'IN_PROGRESS' || call.status === 'ACCEPTED',
-                      'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300': call.status === 'COMPLETED'
-                    }">
-                {{ call.status }}
-              </span>
-            </div>
-            <p class="text-xs text-slate-600 dark:text-slate-300 mt-1 font-medium">{{ call.message }}</p>
-            <p class="text-[10px] text-slate-400 mt-0.5 font-mono">Time: {{ call.timestamp | date:'shortTime' }}</p>
-          </div>
-        </div>
-
-        <div class="flex items-center gap-2 w-full sm:w-auto">
-          <button
-            *ngIf="call.status === 'WAITING'"
-            (click)="wsService.updateServiceRequestStatus(call.id, 'IN_PROGRESS', 'Staff Member')"
-            class="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition shadow cursor-pointer">
-            Accept
-          </button>
-          <button
-            (click)="resolveCall(call)"
-            class="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow cursor-pointer">
-            Resolve
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
 </div>
