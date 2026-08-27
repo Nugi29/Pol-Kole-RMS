@@ -1,72 +1,8 @@
 <div class="display-hub-container space-y-6 max-w-7xl mx-auto p-4 sm:p-6 select-none">
 
-  <!-- TOP HEADER -->
-  <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm">
-    <div class="flex items-center gap-4">
-      <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-500 to-violet-600 flex items-center justify-center text-white shadow-md">
-        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-        </svg>
-      </div>
-      <div>
-        <h1 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Live Customer Displays Hub</h1>
-        <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Real-time WebSocket displays for Tables, Guest Rooms, and Front Big Screen TV</p>
-      </div>
-    </div>
-
-    <!-- Quick Action / Tab switch -->
-    <div class="flex items-center gap-2">
-      <button
-        (click)="activeTab = 'screens'"
-        class="px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer"
-        [ngClass]="activeTab === 'screens' ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'">
-        Display Screens
-      </button>
-
-      <button
-        (click)="activeTab = 'calls'"
-        class="px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer relative"
-        [ngClass]="activeTab === 'calls' ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'">
-        <span>Guest Calls</span>
-        <span *ngIf="activeGuestCalls.length > 0" class="ml-1.5 px-1.5 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-black animate-pulse">
-          {{ activeGuestCalls.length }}
-        </span>
-      </button>
-    </div>
-  </div>
-
   <!-- SECTION 1: SCREENS LAUNCHER -->
   <div *ngIf="activeTab === 'screens'" class="space-y-6">
-
-    <!-- 1. BIG SCREEN TAKEAWAY CARD -->
-    <div class="bg-gradient-to-r from-slate-900 to-indigo-950 border border-indigo-900/60 rounded-3xl p-6 sm:p-8 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
-      <div class="space-y-2 max-w-xl z-10">
-        <div class="flex items-center gap-2">
-          <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 uppercase tracking-wider">
-            LOBBY & COUNTER BIG TV
-          </span>
-          <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300">
-            WebSocket Real-Time
-          </span>
-        </div>
-        <h2 class="text-2xl sm:text-3xl font-black tracking-tight text-white">Front Big Screen Takeaway Board</h2>
-        <p class="text-sm text-slate-300 leading-relaxed">
-          Launch this fullscreen view on wall-mounted 1080p/4K TVs in the waiting lobby. Features live dual-column cooking vs. ready queues and Web Audio chimes for token pickup announcements.
-        </p>
-      </div>
-
-      <div class="z-10 flex-shrink-0">
-        <button
-          (click)="launchTakeawayScreen()"
-          class="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 font-black text-sm tracking-wider uppercase transition-all shadow-xl shadow-orange-500/25 flex items-center gap-2.5 cursor-pointer">
-          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-          </svg>
-          <span>Launch TV Display (New Tab)</span>
-        </button>
-      </div>
-    </div>
-
+    
     <!-- 2. TABLE SMART DISPLAYS SELECTOR -->
     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-4">
       <div class="flex items-center justify-between">
