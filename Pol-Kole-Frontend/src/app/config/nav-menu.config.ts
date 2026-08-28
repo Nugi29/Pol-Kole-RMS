@@ -122,22 +122,14 @@ export const NAV_MENU = [
     ],
   },
   {
-    name: 'Staff Attendance',
-    icon: 'event',
-    route: '/main/attendance',
-    roles: ['ADMIN', 'MANAGER'],
-  },
-  {
-    name: 'Staff Assignments',
-    icon: 'sync_alt',
-    route: '/main/staff-assignments',
-    roles: ['ADMIN', 'MANAGER'],
-  },
-  {
     name: 'Staff & Users',
     icon: 'manage_accounts',
-    route: '/main/users',
-    roles: ['ADMIN'],
+    roles: ['ADMIN', 'MANAGER'],
+    children: [
+      { name: 'Users', route: '/main/users', roles: ['ADMIN'] },
+      { name: 'Attendance', route: '/main/attendance', roles: ['ADMIN', 'MANAGER'] },
+      { name: 'Assignments', route: '/main/staff-assignments', roles: ['ADMIN', 'MANAGER'] },
+    ],
   },
   {
     name: 'Audit Logging',

@@ -1,36 +1,32 @@
-<div class="space-y-6">
+<div class="space-y-6 animate-fade-in">
 
-  <!-- Header & Title Banner -->
-  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm">
-    <div class="space-y-1">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-sm">
-          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-          </svg>
-        </div>
-        <div>
-          <h1 class="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Staff Attendance & Presence</h1>
-          <p class="text-xs text-slate-500 dark:text-slate-400">Daily check-in roster, historical records & decoupled online status monitor</p>
-        </div>
-      </div>
+  <!-- Header Bar -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-900 dark:text-white leading-none tracking-tight flex items-center gap-2">
+        <span class="w-2.5 h-6 bg-emerald-600 rounded-full"></span>
+        Staff Attendance &amp; Presence
+      </h1>
+      <p class="text-[13px] text-slate-500 dark:text-slate-400 mt-1.5">
+        Daily check-in roster, historical records &amp; decoupled online status monitor.
+      </p>
     </div>
 
     <!-- Navigation Tabs & Date selector -->
     <div class="flex items-center gap-3 flex-wrap">
-      <div class="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+      <div class="flex items-center bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl border border-slate-200 dark:border-slate-700">
         <button
           type="button"
           (click)="switchTab('today')"
-          class="px-4 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer"
-          [ngClass]="activeTab === 'today' ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 shadow-xs' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'">
+          class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none"
+          [ngClass]="activeTab === 'today' ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 shadow-sm border border-slate-200/50 dark:border-slate-600' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'">
           Daily Roster
         </button>
         <button
           type="button"
           (click)="switchTab('history')"
-          class="px-4 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer"
-          [ngClass]="activeTab === 'history' ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 shadow-xs' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'">
+          class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none"
+          [ngClass]="activeTab === 'history' ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 shadow-sm border border-slate-200/50 dark:border-slate-600' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'">
           History Ledger
         </button>
       </div>
@@ -40,7 +36,7 @@
           type="date"
           [(ngModel)]="selectedDate"
           (change)="onDateChange()"
-          class="px-3 py-1.5 text-xs font-medium bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          class="px-3 py-1.5 text-xs font-medium bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
         />
         <button
           type="button"
@@ -138,8 +134,11 @@
     <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
       <div class="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
         <div>
-          <h2 class="text-sm font-bold text-slate-800 dark:text-slate-100">Staff Attendance for {{ selectedDate }}</h2>
-          <p class="text-[11px] text-slate-400">Mark check-in, check-out or status changes for each team member</p>
+          <h2 class="text-[14px] font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span class="w-1.5 h-3.5 bg-emerald-600 rounded-full"></span>
+            Staff Attendance Roster &bull; {{ selectedDate }}
+          </h2>
+          <p class="text-[11px] text-slate-400 mt-0.5">Mark check-in, check-out or status changes for each team member</p>
         </div>
         <button
           type="button"
@@ -344,8 +343,11 @@
     <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
       <div class="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
         <div>
-          <h2 class="text-sm font-bold text-slate-800 dark:text-slate-100">Historical Attendance Records</h2>
-          <p class="text-[11px] text-slate-400">Found {{ filteredHistoryRecords.length }} records in selected date window</p>
+          <h2 class="text-[14px] font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span class="w-1.5 h-3.5 bg-emerald-600 rounded-full"></span>
+            Historical Attendance Records Ledger
+          </h2>
+          <p class="text-[11px] text-slate-400 mt-0.5">Found {{ filteredHistoryRecords.length }} records in selected date window</p>
         </div>
       </div>
 

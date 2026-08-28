@@ -1,13 +1,24 @@
-<div class="space-y-6">
-  <div>
-    <h1 class="text-[22px] font-bold text-slate-900 leading-none">Guests Directory Management</h1>
-    <p class="text-[13px] text-slate-400 mt-2">Manage customer profiles, passport records, and check loyalty program points balances.</p>
+<div class="space-y-6 animate-fade-in">
+  <!-- Page Header -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-900 dark:text-white leading-none tracking-tight flex items-center gap-2">
+        <span class="w-2.5 h-6 bg-indigo-600 rounded-full"></span>
+        Guests Directory &amp; Loyalty Management
+      </h1>
+      <p class="text-[13px] text-slate-500 dark:text-slate-400 mt-1.5">
+        Manage customer profiles, passport records, and check loyalty program points balances.
+      </p>
+    </div>
   </div>
 
   <div class="grid grid-cols-[380px_1fr] gap-6 items-start">
     <!-- Left Column: Form -->
     <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm space-y-4">
-      <h2 class="text-[14px] font-bold text-slate-900 mb-2">{{ editingId ? 'Update Guest Profile' : 'Register New Guest' }}</h2>
+      <h2 class="text-[14px] font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-2">
+        <span class="w-1.5 h-3.5 bg-indigo-600 rounded-full"></span>
+        {{ editingId ? 'Update Guest Profile' : 'Register New Guest' }}
+      </h2>
 
       <div *ngIf="errorMessage" class="bg-red-50 text-red-600 text-[12px] p-3 rounded-lg font-semibold">
         {{ errorMessage }}
@@ -57,6 +68,13 @@
 
     <!-- Right Column: Table List -->
     <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-50 pb-2">
+        <h2 class="text-[14px] font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span class="w-1.5 h-3.5 bg-indigo-600 rounded-full"></span>
+          Registered Guests Directory
+        </h2>
+      </div>
+
       <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
         <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg>
         <input type="text" [(ngModel)]="searchQuery" (input)="loadCustomers()" placeholder="Search guests by name, passport or phone..." class="border-none outline-none text-[13px] text-slate-700 placeholder-slate-400 bg-transparent w-full"/>

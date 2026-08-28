@@ -2,30 +2,30 @@
   <!-- Dynamic Stats Header Bar -->
   <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
     <div>
-      <h1 class="text-2xl font-bold text-slate-900 leading-none tracking-tight flex items-center gap-2">
+      <h1 class="text-2xl font-bold text-slate-900 dark:text-white leading-none tracking-tight flex items-center gap-2">
         <span class="w-2.5 h-6 bg-indigo-600 rounded-full"></span>
-        Restaurant Tables & Dining Floor
+        Restaurant Tables &amp; Dining Floor
       </h1>
-      <p class="text-[13px] text-slate-500 mt-1.5">
+      <p class="text-[13px] text-slate-500 dark:text-slate-400 mt-1.5">
         Manage restaurant seating capacities, monitor table reservation occupancy, and register dining zones.
       </p>
     </div>
     
     <!-- Quick Nav Toggle -->
-    <div class="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200">
+    <div class="flex items-center bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl border border-slate-200 dark:border-slate-700">
       <a routerLink="/main/tables" [queryParams]="{ tab: 'grid' }"
          class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none"
-         [ngClass]="activeTab === 'grid' ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:text-slate-800'">
+         [ngClass]="activeTab === 'grid' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-600' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'">
         Floor Grid Map
       </a>
       <a routerLink="/main/tables" [queryParams]="{ tab: 'occupancy' }"
          class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none"
-         [ngClass]="activeTab === 'occupancy' ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:text-slate-800'">
+         [ngClass]="activeTab === 'occupancy' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-600' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'">
         Location Analytics
       </a>
       <a routerLink="/main/tables" [queryParams]="{ tab: 'locations' }"
          class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none"
-         [ngClass]="activeTab === 'locations' ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:text-slate-800'">
+         [ngClass]="activeTab === 'locations' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-600' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'">
         Table Locations
       </a>
     </div>
@@ -33,49 +33,49 @@
 
   <!-- Status Counter Widgets -->
   <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-    <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex items-center gap-3">
-      <div class="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-600 font-bold border border-slate-100">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 font-bold border border-slate-100 dark:border-slate-700">
         {{ tables.length }}
       </div>
       <div>
-        <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Tables</p>
-        <p class="text-[14px] font-extrabold text-slate-850">Floor Capacity</p>
+        <p class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Total Tables</p>
+        <p class="text-[14px] font-extrabold text-slate-800 dark:text-white">Floor Capacity</p>
       </div>
     </div>
-    <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex items-center gap-3">
-      <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold border border-emerald-100">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold border border-emerald-100 dark:border-emerald-900/40">
         {{ getTablesCountByStatus('AVAILABLE') }}
       </div>
       <div>
         <p class="text-[11px] font-bold text-emerald-500 uppercase tracking-wider">Available</p>
-        <p class="text-[14px] font-extrabold text-slate-850">Ready to Seat</p>
+        <p class="text-[14px] font-extrabold text-slate-800 dark:text-white">Ready to Seat</p>
       </div>
     </div>
-    <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex items-center gap-3">
-      <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold border border-blue-100">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold border border-blue-100 dark:border-blue-900/40">
         {{ getTablesCountByStatus('RESERVED') }}
       </div>
       <div>
         <p class="text-[11px] font-bold text-blue-500 uppercase tracking-wider">Reserved</p>
-        <p class="text-[14px] font-extrabold text-slate-850">Booked Slots</p>
+        <p class="text-[14px] font-extrabold text-slate-800 dark:text-white">Booked Slots</p>
       </div>
     </div>
-    <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex items-center gap-3">
-      <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold border border-indigo-100">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold border border-indigo-100 dark:border-indigo-900/40">
         {{ getTablesCountByStatus('OCCUPIED') }}
       </div>
       <div>
         <p class="text-[11px] font-bold text-indigo-500 uppercase tracking-wider">Occupied</p>
-        <p class="text-[14px] font-extrabold text-slate-850">Active Dining</p>
+        <p class="text-[14px] font-extrabold text-slate-800 dark:text-white">Active Dining</p>
       </div>
     </div>
-    <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex items-center gap-3">
-      <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold border border-amber-100">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold border border-amber-100 dark:border-amber-900/40">
         {{ getTablesCountByStatus('CLEANING') }}
       </div>
       <div>
         <p class="text-[11px] font-bold text-amber-500 uppercase tracking-wider">Cleaning</p>
-        <p class="text-[14px] font-extrabold text-slate-850">Sanitizing</p>
+        <p class="text-[14px] font-extrabold text-slate-800 dark:text-white">Sanitizing</p>
       </div>
     </div>
   </div>
@@ -84,33 +84,33 @@
   <div *ngIf="activeTab === 'grid'" class="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-6 items-start">
     
     <!-- Table Registry Card Form -->
-    <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm space-y-4">
-      <div class="flex items-center justify-between border-b border-slate-50 pb-3">
-        <h2 class="text-[14px] font-bold text-slate-900 flex items-center gap-2">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-100 dark:border-slate-800 shadow-sm space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-50 dark:border-slate-800 pb-3">
+        <h2 class="text-[14px] font-bold text-slate-900 dark:text-white flex items-center gap-2">
           <span class="w-1.5 h-3.5 bg-indigo-600 rounded-full"></span>
           {{ editingId ? 'Update Table Profile' : 'Register New Dining Table' }}
         </h2>
       </div>
 
-      <div *ngIf="errorMessage" class="bg-red-50 border border-red-100 text-red-600 text-[12px] p-3.5 rounded-xl font-semibold">
+      <div *ngIf="errorMessage" class="bg-red-50 dark:bg-rose-950/30 border border-red-100 dark:border-rose-900/40 text-red-600 dark:text-rose-400 text-[12px] p-3.5 rounded-xl font-semibold">
         {{ errorMessage }}
       </div>
 
       <form [formGroup]="form" (ngSubmit)="saveTable()" class="space-y-4">
         <!-- Display Table Number as read-only during edit -->
         <div *ngIf="editingId">
-          <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Table Number / Label</label>
-          <input type="text" formControlName="tableNumber" [readonly]="true" class="w-full bg-slate-100 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] text-slate-500 font-bold cursor-not-allowed"/>
+          <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">Table Number / Label</label>
+          <input type="text" formControlName="tableNumber" [readonly]="true" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-[13px] text-slate-500 dark:text-slate-400 font-bold cursor-not-allowed"/>
         </div>
 
         <div class="grid grid-cols-2 gap-3.5">
           <div>
-            <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Seating Capacity</label>
-            <input type="number" formControlName="capacity" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all"/>
+            <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">Seating Capacity</label>
+            <input type="number" formControlName="capacity" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-[13px] text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-700 transition-all"/>
           </div>
           <div>
-            <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Section / Location</label>
-            <select formControlName="locationId" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all">
+            <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">Section / Location</label>
+            <select formControlName="locationId" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-[13px] text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-700 transition-all">
               <option [ngValue]="null" disabled>Select Location</option>
               <option *ngFor="let loc of activeLocations" [ngValue]="loc.id">
                 {{ loc.name }} [{{ loc.code }}]
@@ -120,8 +120,8 @@
         </div>
 
         <div>
-          <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Initial Status</label>
-          <select formControlName="status" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all">
+          <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">Initial Status</label>
+          <select formControlName="status" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-[13px] text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-700 transition-all">
             <option value="AVAILABLE">🟢 AVAILABLE / VACANT</option>
             <option value="RESERVED">🔵 RESERVED</option>
             <option value="OCCUPIED">🟣 OCCUPIED / DINING</option>
@@ -133,7 +133,7 @@
           <button type="submit" [disabled]="loading" class="flex-1 bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white text-[13px] font-bold py-2.5 rounded-xl cursor-pointer shadow-sm transition-all disabled:opacity-50">
             {{ editingId ? 'Apply Update' : 'Add to Floor Map' }}
           </button>
-          <button type="button" (click)="requestClear()" class="bg-slate-50 hover:bg-slate-100 text-slate-650 text-[13px] font-bold px-4 py-2.5 rounded-xl cursor-pointer border border-slate-200 transition-all">
+          <button type="button" (click)="requestClear()" class="bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-[13px] font-bold px-4 py-2.5 rounded-xl cursor-pointer border border-slate-200 dark:border-slate-700 transition-all">
             Cancel
           </button>
         </div>
@@ -142,52 +142,52 @@
 
     <!-- Active Tables Grid Map -->
     <div class="space-y-6">
-      <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm space-y-4">
+      <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-100 dark:border-slate-800 shadow-sm space-y-4">
         
         <!-- Header & Quick State Filter Pills -->
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
-          <h2 class="text-[14px] font-bold text-slate-900 flex items-center gap-2">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
+          <h2 class="text-[14px] font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <span class="w-1.5 h-3.5 bg-indigo-600 rounded-full"></span>
             Restaurant Floorboard Grid ({{ filteredTables.length }} Tables)
           </h2>
 
           <!-- State Filter Buttons -->
-          <div class="flex flex-wrap items-center gap-1.5 bg-slate-50 p-1 rounded-xl border border-slate-200/70">
+          <div class="flex flex-wrap items-center gap-1.5 bg-slate-50 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200/70 dark:border-slate-700">
             <button
               *ngIf="myAssignments.length > 0 || isNonAdmin"
               (click)="statusFilter = 'MY_ASSIGNED'"
               class="px-3 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1"
-              [ngClass]="statusFilter === 'MY_ASSIGNED' ? 'bg-indigo-600 text-white shadow-sm' : 'text-indigo-600 hover:bg-indigo-50'">
+              [ngClass]="statusFilter === 'MY_ASSIGNED' ? 'bg-indigo-600 text-white shadow-sm' : 'text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40'">
               <span>⭐ My Assigned ({{ myAssignedTablesCount }})</span>
             </button>
             <button
               (click)="statusFilter = 'ALL'"
               class="px-3 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer"
-              [ngClass]="statusFilter === 'ALL' ? 'bg-white text-slate-900 shadow-sm border border-slate-200' : 'text-slate-500 hover:text-slate-800'">
+              [ngClass]="statusFilter === 'ALL' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm border border-slate-200 dark:border-slate-600' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'">
               All ({{ tables.length }})
             </button>
             <button
               (click)="statusFilter = 'AVAILABLE'"
               class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer"
-              [ngClass]="statusFilter === 'AVAILABLE' ? 'bg-emerald-500 text-white shadow-sm' : 'text-emerald-600 hover:bg-emerald-50'">
+              [ngClass]="statusFilter === 'AVAILABLE' ? 'bg-emerald-500 text-white shadow-sm' : 'text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40'">
               🟢 Available ({{ getTablesCountByStatus('AVAILABLE') }})
             </button>
             <button
               (click)="statusFilter = 'RESERVED'"
               class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer"
-              [ngClass]="statusFilter === 'RESERVED' ? 'bg-blue-500 text-white shadow-sm' : 'text-blue-600 hover:bg-blue-50'">
+              [ngClass]="statusFilter === 'RESERVED' ? 'bg-blue-500 text-white shadow-sm' : 'text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40'">
               🔵 Reserved ({{ getTablesCountByStatus('RESERVED') }})
             </button>
             <button
               (click)="statusFilter = 'OCCUPIED'"
               class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer"
-              [ngClass]="statusFilter === 'OCCUPIED' ? 'bg-indigo-600 text-white shadow-sm' : 'text-indigo-600 hover:bg-indigo-50'">
+              [ngClass]="statusFilter === 'OCCUPIED' ? 'bg-indigo-600 text-white shadow-sm' : 'text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40'">
               🟣 Occupied ({{ getTablesCountByStatus('OCCUPIED') }})
             </button>
             <button
               (click)="statusFilter = 'CLEANING'"
               class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer"
-              [ngClass]="statusFilter === 'CLEANING' ? 'bg-amber-500 text-white shadow-sm' : 'text-amber-600 hover:bg-amber-50'">
+              [ngClass]="statusFilter === 'CLEANING' ? 'bg-amber-500 text-white shadow-sm' : 'text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40'">
               🟡 Cleaning ({{ getTablesCountByStatus('CLEANING') }})
             </button>
           </div>
@@ -198,10 +198,10 @@
           <div *ngFor="let tb of filteredTables"
                class="rounded-2xl p-4.5 border transition-all duration-200 flex flex-col justify-between gap-3.5 group relative"
                [ngClass]="{
-                 'bg-white border-emerald-200/80 shadow-sm hover:shadow-md hover:border-emerald-400': tb.status.toUpperCase() === 'AVAILABLE',
-                 'bg-blue-50/40 border-blue-200/90 shadow-sm hover:shadow-md hover:border-blue-400': tb.status.toUpperCase() === 'RESERVED',
-                 'bg-gradient-to-br from-indigo-50/50 via-white to-slate-50 border-indigo-200/90 shadow-md hover:shadow-lg hover:border-indigo-400': tb.status.toUpperCase() === 'OCCUPIED',
-                 'bg-amber-50/50 border-amber-200/90 shadow-sm hover:shadow-md hover:border-amber-400': tb.status.toUpperCase() === 'CLEANING'
+                 'bg-white dark:bg-slate-900 border-emerald-200/80 dark:border-emerald-900/60 shadow-sm hover:shadow-md hover:border-emerald-400': tb.status.toUpperCase() === 'AVAILABLE',
+                 'bg-blue-50/40 dark:bg-blue-950/20 border-blue-200/90 dark:border-blue-900/60 shadow-sm hover:shadow-md hover:border-blue-400': tb.status.toUpperCase() === 'RESERVED',
+                 'bg-gradient-to-br from-indigo-50/50 via-white to-slate-50 dark:from-indigo-950/30 dark:via-slate-900 dark:to-slate-900 border-indigo-200/90 dark:border-indigo-900/60 shadow-md hover:shadow-lg hover:border-indigo-400': tb.status.toUpperCase() === 'OCCUPIED',
+                 'bg-amber-50/50 dark:bg-amber-950/20 border-amber-200/90 dark:border-amber-900/60 shadow-sm hover:shadow-md hover:border-amber-400': tb.status.toUpperCase() === 'CLEANING'
                }">
             
             <div>
@@ -209,8 +209,8 @@
               <div class="flex items-start justify-between">
                 <div class="flex items-center gap-3">
                   <div>
-                    <h3 class="text-base font-extrabold text-slate-900 leading-tight">Table {{ tb.tableNumber }}</h3>
-                    <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">
+                    <h3 class="text-base font-extrabold text-slate-900 dark:text-white leading-tight">Table {{ tb.tableNumber }}</h3>
+                    <p class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wide">
                       {{ tb.locationName || 'Main Floor' }} • {{ tb.capacity }} Seats
                     </p>
                   </div>
@@ -219,10 +219,10 @@
                 <!-- Status Badge -->
                 <span class="text-[10px] font-black px-2.5 py-0.5 rounded-full shadow-xs uppercase tracking-wider"
                       [ngClass]="{
-                        'bg-emerald-50 border border-emerald-200 text-emerald-700': tb.status.toUpperCase() === 'AVAILABLE',
-                        'bg-blue-50 border border-blue-200 text-blue-700': tb.status.toUpperCase() === 'RESERVED',
-                        'bg-indigo-100 border border-indigo-200 text-indigo-800 animate-pulse': tb.status.toUpperCase() === 'OCCUPIED',
-                        'bg-amber-100 border border-amber-200 text-amber-800': tb.status.toUpperCase() === 'CLEANING'
+                        'bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400': tb.status.toUpperCase() === 'AVAILABLE',
+                        'bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-400': tb.status.toUpperCase() === 'RESERVED',
+                        'bg-indigo-100 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-indigo-800 dark:text-indigo-300 animate-pulse': tb.status.toUpperCase() === 'OCCUPIED',
+                        'bg-amber-100 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300': tb.status.toUpperCase() === 'CLEANING'
                       }">
                   {{ tb.status }}
                 </span>
@@ -231,34 +231,34 @@
               <!-- ============================================== -->
               <!-- STATE 1: AVAILABLE (VACANT & CLEAN) -->
               <!-- ============================================== -->
-              <div *ngIf="tb.status.toUpperCase() === 'AVAILABLE'" class="mt-3 p-3 rounded-xl bg-emerald-50/50 border border-emerald-100/60 text-[12px]">
-                <div class="flex items-center gap-2 text-emerald-800 font-semibold">
-                  <svg class="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <div *ngIf="tb.status.toUpperCase() === 'AVAILABLE'" class="mt-3 p-3 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/40 border border-emerald-100/60 dark:border-emerald-900/50 text-[12px]">
+                <div class="flex items-center gap-2 text-emerald-800 dark:text-emerald-300 font-semibold">
+                  <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
-                  <span>Vacant & Sanitized — Ready to seat guests</span>
+                  <span>Vacant &amp; Sanitized &mdash; Ready to seat guests</span>
                 </div>
               </div>
 
               <!-- ============================================== -->
               <!-- STATE 2: RESERVED (BOOKED SLOT) -->
               <!-- ============================================== -->
-              <div *ngIf="tb.status.toUpperCase() === 'RESERVED'" class="mt-3 p-3 rounded-xl bg-blue-50/70 border border-blue-200/60 text-[12px] space-y-1">
-                <div class="flex items-center justify-between text-blue-900 font-bold">
+              <div *ngIf="tb.status.toUpperCase() === 'RESERVED'" class="mt-3 p-3 rounded-xl bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200/60 dark:border-blue-900/50 text-[12px] space-y-1">
+                <div class="flex items-center justify-between text-blue-900 dark:text-blue-200 font-bold">
                   <span class="flex items-center gap-1.5">
-                    <svg class="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                     <span>Reserved Booking</span>
                   </span>
-                  <span *ngIf="getReservationForTable(tb.id)?.reservationTime" class="font-mono text-blue-700">
+                  <span *ngIf="getReservationForTable(tb.id)?.reservationTime" class="font-mono text-blue-700 dark:text-blue-300">
                     {{ getReservationForTable(tb.id)?.reservationTime }}
                   </span>
                 </div>
-                <div *ngIf="getReservationForTable(tb.id)?.customerName" class="text-slate-700 text-xs font-semibold">
-                  Guest: <strong>{{ getReservationForTable(tb.id)?.customerName }}</strong> ({{ getReservationForTable(tb.id)?.guestsCount || tb.capacity }} Guests)
+                <div *ngIf="getReservationForTable(tb.id)?.customerName" class="text-slate-700 dark:text-slate-300 text-xs font-semibold">
+                  Guest: <strong class="text-slate-900 dark:text-white">{{ getReservationForTable(tb.id)?.customerName }}</strong> ({{ getReservationForTable(tb.id)?.guestsCount || tb.capacity }} Guests)
                 </div>
-                <div *ngIf="getReservationForTable(tb.id)?.specialRequests" class="text-slate-500 text-[11px] italic truncate">
+                <div *ngIf="getReservationForTable(tb.id)?.specialRequests" class="text-slate-500 dark:text-slate-400 text-[11px] italic truncate">
                   "{{ getReservationForTable(tb.id)?.specialRequests }}"
                 </div>
               </div>
@@ -266,29 +266,26 @@
               <!-- ============================================== -->
               <!-- STATE 3: OCCUPIED (ACTIVE DINING & ORDER STATUS) -->
               <!-- ============================================== -->
-              <!-- ============================================== -->
-              <!-- STATE 3: OCCUPIED (ACTIVE DINING & ORDER STATUS) -->
-              <!-- ============================================== -->
-              <div *ngIf="tb.status.toUpperCase() === 'OCCUPIED'" class="mt-3 p-3 rounded-xl bg-white border border-indigo-100 shadow-xs text-[12px] space-y-2">
+              <div *ngIf="tb.status.toUpperCase() === 'OCCUPIED'" class="mt-3 p-3 rounded-xl bg-white dark:bg-slate-900/90 border border-indigo-100 dark:border-indigo-900/50 shadow-2xs text-[12px] space-y-2">
                 <ng-container *ngIf="getActiveOrdersForTable(tb.id) as activeOrdersList">
                   <div *ngIf="activeOrdersList.length > 0; else noOrderYet" class="space-y-2">
                     <!-- Order Rounds Header & Latest Status -->
                     <div class="flex items-center justify-between">
                       <div class="flex items-center gap-1.5">
-                        <span class="font-black text-indigo-900 text-xs">
+                        <span class="font-black text-indigo-900 dark:text-indigo-300 text-xs">
                           {{ activeOrdersList.length === 1 ? 'Order #' + activeOrdersList[0].id : activeOrdersList.length + ' Orders' }}
                         </span>
-                        <span *ngIf="activeOrdersList[activeOrdersList.length - 1].customerName" class="text-slate-500 text-[11px] truncate max-w-[100px]">
+                        <span *ngIf="activeOrdersList[activeOrdersList.length - 1].customerName" class="text-slate-500 dark:text-slate-400 text-[11px] truncate max-w-[100px]">
                           ({{ activeOrdersList[activeOrdersList.length - 1].customerName }})
                         </span>
                       </div>
                       <span class="text-[10px] font-black px-2 py-0.5 rounded uppercase shadow-2xs tracking-wider flex items-center gap-1"
                             [ngClass]="{
-                              'bg-amber-50 border border-amber-200 text-amber-700': getKitchenStatusForOrder(activeOrdersList[activeOrdersList.length - 1].id) === 'PENDING' || getKitchenStatusForOrder(activeOrdersList[activeOrdersList.length - 1].id) === 'RECEIVED' || getKitchenStatusForOrder(activeOrdersList[activeOrdersList.length - 1].id) === 'ORDERED',
-                              'bg-blue-50 border border-blue-200 text-blue-700 animate-pulse': getKitchenStatusForOrder(activeOrdersList[activeOrdersList.length - 1].id) === 'PREPARING',
-                              'bg-emerald-50 border border-emerald-250 text-emerald-700 animate-bounce': getKitchenStatusForOrder(activeOrdersList[activeOrdersList.length - 1].id) === 'READY',
-                              'bg-teal-50 border border-teal-200 text-teal-700': getKitchenStatusForOrder(activeOrdersList[activeOrdersList.length - 1].id) === 'SERVED' || getKitchenStatusForOrder(activeOrdersList[activeOrdersList.length - 1].id) === 'DELIVERED',
-                              'bg-slate-100 border border-slate-200 text-slate-600': getKitchenStatusForOrder(activeOrdersList[activeOrdersList.length - 1].id) === 'COMPLETED'
+                              'bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400': getKitchenStatusForOrder(activeOrdersList[activeOrdersList.length - 1].id) === 'PENDING' || getKitchenStatusForOrder(activeOrdersList[activeOrdersList.length - 1].id) === 'RECEIVED' || getKitchenStatusForOrder(activeOrdersList[activeOrdersList.length - 1].id) === 'ORDERED',
+                              'bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-400 animate-pulse': getKitchenStatusForOrder(activeOrdersList[activeOrdersList.length - 1].id) === 'PREPARING',
+                              'bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-250 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 animate-bounce': getKitchenStatusForOrder(activeOrdersList[activeOrdersList.length - 1].id) === 'READY',
+                              'bg-teal-50 dark:bg-teal-950/50 border border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-400': getKitchenStatusForOrder(activeOrdersList[activeOrdersList.length - 1].id) === 'SERVED' || getKitchenStatusForOrder(activeOrdersList[activeOrdersList.length - 1].id) === 'DELIVERED',
+                              'bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400': getKitchenStatusForOrder(activeOrdersList[activeOrdersList.length - 1].id) === 'COMPLETED'
                             }">
                         <span class="w-1.5 h-1.5 rounded-full"
                               [ngClass]="{
@@ -303,32 +300,32 @@
                     </div>
 
                     <!-- Ordered Items Preview (Latest round items) -->
-                    <div class="text-slate-600 text-[11px] space-y-1 max-h-[50px] overflow-hidden">
+                    <div class="text-slate-600 dark:text-slate-300 text-[11px] space-y-1 max-h-[50px] overflow-hidden">
                       <div *ngFor="let item of (activeOrdersList[activeOrdersList.length - 1].items || []).slice(0, 2)" class="flex justify-between">
                         <span class="truncate max-w-[170px] font-medium">{{ item.quantity }}x {{ item.menuItemName }}</span>
-                        <span class="font-mono text-slate-700">Rs. {{ (item.price * item.quantity).toFixed(0) }}</span>
+                        <span class="font-mono text-slate-700 dark:text-slate-300">Rs. {{ (item.price * item.quantity).toFixed(0) }}</span>
                       </div>
-                      <div *ngIf="(activeOrdersList[activeOrdersList.length - 1].items || []).length > 2" class="text-slate-400 text-[10px] italic">
+                      <div *ngIf="(activeOrdersList[activeOrdersList.length - 1].items || []).length > 2" class="text-slate-400 dark:text-slate-500 text-[10px] italic">
                         + {{ activeOrdersList[activeOrdersList.length - 1].items.length - 2 }} more items...
                       </div>
                     </div>
 
                     <!-- Total Price Bar -->
-                    <div class="border-t border-slate-100 pt-1.5 flex items-center justify-between">
-                      <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide">
+                    <div class="border-t border-slate-100 dark:border-slate-800 pt-1.5 flex items-center justify-between">
+                      <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                         {{ activeOrdersList.length > 1 ? 'Grand Total (' + activeOrdersList.length + ' orders):' : 'Total Bill:' }}
                       </span>
-                      <span class="text-sm font-black text-emerald-600 font-mono">Rs. {{ getTableGrandTotal(tb.id) | number:'1.2-2' }}</span>
+                      <span class="text-sm font-black text-emerald-600 dark:text-emerald-400 font-mono">Rs. {{ getTableGrandTotal(tb.id) | number:'1.2-2' }}</span>
                     </div>
                   </div>
                 </ng-container>
 
                 <ng-template #noOrderYet>
-                  <div class="text-slate-400 text-xs italic flex items-center gap-1.5 py-1">
+                  <div class="text-slate-400 dark:text-slate-500 text-xs italic flex items-center gap-1.5 py-1">
                     <svg class="w-4 h-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
-                    <span>Guests seated — awaiting POS order</span>
+                    <span>Guests seated &mdash; awaiting POS order</span>
                   </div>
                 </ng-template>
               </div>
@@ -336,9 +333,9 @@
               <!-- ============================================== -->
               <!-- STATE 4: CLEANING (SANITIZING) -->
               <!-- ============================================== -->
-              <div *ngIf="tb.status.toUpperCase() === 'CLEANING'" class="mt-3 p-3 rounded-xl bg-amber-50/70 border border-amber-200/60 text-[12px]">
-                <div class="flex items-center gap-2 text-amber-900 font-semibold">
-                  <svg class="w-4 h-4 text-amber-600 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <div *ngIf="tb.status.toUpperCase() === 'CLEANING'" class="mt-3 p-3 rounded-xl bg-amber-50/70 dark:bg-amber-950/40 border border-amber-200/60 dark:border-amber-900/50 text-[12px]">
+                <div class="flex items-center gap-2 text-amber-900 dark:text-amber-300 font-semibold">
+                  <svg class="w-4 h-4 text-amber-600 dark:text-amber-400 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                   </svg>
                   <span>Table needs cleaning / sanitization</span>
@@ -347,7 +344,7 @@
             </div>
 
             <!-- Card Bottom State Actions -->
-            <div class="flex items-center justify-between border-t border-slate-100/90 pt-3 mt-1">
+            <div class="flex items-center justify-between border-t border-slate-100/90 dark:border-slate-800 pt-3 mt-1">
               
               <!-- State Transition Actions -->
               <div class="flex items-center gap-1.5">
@@ -367,20 +364,20 @@
 
                 <button *ngIf="tb.status.toUpperCase() === 'RESERVED' && getReservationForTable(tb.id)"
                         (click)="viewReservationDetails(tb)"
-                        class="text-[11px] bg-blue-50 border border-blue-200 text-blue-700 font-bold px-2 py-1 rounded-lg hover:bg-blue-100 transition cursor-pointer">
+                        class="text-[11px] bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 font-bold px-2 py-1 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900 transition cursor-pointer">
                   View Booking
                 </button>
 
                 <!-- If OCCUPIED ➔ View Order / Finish to Cleaning -->
                 <button *ngIf="tb.status.toUpperCase() === 'OCCUPIED' && getActiveOrderForTable(tb.id)"
                         (click)="viewTableOrderDetails(tb)"
-                        class="text-[11px] bg-indigo-50 border border-indigo-200 text-indigo-700 font-bold px-2 py-1 rounded-lg hover:bg-indigo-100 transition cursor-pointer">
+                        class="text-[11px] bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 font-bold px-2 py-1 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900 transition cursor-pointer">
                   View Bill
                 </button>
 
                 <button *ngIf="tb.status.toUpperCase() === 'OCCUPIED'"
                         (click)="quickStatusUpdate(tb, 'CLEANING')"
-                        class="text-[11px] bg-amber-50 border border-amber-200 text-amber-700 font-bold px-2 py-1 rounded-lg hover:bg-amber-100 transition cursor-pointer"
+                        class="text-[11px] bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 font-bold px-2 py-1 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900 transition cursor-pointer"
                         title="Guest checkout / mark dirty">
                   Checkout ➔ Clean
                 </button>
@@ -397,7 +394,7 @@
               <div class="flex items-center gap-1">
                 <button (click)="openTableDisplay(tb.id)"
                         title="Launch Live Guest Tablet Display for this Table"
-                        class="text-[11px] text-slate-600 hover:text-indigo-600 bg-slate-100 hover:bg-indigo-50 p-1.5 rounded-lg transition cursor-pointer">
+                        class="text-[11px] text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 bg-slate-100 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-slate-700 p-1.5 rounded-lg transition cursor-pointer">
                   <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                   </svg>
@@ -405,7 +402,7 @@
 
                 <button (click)="goToPosForTable(tb.id)"
                         title="Add/Create Order at POS for this Table"
-                        class="text-[11px] text-slate-600 hover:text-indigo-600 bg-slate-100 hover:bg-indigo-50 p-1.5 rounded-lg transition cursor-pointer">
+                        class="text-[11px] text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 bg-slate-100 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-slate-700 p-1.5 rounded-lg transition cursor-pointer">
                   <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1 5h12M10 21a1 1 0 100-2 1 1 0 000 2zm8 0a1 1 0 100-2 1 1 0 000 2z" />
                   </svg>
@@ -413,7 +410,7 @@
 
                 <button (click)="editTable(tb)"
                         title="Edit Table Settings"
-                        class="text-[11px] text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 p-1.5 rounded-lg transition cursor-pointer">
+                        class="text-[11px] text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 p-1.5 rounded-lg transition cursor-pointer">
                   <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
@@ -421,7 +418,7 @@
 
                 <button (click)="deleteTable(tb.id!)"
                         title="Delete Table"
-                        class="text-[11px] text-rose-600 hover:text-white bg-rose-50 hover:bg-rose-600 p-1.5 rounded-lg transition cursor-pointer">
+                        class="text-[11px] text-rose-600 dark:text-rose-400 hover:text-white bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-600 p-1.5 rounded-lg transition cursor-pointer">
                   <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
@@ -432,7 +429,7 @@
         </div>
 
         <ng-template #emptyState>
-          <div class="text-center py-12 text-slate-400">
+          <div class="text-center py-12 text-slate-400 dark:text-slate-500">
             <p class="font-bold text-[14px]">No Tables Matching Filter</p>
           </div>
         </ng-template>
@@ -441,67 +438,194 @@
   </div>
 
   <!-- TAB 2: ANALYTICS -->
-  <div *ngIf="activeTab === 'occupancy'" class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm space-y-6">
-    <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
-      <span class="w-2 h-4 bg-indigo-600 rounded-full"></span>
-      Location Seating Analytics
-    </h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <div *ngFor="let loc of locations" class="bg-gradient-to-br from-slate-50 to-slate-100 p-5 rounded-2xl border border-slate-200/60 shadow-sm transition-all hover:shadow-md">
-        <div class="flex items-center justify-between">
-          <h3 class="text-sm font-bold text-slate-800">{{ loc.name }}</h3>
-          <span class="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                [ngClass]="loc.isActive ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-slate-100 text-slate-400'">
-            {{ loc.isActive ? 'Active' : 'Inactive' }}
-          </span>
-        </div>
-        <p class="text-2xl font-extrabold text-indigo-600 mt-3 flex items-baseline gap-1.5">
-          {{ getTablesCountByLocationId(loc.id!) }} 
-          <span class="text-xs font-semibold text-slate-400">Tables</span>
+  <div *ngIf="activeTab === 'occupancy'" class="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-100 dark:border-slate-800 shadow-sm space-y-6">
+    <!-- Header & Summary Bar -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
+      <div>
+        <h2 class="text-[14px] font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span class="w-1.5 h-3.5 bg-indigo-600 rounded-full"></span>
+          Location Seating &amp; Capacity Analytics
+        </h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          Real-time breakdown of dining table distribution, seat capacities, and live occupancy rates by zone.
         </p>
-        <p class="text-[11px] text-slate-450 mt-1 font-semibold">Location Code: <span class="text-slate-600 font-bold">{{ loc.code }}</span></p>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800">
+          {{ locations.length }} Dining Zones
+        </span>
       </div>
     </div>
+
+    <!-- Overall Seating KPI Row -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3.5">
+      <div class="bg-slate-50/80 dark:bg-slate-800/60 p-4 rounded-xl border border-slate-200/60 dark:border-slate-700/60 shadow-2xs">
+        <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Total Dining Zones</p>
+        <p class="text-2xl font-extrabold text-slate-900 dark:text-white mt-1">{{ locations.length }}</p>
+        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{{ activeLocations.length }} active &amp; seatable</p>
+      </div>
+
+      <div class="bg-slate-50/80 dark:bg-slate-800/60 p-4 rounded-xl border border-slate-200/60 dark:border-slate-700/60 shadow-2xs">
+        <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Total Floor Seats</p>
+        <p class="text-2xl font-extrabold text-indigo-600 dark:text-indigo-400 mt-1">{{ getTotalSeatsAcrossAllLocations() }}</p>
+        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Across {{ tables.length }} tables</p>
+      </div>
+
+      <div class="bg-slate-50/80 dark:bg-slate-800/60 p-4 rounded-xl border border-slate-200/60 dark:border-slate-700/60 shadow-2xs">
+        <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Overall Occupancy</p>
+        <p class="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-1">{{ getOverallOccupancyRate() }}%</p>
+        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{{ getTablesCountByStatus('OCCUPIED') }} tables dining</p>
+      </div>
+
+      <div class="bg-slate-50/80 dark:bg-slate-800/60 p-4 rounded-xl border border-slate-200/60 dark:border-slate-700/60 shadow-2xs">
+        <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Vacant Available Seats</p>
+        <p class="text-2xl font-extrabold text-blue-600 dark:text-blue-400 mt-1">{{ getTablesCountByStatus('AVAILABLE') }}</p>
+        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Tables ready to seat</p>
+      </div>
+    </div>
+
+    <!-- Location Cards Grid -->
+    <div *ngIf="locations.length > 0; else noLocationsAnalytics" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div *ngFor="let loc of locations"
+           class="bg-slate-50/70 dark:bg-slate-800/60 p-5 rounded-2xl border border-slate-200/70 dark:border-slate-700/80 shadow-xs hover:shadow-md transition-all space-y-4">
+        
+        <!-- Location Card Header -->
+        <div class="flex items-start justify-between">
+          <div class="space-y-0.5">
+            <div class="flex items-center gap-2">
+              <h3 class="text-base font-bold text-slate-900 dark:text-white tracking-tight">{{ loc.name }}</h3>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-md font-mono"
+                    [ngClass]="loc.isActive ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400 border border-slate-300 dark:border-slate-600'">
+                {{ loc.code }}
+              </span>
+            </div>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400">
+              {{ loc.isActive ? 'Active Dining Floor Zone' : 'Inactive Location' }}
+            </p>
+          </div>
+
+          <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full"
+                [ngClass]="loc.isActive ? 'bg-emerald-500 text-white shadow-xs' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'">
+            {{ loc.isActive ? 'ACTIVE' : 'INACTIVE' }}
+          </span>
+        </div>
+
+        <!-- Capacity & Table Numbers Row -->
+        <div class="grid grid-cols-2 gap-3 pt-1">
+          <div class="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200/60 dark:border-slate-700/60 shadow-2xs">
+            <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Tables</p>
+            <p class="text-xl font-extrabold text-indigo-600 dark:text-indigo-400 mt-0.5">
+              {{ getTablesCountByLocationId(loc.id!) }}
+              <span class="text-xs font-semibold text-slate-400">units</span>
+            </p>
+          </div>
+          <div class="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200/60 dark:border-slate-700/60 shadow-2xs">
+            <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Seat Capacity</p>
+            <p class="text-xl font-extrabold text-slate-800 dark:text-slate-100 mt-0.5">
+              {{ getTotalCapacityByLocationId(loc.id!) }}
+              <span class="text-xs font-semibold text-slate-400">seats</span>
+            </p>
+          </div>
+        </div>
+
+        <!-- Live Occupancy Progress Bar -->
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between text-xs">
+            <span class="font-bold text-slate-600 dark:text-slate-300 text-[11px]">Occupancy Rate</span>
+            <span class="font-extrabold text-indigo-600 dark:text-indigo-400 font-mono text-xs">
+              {{ getOccupancyRateByLocationId(loc.id!) }}%
+            </span>
+          </div>
+          <div class="w-full h-2.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden flex">
+            <div class="bg-indigo-600 dark:bg-indigo-500 transition-all duration-500 rounded-full" [style.width.%]="getOccupancyRateByLocationId(loc.id!)"></div>
+          </div>
+        </div>
+
+        <!-- Live Status Breakdown Chips -->
+        <div class="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 grid grid-cols-4 gap-1.5 text-center">
+          <div class="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/40">
+            <p class="text-[9px] font-bold text-emerald-700 dark:text-emerald-400 uppercase">Available</p>
+            <p class="text-xs font-extrabold text-emerald-800 dark:text-emerald-300 mt-0.5">{{ getAvailableCountByLocationId(loc.id!) }}</p>
+          </div>
+          <div class="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/40">
+            <p class="text-[9px] font-bold text-blue-700 dark:text-blue-400 uppercase">Reserved</p>
+            <p class="text-xs font-extrabold text-blue-800 dark:text-blue-300 mt-0.5">{{ getReservedCountByLocationId(loc.id!) }}</p>
+          </div>
+          <div class="p-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/40">
+            <p class="text-[9px] font-bold text-indigo-700 dark:text-indigo-400 uppercase">Occupied</p>
+            <p class="text-xs font-extrabold text-indigo-800 dark:text-indigo-300 mt-0.5">{{ getOccupiedCountByLocationId(loc.id!) }}</p>
+          </div>
+          <div class="p-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/40">
+            <p class="text-[9px] font-bold text-amber-700 dark:text-amber-400 uppercase">Cleaning</p>
+            <p class="text-xs font-extrabold text-amber-800 dark:text-amber-300 mt-0.5">{{ getCleaningCountByLocationId(loc.id!) }}</p>
+          </div>
+        </div>
+
+        <!-- Assigned Table Pills -->
+        <div *ngIf="getTablesByLocationId(loc.id!).length > 0" class="pt-2 border-t border-slate-200/60 dark:border-slate-700/60">
+          <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">Tables in Zone</p>
+          <div class="flex flex-wrap gap-1">
+            <span *ngFor="let t of getTablesByLocationId(loc.id!)"
+                  class="px-2 py-0.5 rounded-md text-[11px] font-bold border transition-all"
+                  [ngClass]="{
+                    'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800': t.status.toUpperCase() === 'AVAILABLE',
+                    'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800': t.status.toUpperCase() === 'RESERVED',
+                    'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800': t.status.toUpperCase() === 'OCCUPIED',
+                    'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800': t.status.toUpperCase() === 'CLEANING'
+                  }">
+              T{{ t.tableNumber }} ({{ t.capacity }})
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <ng-template #noLocationsAnalytics>
+      <div class="text-center py-12 text-slate-400 dark:text-slate-500">
+        <p class="font-bold text-[14px]">No Dining Floor Locations Configured</p>
+        <p class="text-xs mt-1">Register dining zones to view seating capacity analytics.</p>
+      </div>
+    </ng-template>
   </div>
 
   <!-- TAB 3: TABLE LOCATION MANAGEMENT -->
   <div *ngIf="activeTab === 'locations'" class="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-6 items-start">
     
     <!-- Location Form -->
-    <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm space-y-4">
-      <div class="flex items-center justify-between border-b border-slate-50 pb-3">
-        <h2 class="text-[14px] font-bold text-slate-900 flex items-center gap-2">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-100 dark:border-slate-800 shadow-sm space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-50 dark:border-slate-800 pb-3">
+        <h2 class="text-[14px] font-bold text-slate-900 dark:text-white flex items-center gap-2">
           <span class="w-1.5 h-3.5 bg-indigo-600 rounded-full"></span>
           {{ editingLocationId ? 'Update Location Details' : 'Create New Table Location' }}
         </h2>
       </div>
 
-      <div *ngIf="locationErrorMessage" class="bg-red-50 border border-red-100 text-red-600 text-[12px] p-3.5 rounded-xl font-semibold">
+      <div *ngIf="locationErrorMessage" class="bg-red-50 dark:bg-rose-950/30 border border-red-100 dark:border-rose-900/40 text-red-600 dark:text-rose-400 text-[12px] p-3.5 rounded-xl font-semibold">
         {{ locationErrorMessage }}
       </div>
 
       <form [formGroup]="locationForm" (ngSubmit)="saveLocation()" class="space-y-4">
         <div>
-          <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Location Name</label>
-          <input type="text" formControlName="name" placeholder="e.g. Poolside Lounge, VIP Deck" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all"/>
+          <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">Location Name</label>
+          <input type="text" formControlName="name" placeholder="e.g. Poolside Lounge, VIP Deck" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-[13px] text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-700 transition-all"/>
         </div>
 
         <div>
-          <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Location Code (for Table Prefix)</label>
-          <input type="text" formControlName="code" placeholder="e.g. POOL, VIP" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] uppercase focus:outline-none focus:border-indigo-500 focus:bg-white transition-all"/>
+          <label class="block text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">Location Code (for Table Prefix)</label>
+          <input type="text" formControlName="code" placeholder="e.g. POOL, VIP" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-[13px] uppercase text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-700 transition-all"/>
           <p class="text-[10px] text-slate-400 mt-1">Alphanumeric character sequences used to prefix table codes.</p>
         </div>
 
         <div class="flex items-center gap-2 pt-1">
-          <input type="checkbox" formControlName="isActive" id="isActiveCheck" class="rounded text-indigo-650 focus:ring-indigo-500 w-4 h-4 cursor-pointer"/>
-          <label for="isActiveCheck" class="text-[12px] font-bold text-slate-700 cursor-pointer">Active and Seatable</label>
+          <input type="checkbox" formControlName="isActive" id="isActiveCheck" class="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4 cursor-pointer"/>
+          <label for="isActiveCheck" class="text-[12px] font-bold text-slate-700 dark:text-slate-300 cursor-pointer">Active and Seatable</label>
         </div>
 
         <div class="flex items-center gap-3 pt-2">
           <button type="submit" [disabled]="locationLoading" class="flex-1 bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white text-[13px] font-bold py-2.5 rounded-xl cursor-pointer shadow-sm transition-all disabled:opacity-50">
             {{ editingLocationId ? 'Apply Update' : 'Register Location' }}
           </button>
-          <button type="button" (click)="requestClearLocationForm()" class="bg-slate-50 hover:bg-slate-100 text-slate-650 text-[13px] font-bold px-4 py-2.5 rounded-xl cursor-pointer border border-slate-200 transition-all">
+          <button type="button" (click)="requestClearLocationForm()" class="bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-[13px] font-bold px-4 py-2.5 rounded-xl cursor-pointer border border-slate-200 dark:border-slate-700 transition-all">
             Cancel
           </button>
         </div>
@@ -509,36 +633,36 @@
     </div>
 
     <!-- Locations List Table -->
-    <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm space-y-4">
-      <div class="flex items-center justify-between border-b border-slate-50 pb-3">
-        <h2 class="text-[14px] font-bold text-slate-900 flex items-center gap-2">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-100 dark:border-slate-800 shadow-sm space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-50 dark:border-slate-800 pb-3">
+        <h2 class="text-[14px] font-bold text-slate-900 dark:text-white flex items-center gap-2">
           <span class="w-1.5 h-3.5 bg-indigo-600 rounded-full"></span>
           Table Seating Locations Directory
         </h2>
       </div>
 
-      <div *ngIf="locations.length > 0; else emptyLocations" class="overflow-x-auto rounded-xl border border-slate-150/60">
-        <table mat-table [dataSource]="locationDataSource" class="w-full text-[13px] text-slate-700 text-left">
+      <div *ngIf="locations.length > 0; else emptyLocations" class="overflow-x-auto rounded-xl border border-slate-100 dark:border-slate-800">
+        <table mat-table [dataSource]="locationDataSource" class="w-full text-[13px] text-slate-700 dark:text-slate-300 text-left">
           <!-- Location Name Column -->
           <ng-container matColumnDef="name">
-            <th mat-header-cell *matHeaderCellDef class="px-4 py-3 font-bold text-slate-900 border-b border-slate-100 pb-3">Location Name</th>
-            <td mat-cell *matCellDef="let loc" class="px-4 py-3 font-semibold text-slate-900 border-b border-slate-50">{{ loc.name }}</td>
+            <th mat-header-cell *matHeaderCellDef class="px-4 py-3 font-bold text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-3">Location Name</th>
+            <td mat-cell *matCellDef="let loc" class="px-4 py-3 font-semibold text-slate-900 dark:text-white border-b border-slate-50 dark:border-slate-800/60">{{ loc.name }}</td>
           </ng-container>
 
           <!-- Location Code Column -->
           <ng-container matColumnDef="code">
-            <th mat-header-cell *matHeaderCellDef class="px-4 py-3 font-bold text-slate-900 border-b border-slate-100 pb-3">Location Code</th>
-            <td mat-cell *matCellDef="let loc" class="px-4 py-3 border-b border-slate-50">
-              <span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-mono font-bold">{{ loc.code }}</span>
+            <th mat-header-cell *matHeaderCellDef class="px-4 py-3 font-bold text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-3">Location Code</th>
+            <td mat-cell *matCellDef="let loc" class="px-4 py-3 border-b border-slate-50 dark:border-slate-800/60">
+              <span class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded font-mono font-bold">{{ loc.code }}</span>
             </td>
           </ng-container>
 
           <!-- Status Column -->
           <ng-container matColumnDef="status">
-            <th mat-header-cell *matHeaderCellDef class="px-4 py-3 font-bold text-slate-900 border-b border-slate-100 pb-3">Status</th>
-            <td mat-cell *matCellDef="let loc" class="px-4 py-3 border-b border-slate-50">
+            <th mat-header-cell *matHeaderCellDef class="px-4 py-3 font-bold text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-3">Status</th>
+            <td mat-cell *matCellDef="let loc" class="px-4 py-3 border-b border-slate-50 dark:border-slate-800/60">
               <span class="text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm"
-                    [ngClass]="loc.isActive ? 'bg-emerald-50 border border-emerald-200 text-emerald-600' : 'bg-slate-100 border border-slate-200 text-slate-400'">
+                    [ngClass]="loc.isActive ? 'bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400' : 'bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-400'">
                 {{ loc.isActive ? 'Active' : 'Inactive' }}
               </span>
             </td>
@@ -546,28 +670,28 @@
 
           <!-- Actions Column -->
           <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef class="px-4 py-3 text-right font-bold text-slate-900 border-b border-slate-100 pb-3">Actions</th>
-            <td mat-cell *matCellDef="let loc" class="px-4 py-3 text-right space-x-1 border-b border-slate-50">
-              <button (click)="editLocation(loc)" class="text-[11px] font-bold text-indigo-650 bg-indigo-50/50 hover:bg-indigo-600 hover:text-white px-2.5 py-1 rounded-lg transition-all cursor-pointer">
+            <th mat-header-cell *matHeaderCellDef class="px-4 py-3 text-right font-bold text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-3">Actions</th>
+            <td mat-cell *matCellDef="let loc" class="px-4 py-3 text-right space-x-1 border-b border-slate-50 dark:border-slate-800/60">
+              <button (click)="editLocation(loc)" class="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-950/40 hover:bg-indigo-600 hover:text-white px-2.5 py-1 rounded-lg transition-all cursor-pointer">
                 Edit
               </button>
-              <button (click)="toggleLocationStatus(loc)" class="text-[11px] font-bold text-emerald-650 bg-emerald-50/50 hover:bg-emerald-650 hover:text-white px-2.5 py-1 rounded-lg transition-all cursor-pointer">
+              <button (click)="toggleLocationStatus(loc)" class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/40 hover:bg-emerald-600 hover:text-white px-2.5 py-1 rounded-lg transition-all cursor-pointer">
                 {{ loc.isActive ? 'Deactivate' : 'Activate' }}
               </button>
-              <button (click)="deleteLocation(loc.id!)" class="text-[11px] font-bold text-rose-600 bg-rose-50/50 hover:bg-rose-600 hover:text-white px-2 py-1.5 rounded-lg transition-all cursor-pointer">
+              <button (click)="deleteLocation(loc.id!)" class="text-[11px] font-bold text-rose-600 dark:text-rose-400 bg-rose-50/50 dark:bg-rose-950/40 hover:bg-rose-600 hover:text-white px-2 py-1.5 rounded-lg transition-all cursor-pointer">
                 Delete
               </button>
             </td>
           </ng-container>
 
-          <tr mat-header-row *matHeaderRowDef="locationDisplayedColumns" class="bg-slate-50 text-[10px] font-bold text-slate-450 uppercase tracking-wider border-b border-slate-150/60"></tr>
-          <tr mat-row *matRowDef="let row; columns: locationDisplayedColumns;" class="hover:bg-slate-50/50 transition-all"></tr>
+          <tr mat-header-row *matHeaderRowDef="locationDisplayedColumns" class="bg-slate-50/75 dark:bg-slate-800/60 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider border-b border-slate-100 dark:border-slate-800"></tr>
+          <tr mat-row *matRowDef="let row; columns: locationDisplayedColumns;" class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-all"></tr>
         </table>
       </div>
-      <mat-paginator #locationPaginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons class="mt-4 border-t border-slate-50 pt-2"></mat-paginator>
+      <mat-paginator #locationPaginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons class="mt-4 border-t border-slate-50 dark:border-slate-800 pt-2"></mat-paginator>
 
       <ng-template #emptyLocations>
-        <div class="text-center py-12 text-slate-400">
+        <div class="text-center py-12 text-slate-400 dark:text-slate-500">
           <p class="font-bold text-[14px]">No Dining Floor Locations Registered</p>
         </div>
       </ng-template>

@@ -1,7 +1,15 @@
-<div class="space-y-6">
-  <div>
-    <h1 class="text-[22px] font-bold text-slate-900 leading-none">Security Audit Logs</h1>
-    <p class="text-[13px] text-slate-400 mt-2">View system history, logins, check-ins, check-outs, and checkout payment audits.</p>
+<div class="space-y-6 animate-fade-in">
+  <!-- Page Header -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-900 dark:text-white leading-none tracking-tight flex items-center gap-2">
+        <span class="w-2.5 h-6 bg-indigo-600 rounded-full"></span>
+        Security Audit Logs &amp; Activity
+      </h1>
+      <p class="text-[13px] text-slate-500 dark:text-slate-400 mt-1.5">
+        View system history, logins, check-ins, check-outs, and checkout payment audits.
+      </p>
+    </div>
   </div>
 
   <div *ngIf="errorMessage" class="bg-red-50 text-red-600 text-[12px] p-3 rounded-lg font-semibold">
@@ -9,8 +17,11 @@
   </div>
 
   <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm space-y-4">
-    <div class="flex items-center justify-between">
-      <h2 class="text-[14px] font-bold text-slate-900">Security Ledger</h2>
+    <div class="flex items-center justify-between border-b border-slate-50 pb-2">
+      <h2 class="text-[14px] font-bold text-slate-900 dark:text-white flex items-center gap-2">
+        <span class="w-1.5 h-3.5 bg-indigo-600 rounded-full"></span>
+        Security &amp; Operational Ledger
+      </h2>
     </div>
 
     <div class="overflow-x-auto">

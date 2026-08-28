@@ -513,6 +513,47 @@ export class TablesComponent implements OnInit, OnDestroy {
     return this.tables.filter(t => t.locationId === locationId).length;
   }
 
+  getTablesByLocationId(locationId: number): RestaurantTable[] {
+    return this.tables.filter(t => t.locationId === locationId);
+  }
+
+  getTotalCapacityByLocationId(locationId: number): number {
+    return this.getTablesByLocationId(locationId).reduce((sum, t) => sum + (t.capacity || 0), 0);
+  }
+
+  getOccupiedCountByLocationId(locationId: number): number {
+    return this.getTablesByLocationId(locationId).filter(t => t.status?.toUpperCase() === 'OCCUPIED').length;
+  }
+
+  getAvailableCountByLocationId(locationId: number): number {
+    return this.getTablesByLocationId(locationId).filter(t => t.status?.toUpperCase() === 'AVAILABLE').length;
+  }
+
+  getReservedCountByLocationId(locationId: number): number {
+    return this.getTablesByLocationId(locationId).filter(t => t.status?.toUpperCase() === 'RESERVED').length;
+  }
+
+  getCleaningCountByLocationId(locationId: number): number {
+    return this.getTablesByLocationId(locationId).filter(t => t.status?.toUpperCase() === 'CLEANING').length;
+  }
+
+  getOccupancyRateByLocationId(locationId: number): number {
+    const locTables = this.getTablesByLocationId(locationId);
+    if (locTables.length === 0) return 0;
+    const occupied = locTables.filter(t => t.status?.toUpperCase() === 'OCCUPIED').length;
+    return Math.round((occupied / locTables.length) * 100);
+  }
+
+  getTotalSeatsAcrossAllLocations(): number {
+    return this.tables.reduce((sum, t) => sum + (t.capacity || 0), 0);
+  }
+
+  getOverallOccupancyRate(): number {
+    if (this.tables.length === 0) return 0;
+    const occupied = this.tables.filter(t => t.status?.toUpperCase() === 'OCCUPIED').length;
+    return Math.round((occupied / this.tables.length) * 100);
+  }
+
   // Location management actions
   saveLocation(): void {
     if (this.locationForm.invalid) {

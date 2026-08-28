@@ -2,7 +2,7 @@
   <!-- Header Bar -->
   <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
     <div>
-      <h1 class="text-2xl font-bold text-slate-900 leading-none tracking-tight flex items-center gap-2">
+      <h1 class="text-2xl font-bold text-slate-900 dark:text-white leading-none tracking-tight flex items-center gap-2">
         <span class="w-2.5 h-6 bg-indigo-600 rounded-full"></span>
         <ng-container [ngSwitch]="activeTab">
           <span *ngSwitchCase="'payments'">Payments Ledger &amp; Transaction History</span>
@@ -10,7 +10,7 @@
           <span *ngSwitchDefault>Billing Console &amp; Invoice Registry</span>
         </ng-container>
       </h1>
-      <p class="text-[13px] text-slate-500 mt-1.5">
+      <p class="text-[13px] text-slate-500 dark:text-slate-400 mt-1.5">
         <ng-container [ngSwitch]="activeTab">
           <span *ngSwitchCase="'payments'">Audit settled bills history, check transaction references, and print official Jasper PDF receipts.</span>
           <span *ngSwitchCase="'vouchers'">Managers can configure promotional coupon codes, special discounts, spend conditions, validity dates, and redemption limits.</span>
@@ -20,23 +20,23 @@
     </div>
 
     <!-- Toggle Selector -->
-    <div class="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200">
+    <div class="flex items-center bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl border border-slate-200 dark:border-slate-700">
       <a routerLink="/main/billing" [queryParams]="{ tab: 'invoices' }"
          (click)="closeInvoice()"
          class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none"
-         [ngClass]="activeTab === 'invoices' ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:text-slate-800'">
+         [ngClass]="activeTab === 'invoices' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-600' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'">
         Invoices Ledger
       </a>
       <a routerLink="/main/billing" [queryParams]="{ tab: 'payments' }"
          (click)="closeInvoice()"
          class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none"
-         [ngClass]="activeTab === 'payments' ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:text-slate-800'">
+         [ngClass]="activeTab === 'payments' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-600' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'">
         Payments Ledger
       </a>
       <a routerLink="/main/billing" [queryParams]="{ tab: 'vouchers' }"
          (click)="closeInvoice()"
          class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none flex items-center gap-1.5"
-         [ngClass]="activeTab === 'vouchers' ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:text-slate-800'">
+         [ngClass]="activeTab === 'vouchers' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-600' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'">
         <mat-icon class="text-[16px] w-4 h-4 text-indigo-500">local_offer</mat-icon>
         Discount Vouchers
       </a>
