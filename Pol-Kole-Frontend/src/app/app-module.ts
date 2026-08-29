@@ -50,6 +50,7 @@ import { StaffAssignmentComponent } from './views/modules/staff-assignment/staff
 import { TakeawayDisplayComponent } from './views/modules/display/takeaway-display/takeaway-display.component';
 import { GuestDisplayComponent } from './views/modules/display/guest-display/guest-display.component';
 import { DisplayHubComponent } from './views/modules/display/display-hub/display-hub.component';
+import { NotificationBellComponent } from './shared/notification-bell/notification-bell.component';
 
 @NgModule({
   declarations: [
@@ -74,6 +75,7 @@ import { DisplayHubComponent } from './views/modules/display/display-hub/display
     TakeawayDisplayComponent,
     GuestDisplayComponent,
     DisplayHubComponent,
+    NotificationBellComponent,
   ],
   imports: [
     BrowserModule,

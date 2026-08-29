@@ -2,7 +2,6 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { NAV_MENU, NavMenuItem } from '../../config/nav-menu.config';
 import { WebsocketService } from '../../services/websocket.service';
-import { StaffNotification, StaffNotificationService } from '../../services/staff-notification.service';
 
 @Component({
   selector: 'app-mainwindow',
@@ -19,10 +18,11 @@ export class MainwindowComponent implements OnInit {
   navMenu: NavMenuItem[] = [];
   expandedGroups: Record<string, boolean> = {};
   
-  // Real-time Notification Popover
-  showNotificationPanel = false;
-  notifications: StaffNotification[] = [];
-  unreadCount = 0;
+  // Check if currently on the Home / Dashboard page
+  get isHomePage(): boolean {
+    const cleanUrl = (this.router.url || '').split('?')[0];
+    return cleanUrl === '/main/dashboard' || cleanUrl === '/main' || cleanUrl === '/main/';
+  }
 
   private currentRoles = new Set<string>();
   private readonly iconPaths: Record<string, string> = {
@@ -46,8 +46,7 @@ export class MainwindowComponent implements OnInit {
 
   constructor(
     private readonly router: Router,
-    public readonly wsService: WebsocketService,
-    private readonly notificationService: StaffNotificationService
+    public readonly wsService: WebsocketService
   ) {}
 
   logout(): void {
@@ -84,15 +83,6 @@ export class MainwindowComponent implements OnInit {
       this.isDarkMode = false;
       document.documentElement.classList.remove('dark');
     }
-
-    // Subscribe to real-time notification streams
-    this.wsService.staffNotifications$.subscribe(notifs => {
-      this.notifications = (notifs || []).filter(n => n.status !== 'RESOLVED' && n.status !== 'DISMISSED');
-    });
-
-    this.wsService.unreadNotificationCount$.subscribe(count => {
-      this.unreadCount = count;
-    });
   }
 
   toggleSidebar(): void {
@@ -107,65 +97,6 @@ export class MainwindowComponent implements OnInit {
     } else {
       document.documentElement.classList.remove('dark');
       localStorage.setItem('theme', 'light');
-    }
-  }
-
-  toggleNotificationPanel(): void {
-    this.showNotificationPanel = !this.showNotificationPanel;
-  }
-
-  /**
-   * Bug fix: was calling resolveNotification() instead of markAsRead().
-   * Clicking ✓ should acknowledge (READ) — not dismiss (RESOLVED).
-   */
-  markNotificationRead(notif: StaffNotification): void {
-    this.notificationService.markAsRead(notif.id).subscribe({
-      next: (updated) => {
-        notif.status = updated.status;
-        // Refresh count but keep the notification visible (it's READ, not gone)
-        const unread = this.notifications.filter(n => n.status === 'UNREAD').length;
-        this.unreadCount = unread;
-        this.wsService.refreshAllData();
-      }
-    });
-  }
-
-  /**
-   * Bug fix: also calls wsService.resolveGuestCall so the guest call card
-   * disappears from the Waiter Service Hub immediately (not on next poll).
-   */
-  resolveNotification(notif: StaffNotification): void {
-    this.notificationService.resolveNotification(notif.id).subscribe({
-      next: () => {
-        notif.status = 'RESOLVED';
-        this.notifications = this.notifications.filter(n => n.id !== notif.id);
-        // Sync the guest call stream so the card in waiter view vanishes instantly
-        this.wsService.resolveGuestCall({
-          id: `notif-${notif.id}`,
-          locationType: notif.targetType as any,
-          locationNumber: notif.targetLabel,
-          locationId: notif.targetId,
-        });
-      }
-    });
-  }
-
-  /**
-   * Bug fix: iterates and resolves each active notification (instead of just marking READ)
-   * so the corresponding guest call cards also clear properly.
-   */
-  markAllRead(): void {
-    const toResolve = [...this.notifications];
-    this.notifications = [];
-    this.unreadCount = 0;
-    for (const notif of toResolve) {
-      this.notificationService.resolveNotification(notif.id).subscribe();
-      this.wsService.resolveGuestCall({
-        id: `notif-${notif.id}`,
-        locationType: notif.targetType as any,
-        locationNumber: notif.targetLabel,
-        locationId: notif.targetId,
-      });
     }
   }
 

@@ -11,23 +11,26 @@
       </p>
     </div>
     
-    <!-- Quick Nav Toggle -->
-    <div class="flex items-center bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl border border-slate-200 dark:border-slate-700">
-      <a routerLink="/main/tables" [queryParams]="{ tab: 'grid' }"
-         class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none"
-         [ngClass]="activeTab === 'grid' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-600' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-700/50'">
-        Floor Grid Map
-      </a>
-      <a routerLink="/main/tables" [queryParams]="{ tab: 'occupancy' }"
-         class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none"
-         [ngClass]="activeTab === 'occupancy' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-600' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-700/50'">
-        Location Analytics
-      </a>
-      <a routerLink="/main/tables" [queryParams]="{ tab: 'locations' }"
-         class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none"
-         [ngClass]="activeTab === 'locations' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-600' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-700/50'">
-        Table Locations
-      </a>
+    <!-- Quick Nav Toggle & Notification Bell -->
+    <div class="flex items-center gap-3">
+      <div class="flex items-center bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl border border-slate-200 dark:border-slate-700">
+        <a routerLink="/main/tables" [queryParams]="{ tab: 'grid' }"
+           class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none"
+           [ngClass]="activeTab === 'grid' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-600' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-700/50'">
+          Floor Grid Map
+        </a>
+        <a routerLink="/main/tables" [queryParams]="{ tab: 'occupancy' }"
+           class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none"
+           [ngClass]="activeTab === 'occupancy' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-600' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-700/50'">
+          Location Analytics
+        </a>
+        <a routerLink="/main/tables" [queryParams]="{ tab: 'locations' }"
+           class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none"
+           [ngClass]="activeTab === 'locations' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-600' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-700/50'">
+          Table Locations
+        </a>
+      </div>
+      <app-notification-bell></app-notification-bell>
     </div>
   </div>
 

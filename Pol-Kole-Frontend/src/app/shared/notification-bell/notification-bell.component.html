@@ -1,0 +1,83 @@
+<div class="relative">
+  <button
+    type="button"
+    (click)="toggleNotificationPanel()"
+    class="relative h-9 w-9 flex items-center justify-center text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/80 rounded-xl transition-all cursor-pointer border border-slate-200/80 dark:border-slate-700/80 shadow-2xs"
+    [attr.aria-expanded]="showNotificationPanel"
+    aria-label="Toggle notifications">
+    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+    </svg>
+    <!-- Unread Badge -->
+    <span
+      *ngIf="unreadCount > 0"
+      class="absolute -top-1 -right-1 px-1.5 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-black animate-pulse shadow-xs">
+      {{ unreadCount }}
+    </span>
+  </button>
+
+  <!-- Notification Popover Panel -->
+  <div
+    *ngIf="showNotificationPanel"
+    class="absolute right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-2xl z-50 overflow-hidden space-y-2">
+    
+    <div class="p-3.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/75 dark:bg-slate-800/40">
+      <div class="flex items-center gap-2">
+        <h3 class="text-xs font-bold text-slate-900 dark:text-white">Real-Time Notifications</h3>
+        <span *ngIf="unreadCount > 0" class="px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-extrabold">
+          {{ unreadCount }} new
+        </span>
+      </div>
+      <button
+        *ngIf="unreadCount > 0"
+        (click)="markAllRead()"
+        class="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer">
+        Mark all read
+      </button>
+    </div>
+
+    <div class="max-h-80 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800 px-2">
+      <div
+        *ngFor="let notif of notifications"
+        class="p-3 rounded-xl transition-all"
+        [ngClass]="notif.status === 'UNREAD' ? 'bg-indigo-50/40 dark:bg-indigo-950/20' : 'hover:bg-slate-50 dark:hover:bg-slate-800/40'">
+        
+        <div class="flex items-start justify-between gap-2">
+          <div class="space-y-0.5 flex-1">
+            <div class="flex items-center gap-1.5">
+              <span
+                class="px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase"
+                [ngClass]="notif.isFallback ? 'bg-rose-100 text-rose-700 border border-rose-200' : 'bg-indigo-100 text-indigo-700'">
+                {{ notif.isFallback ? 'FALLBACK ALERT' : notif.type }}
+              </span>
+              <span class="text-[10px] text-slate-400 font-mono">{{ notif.createdAt | date:'HH:mm' }}</span>
+            </div>
+            <p class="text-xs font-bold text-slate-900 dark:text-white">{{ notif.title }}</p>
+            <p class="text-[11px] text-slate-600 dark:text-slate-300">{{ notif.message }}</p>
+            <p *ngIf="notif.fallbackNote" class="text-[10px] text-rose-500 font-semibold italic">{{ notif.fallbackNote }}</p>
+          </div>
+
+          <div class="flex flex-col gap-1 items-end">
+            <button
+              *ngIf="notif.status === 'UNREAD'"
+              (click)="markNotificationRead(notif)"
+              title="Mark as Read"
+              class="text-[10px] font-semibold text-slate-400 hover:text-indigo-600 cursor-pointer">
+              ✓
+            </button>
+            <button
+              (click)="resolveNotification(notif)"
+              title="Dismiss"
+              class="text-xs text-slate-400 hover:text-rose-600 cursor-pointer font-bold">
+              &times;
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="notifications.length === 0" class="py-8 text-center text-xs text-slate-400">
+        No recent notifications.
+      </div>
+    </div>
+  </div>
+</div>

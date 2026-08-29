@@ -19,27 +19,30 @@
       </p>
     </div>
 
-    <!-- Toggle Selector -->
-    <div class="flex items-center bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl border border-slate-200 dark:border-slate-700">
-      <a routerLink="/main/billing" [queryParams]="{ tab: 'invoices' }"
-         (click)="closeInvoice()"
-         class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none"
-         [ngClass]="activeTab === 'invoices' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-600' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'">
-        Invoices Ledger
-      </a>
-      <a routerLink="/main/billing" [queryParams]="{ tab: 'payments' }"
-         (click)="closeInvoice()"
-         class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none"
-         [ngClass]="activeTab === 'payments' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-600' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'">
-        Payments Ledger
-      </a>
-      <a routerLink="/main/billing" [queryParams]="{ tab: 'vouchers' }"
-         (click)="closeInvoice()"
-         class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none flex items-center gap-1.5"
-         [ngClass]="activeTab === 'vouchers' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-600' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'">
-        <mat-icon class="text-[16px] w-4 h-4 text-indigo-500">local_offer</mat-icon>
-        Discount Vouchers
-      </a>
+    <!-- Toggle Selector & Notification Bell -->
+    <div class="flex items-center gap-3">
+      <div class="flex items-center bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl border border-slate-200 dark:border-slate-700">
+        <a routerLink="/main/billing" [queryParams]="{ tab: 'invoices' }"
+           (click)="closeInvoice()"
+           class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none"
+           [ngClass]="activeTab === 'invoices' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-600' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'">
+          Invoices Ledger
+        </a>
+        <a routerLink="/main/billing" [queryParams]="{ tab: 'payments' }"
+           (click)="closeInvoice()"
+           class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none"
+           [ngClass]="activeTab === 'payments' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-600' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'">
+          Payments Ledger
+        </a>
+        <a routerLink="/main/billing" [queryParams]="{ tab: 'vouchers' }"
+           (click)="closeInvoice()"
+           class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none flex items-center gap-1.5"
+           [ngClass]="activeTab === 'vouchers' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-600' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'">
+          <mat-icon class="text-[16px] w-4 h-4 text-indigo-500">local_offer</mat-icon>
+          Discount Vouchers
+        </a>
+      </div>
+      <app-notification-bell></app-notification-bell>
     </div>
   </div>
 
