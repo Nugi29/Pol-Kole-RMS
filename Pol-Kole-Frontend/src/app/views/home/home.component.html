@@ -98,7 +98,7 @@
       <!-- Overview Tab: Available for Admin, Manager, Cashier -->
       <button *ngIf="isAdmin || isManager || isCashier" (click)="setTab('overview')"
               class="px-3.5 py-1.5 rounded-xl text-[12.5px] font-bold transition-all cursor-pointer flex items-center gap-2 select-none"
-              [ngClass]="activeTab === 'overview' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs border border-slate-200/60 dark:border-slate-700' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'">
+              [ngClass]="activeTab === 'overview' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs border border-slate-200/60 dark:border-slate-700' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-800/40'">
         <span>📊</span>
         <span>Overview</span>
       </button>
@@ -106,7 +106,7 @@
       <!-- Dining & POS Tab -->
       <button *ngIf="canViewDining" (click)="setTab('dining')"
               class="px-3.5 py-1.5 rounded-xl text-[12.5px] font-bold transition-all cursor-pointer flex items-center gap-2 select-none"
-              [ngClass]="activeTab === 'dining' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs border border-slate-200/60 dark:border-slate-700' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'">
+              [ngClass]="activeTab === 'dining' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs border border-slate-200/60 dark:border-slate-700' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-800/40'">
         <span>🍽️</span>
         <span>Dining &amp; POS</span>
         <span *ngIf="stats.ordersToday > 0" class="px-1.5 py-0.2 rounded-full text-[10px] font-extrabold bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300">
@@ -117,7 +117,7 @@
       <!-- Hotel & Rooms Tab -->
       <button *ngIf="canViewHotel" (click)="setTab('hotel')"
               class="px-3.5 py-1.5 rounded-xl text-[12.5px] font-bold transition-all cursor-pointer flex items-center gap-2 select-none"
-              [ngClass]="activeTab === 'hotel' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs border border-slate-200/60 dark:border-slate-700' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'">
+              [ngClass]="activeTab === 'hotel' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs border border-slate-200/60 dark:border-slate-700' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-800/40'">
         <span>🏨</span>
         <span>Hotel &amp; Rooms</span>
         <span *ngIf="stats.activeRoomStaysToday > 0" class="px-1.5 py-0.2 rounded-full text-[10px] font-extrabold bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300">
@@ -128,7 +128,7 @@
       <!-- Kitchen & Service Tab -->
       <button *ngIf="canViewKitchen" (click)="setTab('kitchen')"
               class="px-3.5 py-1.5 rounded-xl text-[12.5px] font-bold transition-all cursor-pointer flex items-center gap-2 select-none"
-              [ngClass]="activeTab === 'kitchen' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs border border-slate-200/60 dark:border-slate-700' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'">
+              [ngClass]="activeTab === 'kitchen' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs border border-slate-200/60 dark:border-slate-700' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-800/40'">
         <span>👨‍🍳</span>
         <span>Kitchen &amp; Service</span>
         <span *ngIf="stats.pendingKitchenOrders > 0" class="px-1.5 py-0.2 rounded-full text-[10px] font-extrabold bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 animate-pulse">
@@ -139,7 +139,7 @@
       <!-- Financials & Inventory Tab -->
       <button *ngIf="canViewFinancials || canViewInventory" (click)="setTab('inventory')"
               class="px-3.5 py-1.5 rounded-xl text-[12.5px] font-bold transition-all cursor-pointer flex items-center gap-2 select-none"
-              [ngClass]="activeTab === 'inventory' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs border border-slate-200/60 dark:border-slate-700' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'">
+              [ngClass]="activeTab === 'inventory' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs border border-slate-200/60 dark:border-slate-700' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-800/40'">
         <span>📦</span>
         <span *ngIf="canViewFinancials">Financials &amp; Stock</span>
         <span *ngIf="!canViewFinancials">Culinary Supplies</span>

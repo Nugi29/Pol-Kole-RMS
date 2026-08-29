@@ -17,9 +17,15 @@ spring:
   mail:
     host: localhost
     port: 25
+    test-connection: false
     properties:
       mail:
         smtp:
           auth: false
           starttls:
             enable: false
+
+management:
+  health:
+    mail:
+      enabled: false

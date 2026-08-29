@@ -15,12 +15,12 @@
     <div class="flex items-center bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl border border-slate-200 dark:border-slate-700 overflow-x-auto">
       <a routerLink="/main/waiter" [queryParams]="{ tab: 'ready' }"
          class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none whitespace-nowrap"
-         [ngClass]="activeTab === 'ready' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-600' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'">
+         [ngClass]="activeTab === 'ready' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-600' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-700/50'">
         Ready to Serve
       </a>
       <a routerLink="/main/waiter" [queryParams]="{ tab: 'requests' }"
          class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none relative whitespace-nowrap"
-         [ngClass]="activeTab === 'requests' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-600' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'">
+         [ngClass]="activeTab === 'requests' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-600' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-700/50'">
         <span>Guest & Room Calls</span>
         <span *ngIf="filteredGuestCalls.length > 0" class="ml-1 px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-[10px] font-black animate-pulse">
           {{ filteredGuestCalls.length }}
@@ -28,12 +28,12 @@
       </a>
       <a routerLink="/main/waiter" [queryParams]="{ tab: 'history' }"
          class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none whitespace-nowrap"
-         [ngClass]="activeTab === 'history' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-600' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'">
+         [ngClass]="activeTab === 'history' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-600' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-700/50'">
         Served History
       </a>
       <a routerLink="/main/waiter" [queryParams]="{ tab: 'cleaning' }"
          class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none whitespace-nowrap"
-         [ngClass]="activeTab === 'cleaning' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-600' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'">
+         [ngClass]="activeTab === 'cleaning' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-600' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-700/50'">
         Cleaning Tasks
       </a>
     </div>
