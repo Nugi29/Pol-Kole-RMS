@@ -1,6 +1,8 @@
 @import "tailwindcss";
 @import "tailwindcss-primeui";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: InterVariable, sans-serif;
   --font-sans--font-feature-settings: "cv02", "cv03", "cv04", "cv11";
@@ -148,48 +150,24 @@ main {
   border-color: var(--border-light) !important;
 }
 
-.text-slate-900 {
+.dark .text-slate-900,
+.dark .text-slate-805,
+.dark .text-slate-950,
+.dark .text-slate-800 {
   color: var(--text-main) !important;
 }
 
-.text-slate-805 {
-  color: var(--text-main) !important;
-}
-
-.text-slate-950 {
-  color: var(--text-main) !important;
-}
-
-.text-slate-800 {
-  color: var(--text-main) !important;
-}
-
-.text-slate-700 {
+.dark .text-slate-700,
+.dark .text-slate-655,
+.dark .text-slate-500,
+.dark .text-slate-450,
+.dark .text-slate-400 {
   color: var(--text-muted) !important;
 }
 
-.text-slate-655 {
-  color: var(--text-muted) !important;
-}
-
-.text-slate-500 {
-  color: var(--text-muted) !important;
-}
-
-.text-slate-450 {
-  color: var(--text-muted) !important;
-}
-
-.text-slate-400 {
-  color: var(--text-muted) !important;
-}
-
-.bg-slate-50 {
-  background-color: var(--border-light) !important;
-}
-
-.bg-slate-100 {
-  background-color: var(--border-light) !important;
+.dark .bg-slate-50,
+.dark .bg-slate-100 {
+  background-color: var(--bg-card) !important;
 }
 
 input, select, textarea {

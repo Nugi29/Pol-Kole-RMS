@@ -13,6 +13,7 @@ import { DialogService } from '../../../services/dialog.service';
 import { ItemDiscount, ItemDiscountService } from '../../../services/item-discount.service';
 import { WebsocketService } from '../../../services/websocket.service';
 import { StaffAssignmentService, DailyStaffAssignment } from '../../../services/staff-assignment.service';
+import { BillPrintService } from '../../../services/bill-print.service';
 
 @Component({
   selector: 'app-orders',
@@ -77,7 +78,8 @@ export class OrdersComponent implements OnInit {
     private readonly route: ActivatedRoute,
     private readonly cdr: ChangeDetectorRef,
     private readonly dialogService: DialogService,
-    private readonly wsService: WebsocketService
+    private readonly wsService: WebsocketService,
+    private readonly billPrintService: BillPrintService
   ) {}
 
   ngOnInit(): void {
@@ -594,145 +596,11 @@ export class OrdersComponent implements OnInit {
   }
 
   printReceipt(order: Order): void {
-    const printWindow = window.open('', '_blank', 'width=380,height=650');
-    if (!printWindow) {
-      this.dialogService.showError('Popup Blocked', 'Please allow popups in your browser to print receipts.');
-      return;
-    }
-
-    const isTakeaway = !order.tableNumber && !order.roomNumber;
-    const isTable = !!order.tableNumber;
-    const isRoom = !isTable && !!order.roomNumber;
-
-    const itemsSubtotal = (order.items || []).reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    // 10% Service Charge for Table dining and Room ordering; No service charge for Takeaway
-    const serviceCharge = (isTable || isRoom) ? (itemsSubtotal * 0.10) : 0;
-    const netTotal = itemsSubtotal + serviceCharge;
-
-    const serviceTitle = isTable 
-      ? `Table Dining Receipt (Table ${order.tableNumber})` 
-      : (isRoom ? `Room Service Receipt (Room ${order.roomNumber})` : `Takeaway Order Ticket & Token`);
-
-    const itemsHtml = (order.items || []).map(item => `
-      <tr style="border-bottom: 1px dashed #e2e8f0;">
-        <td style="padding: 6px 0; font-weight: 600; color: #1e293b;">
-          ${item.menuItemName || 'Item'}
-          ${item.notes ? `<div style="font-size: 10px; color: #64748b; font-style: italic;">* ${item.notes}</div>` : ''}
-        </td>
-        <td style="padding: 6px 0; text-align: center; color: #475569;">x${item.quantity}</td>
-        <td style="padding: 6px 0; text-align: right; font-weight: 600; color: #0f172a;">Rs. ${(item.price * item.quantity).toFixed(2)}</td>
-      </tr>
-    `).join('');
-
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <title>Receipt #${order.id} - Pol-Kole Resort</title>
-        <style>
-          body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            width: 320px; 
-            margin: 0 auto; 
-            padding: 16px; 
-            font-size: 12px; 
-            color: #1e293b; 
-            background: #fff;
-          }
-          .header { text-align: center; border-bottom: 2px dashed #94a3b8; padding-bottom: 12px; margin-bottom: 12px; }
-          .logo { font-size: 18px; font-weight: 900; letter-spacing: 1px; color: #0f172a; }
-          .sublogo { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; margin-top: 2px; }
-          .receipt-type { font-size: 13px; font-weight: 700; color: #2563eb; margin-top: 6px; }
-          .token-badge { 
-            display: inline-block; 
-            background: #f1f5f9; 
-            border: 2px solid #0f172a; 
-            font-size: 22px; 
-            font-weight: 900; 
-            padding: 4px 14px; 
-            border-radius: 8px; 
-            margin: 8px 0; 
-            font-family: monospace;
-          }
-          .meta-box { margin-bottom: 12px; font-size: 11.5px; line-height: 1.5; color: #334155; }
-          table { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 12px; }
-          .breakdown { border-top: 2px dashed #94a3b8; border-bottom: 2px dashed #94a3b8; padding: 8px 0; margin-top: 10px; font-size: 12px; }
-          .row { display: flex; justify-content: space-between; padding: 2px 0; }
-          .total-row { display: flex; justify-content: space-between; font-size: 15px; font-weight: 900; color: #0f172a; margin-top: 4px; padding-top: 4px; border-top: 1px solid #e2e8f0; }
-          .footer { text-align: center; margin-top: 16px; font-size: 10.5px; color: #64748b; line-height: 1.4; border-top: 1px solid #f1f5f9; padding-top: 10px; }
-          .notice-tag { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 6px; margin-top: 6px; font-size: 10px; }
-          @media print {
-            body { width: 100%; padding: 0; }
-          }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <div class="logo">POL-KOLE RESORT</div>
-          <div class="sublogo">Hospitality & Dining Hub</div>
-          <div class="receipt-type">${serviceTitle}</div>
-          <div class="token-badge">#${order.id}</div>
-          <div style="font-size: 11px; color: #64748b;">${new Date().toLocaleString()}</div>
-        </div>
-
-        <div class="meta-box">
-          <div><strong>Guest:</strong> ${order.customerName || 'Walk-in Guest'}</div>
-          <div><strong>Service Location:</strong> ${isTable ? 'Table ' + order.tableNumber + ' (Dine-In)' : (isRoom ? 'Room ' + order.roomNumber + ' (Room Service)' : 'Takeaway Counter')}</div>
-          <div><strong>Status:</strong> ${order.statusName || 'CONFIRMED'}</div>
-        </div>
-
-        <table>
-          <thead>
-            <tr style="border-bottom: 1.5px solid #0f172a;">
-              <th style="text-align: left; padding-bottom: 4px; font-size: 11px; text-transform: uppercase;">Item</th>
-              <th style="text-align: center; padding-bottom: 4px; font-size: 11px; text-transform: uppercase;">Qty</th>
-              <th style="text-align: right; font-size: 11px; text-transform: uppercase;">Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${itemsHtml}
-          </tbody>
-        </table>
-
-        <div class="breakdown">
-          <div class="row">
-            <span style="color: #64748b;">Items Subtotal:</span>
-            <span style="font-weight: 600;">Rs. ${itemsSubtotal.toFixed(2)}</span>
-          </div>
-          <div class="row">
-            <span style="color: #64748b;">${isTakeaway ? 'Service Charge:' : 'Service Charge (10%):'}</span>
-            <span style="font-weight: 600; color: ${isTakeaway ? '#64748b' : '#0d9488'};">
-              ${isTakeaway ? 'Rs. 0.00 (Takeaway)' : '+Rs. ' + serviceCharge.toFixed(2)}
-            </span>
-          </div>
-          <div class="total-row">
-            <span>NET TOTAL:</span>
-            <span>Rs. ${netTotal.toFixed(2)}</span>
-          </div>
-        </div>
-
-        <div class="footer">
-          <div>${isTakeaway ? 'Please present this token at the pickup counter.' : 'Thank you for dining with us at Pol-Kole Resort!'}</div>
-          <div class="notice-tag">No Taxes/VAT • 10% Service Charge applies to Dine-in & Rooms</div>
-        </div>
-
-        <script>
-          window.onload = function() {
-            window.print();
-            window.onafterprint = function() { window.close(); };
-          };
-        </script>
-      </body>
-      </html>
-    `;
-
-    printWindow.document.write(htmlContent);
-    printWindow.document.close();
+    this.billPrintService.printToken(order);
   }
 
   printToken(order: Order): void {
-    this.printReceipt(order);
+    this.billPrintService.printToken(order);
   }
 
   cancelOrder(order: Order): void {
