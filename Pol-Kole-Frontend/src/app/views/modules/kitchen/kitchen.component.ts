@@ -7,6 +7,7 @@ import { ApiResponse } from '../../../services/room.service';
 import { DialogService } from '../../../services/dialog.service';
 import { WebsocketService } from '../../../services/websocket.service';
 import { AttendanceService, AttendanceRecord } from '../../../services/attendance.service';
+import { environment } from '../../../../environments/environment';
 
 export interface KitchenOrderItem {
   id?: number;
@@ -57,7 +58,7 @@ export class KitchenComponent implements OnInit {
   // Manager filter dropdown
   selectedChefFilter: string = 'ALL';
 
-  private readonly baseUrl = 'http://localhost:8080/api/kitchen';
+  private readonly baseUrl = `${environment.apiUrl}/kitchen`;
 
   constructor(
     private readonly http: HttpClient,
@@ -104,7 +105,7 @@ export class KitchenComponent implements OnInit {
     if (!this.currentUserId) {
       const email = localStorage.getItem('email');
       if (email) {
-        this.http.get<any>('http://localhost:8080/api/users').pipe(
+        this.http.get<any>(`${environment.apiUrl}/users`).pipe(
           catchError(() => of(null))
         ).subscribe((res) => {
           const users = res?.data || (Array.isArray(res) ? res : []);

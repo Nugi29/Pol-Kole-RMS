@@ -18,8 +18,8 @@ import java.util.function.Function;
 @Component
 public class JwtUtil {
 
-    @Value("${jwt.secret:mySecretKey123456789012345678901234567890123456789012345678901234567890}")
-    private String SECRET_KEY;
+    @Value("${jwt.secret}")
+    private String secretKey;
 
     @Value("${jwt.expiration:86400}")
     private long jwtExpiration;
@@ -80,11 +80,11 @@ public class JwtUtil {
 
     private Key getSignKey() {
         try {
-            byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
+            byte[] keyBytes = Decoders.BASE64.decode(secretKey);
             return Keys.hmacShaKeyFor(keyBytes);
-        } catch (IllegalArgumentException e) {
+        } catch (Exception e) {
             // Fallback for non-base64 keys
-            return Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
+            return Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
         }
     }
 }

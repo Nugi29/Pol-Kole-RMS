@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ApiResponse, Page } from './room.service';
+import { environment } from '../../environments/environment';
 
 export interface HotelReservation {
   id?: number;
@@ -21,7 +22,7 @@ export interface HotelReservation {
   providedIn: 'root',
 })
 export class HotelReservationService {
-  private readonly baseUrl = 'http://localhost:8080/api/hotel-reservations';
+  private readonly baseUrl = `${environment.apiUrl}/hotel-reservations`;
 
   constructor(private readonly http: HttpClient) {}
 

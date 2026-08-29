@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export type AttendanceStatus = 'PRESENT' | 'ABSENT' | 'LATE' | 'ON_LEAVE';
 
@@ -37,7 +38,7 @@ export interface ActiveStaffSummary {
   providedIn: 'root',
 })
 export class AttendanceService {
-  private readonly baseUrl = 'http://localhost:8080/api/attendance';
+  private readonly baseUrl = `${environment.apiUrl}/attendance`;
 
   constructor(private readonly http: HttpClient) {}
 

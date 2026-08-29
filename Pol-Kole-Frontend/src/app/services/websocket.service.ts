@@ -7,6 +7,7 @@ import { KitchenOrder } from '../views/modules/kitchen/kitchen.component';
 import { ApiResponse } from './room.service';
 import { StaffNotification, StaffNotificationService } from './staff-notification.service';
 import { CallWaiterResponse } from './staff-assignment.service';
+import { environment } from '../../environments/environment';
 
 export type WebSocketMessageType =
   | 'ORDER_CREATED'
@@ -65,12 +66,12 @@ export interface GuestServiceCall {
 })
 export class WebsocketService implements OnDestroy {
   // Configurable endpoints
-  private readonly wsUrl = 'ws://localhost:8080/ws/orders';
-  private readonly ordersApiUrl = 'http://localhost:8080/api/orders';
-  private readonly kitchenApiUrl = 'http://localhost:8080/api/kitchen';
-  private readonly presenceApiUrl = 'http://localhost:8080/api/presence';
-  private readonly staffAssignmentApiUrl = 'http://localhost:8080/api/staff-assignments';
-  private readonly notificationApiUrl = 'http://localhost:8080/api/staff-notifications';
+  private readonly wsUrl = environment.wsUrl;
+  private readonly ordersApiUrl = `${environment.apiUrl}/orders`;
+  private readonly kitchenApiUrl = `${environment.apiUrl}/kitchen`;
+  private readonly presenceApiUrl = `${environment.apiUrl}/presence`;
+  private readonly staffAssignmentApiUrl = `${environment.apiUrl}/staff-assignments`;
+  private readonly notificationApiUrl = `${environment.apiUrl}/staff-notifications`;
 
   private socket: WebSocket | null = null;
   private reconnectAttempts = 0;
@@ -371,7 +372,7 @@ export class WebsocketService implements OnDestroy {
 
   private resolveUserIdByEmail(email: string): void {
     this.resolvingUserId = true;
-    this.http.get<any>('http://localhost:8080/api/users').pipe(
+    this.http.get<any>(`${environment.apiUrl}/users`).pipe(
       catchError(() => of(null))
     ).subscribe((res) => {
       this.resolvingUserId = false;

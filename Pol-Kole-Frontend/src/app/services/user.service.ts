@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { LoginPayload, LoginResponse } from './auth.service';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface FullUserRes {
   id: number;
@@ -42,7 +43,7 @@ export interface CreateUserPayload {
   providedIn: 'root',
 })
 export class UserService {
-  private readonly backendUrl = 'http://localhost:8080/api';
+  private readonly backendUrl = environment.apiUrl;
 
   constructor(private readonly http: HttpClient) {}
 

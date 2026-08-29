@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ApiResponse, Page } from './room.service';
+import { environment } from '../../environments/environment';
 
 export interface CustomerDto {
   id?: number;
@@ -19,7 +20,7 @@ export interface CustomerDto {
   providedIn: 'root',
 })
 export class CustomerService {
-  private readonly baseUrl = 'http://localhost:8080/api/customers';
+  private readonly baseUrl = `${environment.apiUrl}/customers`;
 
   constructor(private readonly http: HttpClient) {}
 

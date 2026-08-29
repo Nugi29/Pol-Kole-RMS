@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface StaffNotification {
   id: number;
@@ -26,7 +27,7 @@ export interface StaffNotification {
   providedIn: 'root',
 })
 export class StaffNotificationService {
-  private readonly baseUrl = 'http://localhost:8080/api/staff-notifications';
+  private readonly baseUrl = `${environment.apiUrl}/staff-notifications`;
 
   constructor(private readonly http: HttpClient) {}
 

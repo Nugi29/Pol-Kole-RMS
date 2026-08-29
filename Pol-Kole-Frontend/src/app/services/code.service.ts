@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { environment } from '../../environments/environment';
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -14,7 +15,7 @@ export interface ApiResponse<T> {
   providedIn: 'root'
 })
 export class CodeService {
-  private readonly baseUrl = 'http://localhost:8080/api/codes';
+  private readonly baseUrl = `${environment.apiUrl}/codes`;
 
   constructor(private readonly http: HttpClient) {}
 

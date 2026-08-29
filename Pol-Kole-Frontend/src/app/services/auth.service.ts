@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { environment } from '../../environments/environment';
 
 export interface LoginPayload {
   email: string;
@@ -27,7 +28,7 @@ export interface LoginResponse {
   providedIn: 'root',
 })
 export class AuthService {
-  private readonly backendUrl = 'http://localhost:8080/api';
+  private readonly backendUrl = environment.apiUrl;
 
   constructor(private readonly http: HttpClient) {}
 

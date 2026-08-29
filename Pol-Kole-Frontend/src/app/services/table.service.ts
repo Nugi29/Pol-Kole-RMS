@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { map, switchMap, catchError } from 'rxjs/operators';
 import { ApiResponse, Page } from './room.service';
+import { environment } from '../../environments/environment';
 
 export interface TableLocation {
   id?: number;
@@ -26,8 +27,8 @@ export interface RestaurantTable {
   providedIn: 'root',
 })
 export class TableService {
-  private readonly baseUrl = 'http://localhost:8080/api/tables';
-  private readonly locationUrl = 'http://localhost:8080/api/table-locations';
+  private readonly baseUrl = `${environment.apiUrl}/tables`;
+  private readonly locationUrl = `${environment.apiUrl}/table-locations`;
 
   constructor(private readonly http: HttpClient) {}
 

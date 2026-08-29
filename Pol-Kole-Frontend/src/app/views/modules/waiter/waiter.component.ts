@@ -10,6 +10,7 @@ import { StaffAssignmentService, DailyStaffAssignment } from '../../../services/
 import { StaffNotificationService, StaffNotification } from '../../../services/staff-notification.service';
 import { map, catchError } from 'rxjs/operators';
 import { forkJoin, of } from 'rxjs';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-waiter',
@@ -37,7 +38,7 @@ export class WaiterComponent implements OnInit {
   currentUserRole: string = '';
   isManagerOrAdmin: boolean = false;
 
-  private readonly baseUrl = 'http://localhost:8080/api/kitchen';
+  private readonly baseUrl = `${environment.apiUrl}/kitchen`;
 
   constructor(
     private readonly http: HttpClient,
@@ -93,7 +94,7 @@ export class WaiterComponent implements OnInit {
     if (!this.currentUserId) {
       const email = localStorage.getItem('email');
       if (email) {
-        this.http.get<any>('http://localhost:8080/api/users').pipe(
+        this.http.get<any>(`${environment.apiUrl}/users`).pipe(
           catchError(() => of(null))
         ).subscribe((res) => {
           const users = res?.data || (Array.isArray(res) ? res : []);

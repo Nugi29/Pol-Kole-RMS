@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ApiResponse } from './room.service';
+import { environment } from '../../environments/environment';
 
 export interface CheckIn {
   id?: number;
@@ -28,7 +29,7 @@ export interface CheckOut {
   providedIn: 'root',
 })
 export class CheckInOutService {
-  private readonly baseUrl = 'http://localhost:8080/api/check-in-out';
+  private readonly baseUrl = `${environment.apiUrl}/check-in-out`;
 
   constructor(private readonly http: HttpClient) {}
 

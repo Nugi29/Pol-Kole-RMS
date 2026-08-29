@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ApiResponse } from './room.service';
+import { environment } from '../../environments/environment';
 
 export interface RecentOrderSummary {
   id: number;
@@ -120,7 +121,7 @@ export interface DashboardStats {
   providedIn: 'root',
 })
 export class DashboardService {
-  private readonly baseUrl = 'http://localhost:8080/api/dashboard';
+  private readonly baseUrl = `${environment.apiUrl}/dashboard`;
 
   constructor(private readonly http: HttpClient) {}
 

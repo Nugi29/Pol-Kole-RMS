@@ -7,7 +7,6 @@ import com.rms.polkole.repository.RestaurantTableRepository;
 import com.rms.polkole.repository.TableLocationRepository;
 import com.rms.polkole.service.RestaurantTableService;
 import com.rms.polkole.service.CodeGeneratorService;
-import jakarta.annotation.PostConstruct;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
@@ -23,21 +22,32 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import javax.sql.DataSource;
+import java.sql.Connection;
+
 @Service
 @RequiredArgsConstructor
 public class RestaurantTableServiceImpl implements RestaurantTableService {
+
+    private static final String TABLE_NOT_FOUND_PREFIX = "Table not found with ID: ";
 
     private final RestaurantTableRepository tableRepository;
     private final TableLocationRepository locationRepository;
     private final CodeGeneratorService codeGeneratorService;
     private final ModelMapper mapper;
+    private final DataSource dataSource;
 
     @PersistenceContext
     private final EntityManager entityManager;
 
     @EventListener(ApplicationReadyEvent.class)
     @Transactional
+    @SuppressWarnings({"SqlResolve", "SqlNoDataSourceInspection"})
     public void migrateOldLocations() {
+        if (!isMySqlDatabase()) {
+            return;
+        }
+
         try {
             // Check if column 'location' exists in 'restaurant_tables' table in current database
             String checkQuery = "SELECT COUNT(*) FROM information_schema.columns " +
@@ -55,6 +65,15 @@ public class RestaurantTableServiceImpl implements RestaurantTableService {
             }
         } catch (Exception e) {
             // Ignore any issues
+        }
+    }
+
+    private boolean isMySqlDatabase() {
+        try (Connection connection = dataSource.getConnection()) {
+            String productName = connection.getMetaData().getDatabaseProductName();
+            return productName != null && productName.toLowerCase().contains("mysql");
+        } catch (Exception ignored) {
+            return false;
         }
     }
 
@@ -101,7 +120,7 @@ public class RestaurantTableServiceImpl implements RestaurantTableService {
     @Transactional
     public RestaurantTableDto updateTable(Integer id, RestaurantTableDto dto) {
         RestaurantTableEntity table = tableRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Table not found with ID: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, TABLE_NOT_FOUND_PREFIX + id));
 
         if (dto.getLocationId() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Location ID is required");
@@ -133,7 +152,7 @@ public class RestaurantTableServiceImpl implements RestaurantTableService {
     @Transactional
     public void deleteTable(Integer id) {
         RestaurantTableEntity table = tableRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Table not found with ID: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, TABLE_NOT_FOUND_PREFIX + id));
         tableRepository.delete(table);
     }
 
@@ -141,7 +160,7 @@ public class RestaurantTableServiceImpl implements RestaurantTableService {
     @Transactional(readOnly = true)
     public RestaurantTableDto getTableById(Integer id) {
         RestaurantTableEntity table = tableRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Table not found with ID: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, TABLE_NOT_FOUND_PREFIX + id));
         return convertToDto(table);
     }
 

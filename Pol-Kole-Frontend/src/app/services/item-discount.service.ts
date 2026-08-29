@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ApiResponse } from './room.service';
 import { Page } from './voucher.service';
+import { environment } from '../../environments/environment';
 
 export interface ItemDiscount {
   id?: number;
@@ -24,7 +25,7 @@ export interface ItemDiscount {
   providedIn: 'root',
 })
 export class ItemDiscountService {
-  private readonly baseUrl = 'http://localhost:8080/api/item-discounts';
+  private readonly baseUrl = `${environment.apiUrl}/item-discounts`;
 
   constructor(private readonly http: HttpClient) {}
 

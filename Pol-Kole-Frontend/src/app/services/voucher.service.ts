@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ApiResponse } from './room.service';
+import { environment } from '../../environments/environment';
 
 export interface Voucher {
   id?: number;
@@ -36,7 +37,7 @@ export interface Page<T> {
   providedIn: 'root',
 })
 export class VoucherService {
-  private readonly baseUrl = 'http://localhost:8080/api/vouchers';
+  private readonly baseUrl = `${environment.apiUrl}/vouchers`;
 
   constructor(private readonly http: HttpClient) {}
 

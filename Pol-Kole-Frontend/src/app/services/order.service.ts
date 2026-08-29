@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ApiResponse, Page } from './room.service';
+import { environment } from '../../environments/environment';
 
 export interface OrderItemInput {
   menuItemId: number;
@@ -39,7 +40,7 @@ export interface Order {
   providedIn: 'root',
 })
 export class OrderService {
-  private readonly baseUrl = 'http://localhost:8080/api/orders';
+  private readonly baseUrl = `${environment.apiUrl}/orders`;
 
   constructor(private readonly http: HttpClient) {}
 

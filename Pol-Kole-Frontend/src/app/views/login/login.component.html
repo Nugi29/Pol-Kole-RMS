@@ -1,6 +1,6 @@
 <div
   class="login-wrapper"
-  style="background-image: url('https://fqjltiegiezfetthbags.supabase.co/storage/v1/object/public/block.images/blocks/signin/signin-glass.jpg')"
+  [style.background-image]="'url(' + loginBgImageUrl + ')'"
 >
   <!-- Session check loading overlay -->
   <div class="session-loader-overlay" *ngIf="isCheckingSession">

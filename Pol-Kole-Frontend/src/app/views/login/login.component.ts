@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService, LoginPayload, LoginResponse } from '../../services/auth.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-login',
@@ -10,6 +11,7 @@ import { AuthService, LoginPayload, LoginResponse } from '../../services/auth.se
 })
 export class LoginComponent implements OnInit {
   readonly state = 'User';
+  readonly loginBgImageUrl = environment.loginBgImageUrl;
   email = '';
   password = '';
   isSubmitting = false;

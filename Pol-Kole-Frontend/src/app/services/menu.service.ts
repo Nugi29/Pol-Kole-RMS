@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ApiResponse, Page } from './room.service';
+import { environment } from '../../environments/environment';
 
 export interface MenuCategory {
   id?: number;
@@ -25,7 +26,7 @@ export interface MenuItem {
   providedIn: 'root',
 })
 export class MenuService {
-  private readonly baseUrl = 'http://localhost:8080/api/menu';
+  private readonly baseUrl = `${environment.apiUrl}/menu`;
 
   constructor(private readonly http: HttpClient) {}
 

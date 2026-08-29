@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ApiResponse } from './room.service';
+import { environment } from '../../environments/environment';
 
 export interface InvoiceItem {
   id?: number;
@@ -41,7 +42,7 @@ export interface PaymentPayload {
   providedIn: 'root',
 })
 export class BillingService {
-  private readonly baseUrl = 'http://localhost:8080/api';
+  private readonly baseUrl = environment.apiUrl;
 
   constructor(private readonly http: HttpClient) {}
 

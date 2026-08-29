@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ApiResponse, Page } from './room.service';
+import { environment } from '../../environments/environment';
 
 export interface AuditLog {
   id: number;
@@ -16,7 +17,7 @@ export interface AuditLog {
   providedIn: 'root',
 })
 export class AuditLogService {
-  private readonly baseUrl = 'http://localhost:8080/api/audit-logs';
+  private readonly baseUrl = `${environment.apiUrl}/audit-logs`;
 
   constructor(private readonly http: HttpClient) {}
 
