@@ -317,7 +317,7 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   getReservationStatusBadgeClass(status: string): string {
     const s = (status || '').toUpperCase();
-    if (s.includes('CONFIRM') || s.includes('CHECKED_IN') || s.includes('SEATED')) {
+    if (s.includes('CONFIRM') || s.includes('CHECKED') || s.includes('SEATED')) {
       return 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800';
     }
     if (s.includes('PENDING')) {

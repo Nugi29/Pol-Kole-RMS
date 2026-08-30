@@ -256,6 +256,7 @@
             <div class="text-right">
               <span class="font-bold text-slate-900 block">20 Minutes Max</span>
               <span class="text-[11px] text-emerald-600 font-semibold" *ngIf="holdCount > 0">🟢 {{ holdCount }} Active Grace Hold</span>
+              <span class="text-[11px] text-slate-400 font-medium" *ngIf="holdCount === 0 && checkedInCount > 0">✓ Grace holds end on check-in</span>
             </div>
           </div>
 
@@ -290,6 +291,7 @@
         <h2 class="text-[14px] font-bold text-slate-900">Table Reservations Ledger</h2>
       </div>
       <div class="flex items-center gap-2 text-[12px]">
+        <span *ngIf="checkedInCount > 0" class="bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold px-2.5 py-1 rounded-lg">🟢 {{ checkedInCount }} Seated</span>
         <span *ngIf="prepCount > 0" class="bg-amber-50 text-amber-700 border border-amber-200 font-bold px-2.5 py-1 rounded-lg">🟡 {{ prepCount }} Prep</span>
         <span *ngIf="holdCount > 0" class="bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold px-2.5 py-1 rounded-lg">🟢 {{ holdCount }} Hold</span>
         <span *ngIf="expiredCount > 0" class="bg-rose-50 text-rose-700 border border-rose-200 font-bold px-2.5 py-1 rounded-lg">🔴 {{ expiredCount }} Expired</span>
@@ -353,12 +355,22 @@
                 {{ getReservationTimeline(res).label }}
               </span>
             </div>
+            <div *ngIf="getReservationTimeline(res).type === 'CHECKED_IN'">
+              <span class="text-[10px] font-semibold px-2 py-0.5 rounded-md inline-block bg-emerald-50 text-emerald-700 border border-emerald-200">
+                🟢 Seated / Dining
+              </span>
+            </div>
           </td>
         </ng-container>
 
         <ng-container matColumnDef="actions">
           <th mat-header-cell *matHeaderCellDef class="font-bold text-slate-900 border-b border-slate-100 pb-3 text-right">Actions</th>
           <td mat-cell *matCellDef="let res" class="py-3.5 border-b border-slate-50 text-right space-x-2">
+            <!-- 1-Click Check In button when guest arrives -->
+            <button *ngIf="(res.reservationStatusName?.toUpperCase() === 'CONFIRMED' || res.reservationStatusName?.toUpperCase() === 'PENDING') && !getReservationTimeline(res).isExpired"
+                    (click)="checkInCustomer(res)" class="text-[12px] bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm px-3 py-1.5 rounded-lg cursor-pointer font-bold transition-all">
+              ✓ Check In
+            </button>
             <button *ngIf="getReservationTimeline(res).isExpired && (res.reservationStatusName?.toUpperCase() === 'CONFIRMED' || res.reservationStatusName?.toUpperCase() === 'PENDING')"
                     (click)="releaseTableNoShow(res)" class="text-[12px] bg-rose-600 hover:bg-rose-700 text-white shadow-sm px-3 py-1.5 rounded-lg cursor-pointer font-bold transition-all">
               ⚡ Release Table (No-Show)
@@ -367,8 +379,13 @@
                     (click)="cancelBooking(res.id)" class="text-[12px] bg-slate-100 text-slate-700 hover:bg-rose-50 hover:text-rose-700 border border-slate-200 px-3 py-1.5 rounded-lg cursor-pointer font-bold transition-all">
               Cancel
             </button>
+            <!-- Check Out button for Seated guests -->
+            <button *ngIf="res.reservationStatusName?.toUpperCase() === 'CHECKED IN' || res.reservationStatusName?.toUpperCase() === 'CHECKED_IN' || res.reservationStatusName?.toUpperCase() === 'OCCUPIED'"
+                    (click)="checkOutCustomer(res)" class="text-[12px] bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm px-3 py-1.5 rounded-lg cursor-pointer font-bold transition-all">
+              Check Out
+            </button>
             <span *ngIf="res.reservationStatusName?.toUpperCase() === 'CANCELLED'" class="text-[12px] text-slate-400 font-semibold">Cancelled</span>
-            <span *ngIf="res.reservationStatusName?.toUpperCase() === 'CHECKED OUT' || res.reservationStatusName?.toUpperCase() === 'COMPLETED'" class="text-[12px] text-slate-400 font-semibold">Seated / Completed</span>
+            <span *ngIf="res.reservationStatusName?.toUpperCase() === 'CHECKED OUT' || res.reservationStatusName?.toUpperCase() === 'COMPLETED'" class="text-[12px] text-slate-400 font-semibold">Completed</span>
           </td>
         </ng-container>
 

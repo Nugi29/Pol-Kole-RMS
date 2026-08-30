@@ -12,6 +12,7 @@ import { Reservation, ReservationService } from '../../../services/reservation.s
 import { WebsocketService } from '../../../services/websocket.service';
 import { StaffAssignmentService, DailyStaffAssignment } from '../../../services/staff-assignment.service';
 import { KitchenOrder } from '../kitchen/kitchen.component';
+import { CheckInOutService } from '../../../services/check-in-out.service';
 
 @Component({
   selector: 'app-tables',
@@ -67,6 +68,7 @@ export class TablesComponent implements OnInit, OnDestroy {
     private readonly tableService: TableService,
     private readonly orderService: OrderService,
     private readonly reservationService: ReservationService,
+    private readonly checkInOutService: CheckInOutService,
     private readonly staffAssignmentService: StaffAssignmentService,
     public readonly wsService: WebsocketService,
     private readonly route: ActivatedRoute,
@@ -281,8 +283,27 @@ export class TablesComponent implements OnInit, OnDestroy {
   }
 
   getReservationForTable(tableId?: number): Reservation | undefined {
-    if (!tableId || !this.reservations) return undefined;
-    return this.reservations.find(r => r.tableId === tableId);
+    if (!tableId || !this.reservations || this.reservations.length === 0) return undefined;
+    const todayStr = new Date().toISOString().slice(0, 10);
+
+    // 1. Prefer today's active reservation for this table (not cancelled or checked out)
+    const todayActive = this.reservations.find(r => 
+      r.tableId === tableId && 
+      r.reservationDate === todayStr && 
+      !['CANCELLED', 'CHECKED OUT', 'COMPLETED'].includes((r.reservationStatusName || '').toUpperCase())
+    );
+    if (todayActive) return todayActive;
+
+    // 2. Or today's reservation even if already seated
+    const todayAny = this.reservations.find(r => 
+      r.tableId === tableId && 
+      r.reservationDate === todayStr && 
+      (r.reservationStatusName || '').toUpperCase() !== 'CANCELLED'
+    );
+    if (todayAny) return todayAny;
+
+    // 3. Fallback to any non-cancelled reservation
+    return this.reservations.find(r => r.tableId === tableId && (r.reservationStatusName || '').toUpperCase() !== 'CANCELLED');
   }
 
   openTableDisplay(tableId?: number): void {
@@ -456,6 +477,61 @@ export class TablesComponent implements OnInit, OnDestroy {
       capacity: table.capacity,
       locationId: table.locationId,
       status: table.status
+    });
+  }
+
+  seatOrCheckInReservedTable(table: RestaurantTable): void {
+    const res = this.getReservationForTable(table.id);
+    const guestLabel = res?.customerName ? `guest "${res.customerName}"` : 'the reserved guest';
+
+    this.dialogService.confirmAction(
+      'Confirm Check-In / Seating',
+      `Check in ${guestLabel} to Table ${table.tableNumber}? This will mark the guest as Checked In, stop the grace hold, and occupy the table.`
+    ).subscribe((confirmed) => {
+      if (confirmed) {
+        this.loading = true;
+        if (res?.id) {
+          this.checkInOutService.tableCheckIn(res.id).subscribe({
+            next: () => {
+              this.loadTables();
+              this.loadReservations();
+              this.loading = false;
+              this.dialogService.showSuccess('Check-In Complete', `Table ${table.tableNumber} is now OCCUPIED and ${guestLabel} is checked in.`);
+            },
+            error: () => {
+              this.quickStatusUpdate(table, 'OCCUPIED');
+            }
+          });
+        } else {
+          this.quickStatusUpdate(table, 'OCCUPIED');
+        }
+      }
+    });
+  }
+
+  checkoutOrCleanOccupiedTable(table: RestaurantTable): void {
+    const res = this.getReservationForTable(table.id);
+    this.dialogService.confirmAction(
+      'Confirm Checkout & Clean',
+      `Checkout Table ${table.tableNumber} and mark for CLEANING?`
+    ).subscribe((confirmed) => {
+      if (confirmed) {
+        this.loading = true;
+        const statusUpper = (res?.reservationStatusName || '').toUpperCase();
+        if (res?.id && (statusUpper.includes('CHECKED IN') || statusUpper === 'OCCUPIED')) {
+          this.checkInOutService.tableCheckOut(res.id).subscribe({
+            next: () => {
+              this.loadReservations();
+              this.quickStatusUpdate(table, 'CLEANING');
+            },
+            error: () => {
+              this.quickStatusUpdate(table, 'CLEANING');
+            }
+          });
+        } else {
+          this.quickStatusUpdate(table, 'CLEANING');
+        }
+      }
     });
   }
 

@@ -9,6 +9,7 @@ import { CustomerDto, CustomerService } from '../../../services/customer.service
 import { Room, RoomService } from '../../../services/room.service';
 import { HotelReservation, HotelReservationService } from '../../../services/hotel-reservation.service';
 import { DialogService } from '../../../services/dialog.service';
+import { CheckInOutService } from '../../../services/check-in-out.service';
 
 @Component({
   selector: 'app-reservation',
@@ -27,6 +28,7 @@ export class ReservationComponent implements OnInit, OnDestroy {
 
   reservations: Reservation[] = [];
   rooms: RestaurantTable[] = [];
+  allTables: RestaurantTable[] = [];
   customers: CustomerDto[] = [];
   displayedColumns = ['id', 'customer', 'table', 'date', 'time', 'guestsCount', 'status', 'actions'];
   dataSource = new MatTableDataSource<Reservation>([]);
@@ -60,6 +62,7 @@ export class ReservationComponent implements OnInit, OnDestroy {
     private readonly fb: FormBuilder,
     private readonly reservationService: ReservationService,
     private readonly roomService: TableService,
+    private readonly checkInOutService: CheckInOutService,
     private readonly customerService: CustomerService,
     private readonly hotelRoomService: RoomService,
     private readonly hotelReservationService: HotelReservationService,
@@ -147,13 +150,15 @@ export class ReservationComponent implements OnInit, OnDestroy {
   }
 
   loadRooms(): void {
-    this.roomService.filterTables('AVAILABLE', undefined, undefined, 0, 1000).subscribe({
+    this.roomService.filterTables(undefined, undefined, undefined, 0, 1000).subscribe({
       next: (page) => {
         const data = page?.content || [];
+        this.allTables = data;
         this.rooms = data.filter(t => t.status?.toUpperCase() === 'AVAILABLE');
         this.cdr.markForCheck();
       },
       error: () => {
+        this.allTables = [];
         this.rooms = [];
         this.cdr.markForCheck();
       }
@@ -522,12 +527,118 @@ export class ReservationComponent implements OnInit, OnDestroy {
     });
   }
 
-  getReservationTimeline(res: Reservation): { type: 'UPCOMING' | 'PREP' | 'HOLD' | 'EXPIRED' | 'PAST'; label: string; badgeClass: string; isExpired: boolean; prepActive: boolean } {
+  checkInCustomer(res: Reservation): void {
+    if (!res.id) return;
+    this.dialogService.confirmAction(
+      'Customer Check-In',
+      `Check in guest "${res.customerName || 'VIP Guest'}" to Table ${res.tableNumber}? This will mark the guest as arrived, stop the grace hold, and occupy the table.`
+    ).subscribe((confirmed) => {
+      if (confirmed) {
+        this.loading = true;
+        this.checkInOutService.tableCheckIn(res.id!).subscribe({
+          next: () => {
+            this.loadReservations();
+            this.loadRooms();
+            this.loading = false;
+            this.dialogService.showSuccess('Customer Checked In', `Guest "${res.customerName || 'Guest'}" checked into Table ${res.tableNumber}. Grace hold stopped.`);
+          },
+          error: (err) => {
+            this.errorMessage = err.error?.message || 'Failed to check in customer.';
+            this.loading = false;
+            this.dialogService.showError('Check-In Failed', this.errorMessage);
+          }
+        });
+      }
+    });
+  }
+
+  checkOutCustomer(res: Reservation): void {
+    if (!res.id) return;
+    this.dialogService.confirmAction(
+      'Customer Check-Out',
+      `Check out guest "${res.customerName || 'VIP Guest'}" from Table ${res.tableNumber}? This will release the table.`
+    ).subscribe((confirmed) => {
+      if (confirmed) {
+        this.loading = true;
+        this.checkInOutService.tableCheckOut(res.id!).subscribe({
+          next: () => {
+            this.loadReservations();
+            this.loadRooms();
+            this.loading = false;
+            this.dialogService.showSuccess('Check-Out Complete', `Table ${res.tableNumber} has been released.`);
+          },
+          error: (err) => {
+            this.errorMessage = err.error?.message || 'Failed to check out customer.';
+            this.loading = false;
+            this.dialogService.showError('Check-Out Failed', this.errorMessage);
+          }
+        });
+      }
+    });
+  }
+
+  getReservationTimeline(res: Reservation): { type: 'UPCOMING' | 'PREP' | 'HOLD' | 'EXPIRED' | 'PAST' | 'CHECKED_IN' | 'CHECKED_OUT' | 'CANCELLED'; label: string; badgeClass: string; isExpired: boolean; prepActive: boolean } {
+    const statusUpper = (res.reservationStatusName || '').trim().toUpperCase();
+    const todayStr = new Date().toISOString().slice(0, 10);
+
+    const linkedTable = this.allTables.find(t => t.id === res.tableId);
+    const isTableOccupied = linkedTable?.status?.toUpperCase() === 'OCCUPIED';
+
+    // 1. Customer already Checked In / Seated / Table Occupied for today's booking
+    const isCheckedIn = statusUpper === 'CHECKED IN' || 
+                        statusUpper === 'CHECKED_IN' || 
+                        statusUpper === 'CHECKEDIN' || 
+                        statusUpper === 'OCCUPIED' || 
+                        res.reservationStatusId === 3 ||
+                        (isTableOccupied && res.reservationDate === todayStr && statusUpper !== 'CANCELLED' && statusUpper !== 'CHECKED OUT');
+
+    if (isCheckedIn) {
+      return { 
+        type: 'CHECKED_IN', 
+        label: '🟢 Seated / Checked In', 
+        badgeClass: 'bg-emerald-50 text-emerald-700 border border-emerald-300 font-bold', 
+        isExpired: false, 
+        prepActive: false 
+      };
+    }
+
+    // 2. Reservation Checked Out / Completed
+    const isCheckedOut = statusUpper === 'CHECKED OUT' || 
+                         statusUpper === 'CHECKED_OUT' || 
+                         statusUpper === 'CHECKEDOUT' || 
+                         statusUpper === 'COMPLETED' || 
+                         res.reservationStatusId === 4;
+
+    if (isCheckedOut) {
+      return { 
+        type: 'CHECKED_OUT', 
+        label: 'Checked Out', 
+        badgeClass: 'bg-slate-100 text-slate-600 border border-slate-200 font-medium', 
+        isExpired: false, 
+        prepActive: false 
+      };
+    }
+
+    // 3. Reservation Cancelled
+    const isCancelled = statusUpper === 'CANCELLED' || 
+                        statusUpper === 'CANCELED' || 
+                        res.reservationStatusId === 5;
+
+    if (isCancelled) {
+      return { 
+        type: 'CANCELLED', 
+        label: 'Cancelled', 
+        badgeClass: 'bg-rose-50 text-rose-600 border border-rose-200 font-medium', 
+        isExpired: false, 
+        prepActive: false 
+      };
+    }
+
+    // 4. Missing date or time
     if (!res.reservationDate || !res.reservationTime) {
       return { type: 'UPCOMING', label: 'Scheduled', badgeClass: 'bg-slate-100 text-slate-600', isExpired: false, prepActive: false };
     }
 
-    const todayStr = new Date().toISOString().slice(0, 10);
     if (res.reservationDate < todayStr) {
       return { type: 'PAST', label: 'Past Booking', badgeClass: 'bg-slate-100 text-slate-500', isExpired: false, prepActive: false };
     }
@@ -535,6 +646,7 @@ export class ReservationComponent implements OnInit, OnDestroy {
       return { type: 'UPCOMING', label: `Upcoming (${res.reservationDate})`, badgeClass: 'bg-indigo-50 text-indigo-600 border border-indigo-200', isExpired: false, prepActive: false };
     }
 
+    // 5. Active today and awaiting arrival (CONFIRMED / PENDING)
     const [h, m] = res.reservationTime.split(':').map(Number);
     const now = new Date();
     const target = new Date();
@@ -568,6 +680,10 @@ export class ReservationComponent implements OnInit, OnDestroy {
 
   get expiredCount(): number {
     return this.reservations.filter(r => this.getReservationTimeline(r).type === 'EXPIRED').length;
+  }
+
+  get checkedInCount(): number {
+    return this.reservations.filter(r => this.getReservationTimeline(r).type === 'CHECKED_IN').length;
   }
 
   createHotelBooking(): void {
