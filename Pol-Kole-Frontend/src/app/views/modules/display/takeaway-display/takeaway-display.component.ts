@@ -30,6 +30,10 @@ export class TakeawayDisplayComponent implements OnInit, OnDestroy {
   readyOrders: TakeawayTicket[] = [];
   recentCompleted: TakeawayTicket[] = [];
 
+  // Real-time sync listening
+  isSyncStopped = false;
+  private syncSub: Subscription | null = null;
+
   private previousReadyIds = new Set<number>();
   private clockSub: Subscription | null = null;
   private wsSub: Subscription | null = null;
@@ -49,10 +53,16 @@ export class TakeawayDisplayComponent implements OnInit, OnDestroy {
       this.cdr.markForCheck();
     });
 
-    // 2. Connection status
+    // 2. Real-time sync state & Connection status
+    this.syncSub = this.wsService.isSyncStopped$.subscribe(stopped => {
+      this.isSyncStopped = stopped;
+      this.isConnected = !stopped && (this.connectionMode === 'WEBSOCKET' ? this.wsService.isConnected$.value : true);
+      this.cdr.markForCheck();
+    });
+
     this.wsSub = this.wsService.connectionMode$.subscribe(mode => {
       this.connectionMode = mode;
-      this.isConnected = mode === 'WEBSOCKET' ? this.wsService.isConnected$.value : true;
+      this.isConnected = !this.isSyncStopped && (mode === 'WEBSOCKET' ? this.wsService.isConnected$.value : true);
       this.cdr.markForCheck();
     });
 
@@ -68,23 +78,26 @@ export class TakeawayDisplayComponent implements OnInit, OnDestroy {
       this.processTakeawayOrders(allOrders, kitchenOrders);
     });
 
-    // 5. Direct HTTP load as robust fallback
-    this.orderService.filterOrders(undefined, undefined, undefined, 0, 1000).subscribe({
-      next: (page) => {
-        const orders = page?.content || [];
-        if (orders.length > 0) {
-          this.wsService.allOrders$.next(orders);
-          const kOrders = this.wsService.kitchenOrders$.value || [];
-          this.processTakeawayOrders(orders, kOrders);
-        }
-      },
-      error: (err) => console.warn('Direct order load fallback error', err)
-    });
+    // 5. Direct HTTP load as robust fallback (only if sync is not stopped)
+    if (!this.wsService.isSyncStopped$.value) {
+      this.orderService.filterOrders(undefined, undefined, undefined, 0, 1000).subscribe({
+        next: (page) => {
+          const orders = page?.content || [];
+          if (orders.length > 0) {
+            this.wsService.allOrders$.next(orders);
+            const kOrders = this.wsService.kitchenOrders$.value || [];
+            this.processTakeawayOrders(orders, kOrders);
+          }
+        },
+        error: (err) => console.warn('Direct order load fallback error', err)
+      });
 
-    this.wsService.refreshAllData();
+      this.wsService.refreshAllData();
+    }
   }
 
   ngOnDestroy(): void {
+    if (this.syncSub) this.syncSub.unsubscribe();
     if (this.clockSub) this.clockSub.unsubscribe();
     if (this.wsSub) this.wsSub.unsubscribe();
     if (this.ordersSub) this.ordersSub.unsubscribe();

@@ -46,13 +46,51 @@
 
     <!-- Header Controls & Role-Targeted Actions -->
     <div class="flex items-center gap-2.5 flex-wrap">
-      <!-- Auto-Refresh Toggle -->
-      <button type="button" (click)="toggleAutoRefresh()"
-              [title]="autoRefresh ? 'Auto-refresh active (every 30s)' : 'Auto-refresh paused'"
-              class="h-9 px-3 rounded-xl border text-[12px] font-bold flex items-center gap-2 transition-all cursor-pointer shadow-2xs"
-              [ngClass]="autoRefresh ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800' : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700'">
-        <span class="w-2 h-2 rounded-full" [ngClass]="autoRefresh ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'"></span>
-        <span>Auto-Sync {{ autoRefresh ? 'ON' : 'OFF' }}</span>
+      <!-- Admin & Manager Live Displays Sync Control Button -->
+      <button
+        *ngIf="isAdmin || isManager"
+        type="button"
+        (click)="toggleRealtimeSync()"
+        [attr.title]="isSyncStopped ? 'Click to resume live displays sync (tables & takeaway screens)' : 'Click to stop live displays sync (tables & takeaway screens)'"
+        class="h-8 px-2.5 rounded-xl border text-[11.5px] font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs select-none"
+        [ngClass]="isSyncStopped
+          ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800'
+          : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800'">
+        <span class="relative flex h-2 w-2">
+          <span
+            *ngIf="!isSyncStopped"
+            class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span
+            class="relative inline-flex rounded-full h-2 w-2"
+            [ngClass]="isSyncStopped ? 'bg-rose-500' : 'bg-emerald-500'"></span>
+        </span>
+        <span>Displays Sync</span>
+        <span class="text-[9.5px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/10 ml-0.5">
+          {{ isSyncStopped ? 'OFF' : 'ON' }}
+        </span>
+      </button>
+
+      <!-- Dashboard Sync Toggle -->
+      <button
+        type="button"
+        (click)="toggleAutoRefresh()"
+        [title]="autoRefresh ? 'Dashboard sync active (auto-refresh every 30s)' : 'Dashboard sync paused'"
+        class="h-8 px-2.5 rounded-xl border text-[11.5px] font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs select-none"
+        [ngClass]="autoRefresh
+          ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800'
+          : 'bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800'">
+        <span class="relative flex h-2 w-2">
+          <span
+            *ngIf="autoRefresh"
+            class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span
+            class="relative inline-flex rounded-full h-2 w-2"
+            [ngClass]="autoRefresh ? 'bg-emerald-500' : 'bg-rose-500'"></span>
+        </span>
+        <span>Dashboard Sync</span>
+        <span class="text-[9.5px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/10 ml-0.5">
+          {{ autoRefresh ? 'ON' : 'OFF' }}
+        </span>
       </button>
 
       <!-- Manual Refresh Button -->
@@ -89,6 +127,26 @@
         <span>POS Order</span>
       </a>
     </div>
+  </div>
+
+  <!-- Real-Time Sync Paused Banner on Dashboard for Admin & Manager -->
+  <div *ngIf="isSyncStopped && (isAdmin || isManager)" class="rounded-2xl p-4 bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-amber-900 dark:text-amber-200 animate-fade-in">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-600 dark:text-amber-400 flex-shrink-0">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <div>
+        <h4 class="font-bold text-[14px] leading-tight">Real-Time Table &amp; Takeaway Display Sync Paused</h4>
+      </div>
+    </div>
+    <button
+      type="button"
+      (click)="toggleRealtimeSync()"
+      class="px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-sm transition cursor-pointer flex-shrink-0 self-start sm:self-auto">
+      Resume Real-Time Sync
+    </button>
   </div>
 
   <!-- Perspective Tabs Bar (Role-filtered) -->

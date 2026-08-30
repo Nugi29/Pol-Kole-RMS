@@ -1,6 +1,8 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { DashboardService, DashboardStats, DashboardReservation, RecentOrderSummary, TopSellingItem, LowStockAlert, KitchenTicketSummary } from '../../services/dashboard.service';
 import { StaffAssignmentService, DailyStaffAssignment } from '../../services/staff-assignment.service';
+import { WebsocketService } from '../../services/websocket.service';
+import { DialogService } from '../../services/dialog.service';
 import { Subject, interval } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
@@ -106,12 +108,17 @@ export class HomeComponent implements OnInit, OnDestroy {
   canViewDining = true;
   canViewInventory = true;
 
+  // Real-time synchronization state
+  isSyncStopped = false;
+
   // Reservations tab filter
   reservationFilter: 'ALL' | 'TABLE' | 'ROOM' = 'ALL';
 
   constructor(
     private readonly dashboardService: DashboardService,
     private readonly staffAssignmentService: StaffAssignmentService,
+    public readonly wsService: WebsocketService,
+    private readonly dialogService: DialogService,
     private readonly cdr: ChangeDetectorRef
   ) {}
 
@@ -152,6 +159,14 @@ export class HomeComponent implements OnInit, OnDestroy {
       this.loadMyAssignments();
     }
 
+    // Subscribe to real-time synchronization state
+    this.wsService.isSyncStopped$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(stopped => {
+        this.isSyncStopped = stopped;
+        this.cdr.markForCheck();
+      });
+
     this.updateClock();
     // Clock ticker every 1s
     interval(1000)
@@ -175,6 +190,23 @@ export class HomeComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  /**
+   * Stops or resumes real-time table & takeaway display sync and halts all background
+   * WebSocket connections and database queries across the platform.
+   * Restricted to Admin and Manager roles.
+   */
+  toggleRealtimeSync(): void {
+    if (!this.isAdmin && !this.isManager) return;
+
+    if (!this.isSyncStopped) {
+      this.wsService.stopSync();
+    } else {
+      this.wsService.resumeSync();
+      this.loadStats(true);
+    }
+    this.cdr.markForCheck();
   }
 
   updateClock(): void {

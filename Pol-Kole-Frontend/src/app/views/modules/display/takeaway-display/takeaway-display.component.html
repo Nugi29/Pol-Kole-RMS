@@ -19,11 +19,13 @@
 
     <!-- Centered board title -->
     <div class="pointer-events-none absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 text-center sm:block">
-      <p class="text-[10px] font-bold uppercase tracking-[0.35em] text-amber-400/80">Live Counter Status</p>
+      <p class="text-[10px] font-bold uppercase tracking-[0.35em]" [ngClass]="isSyncStopped ? 'text-rose-400' : 'text-amber-400/80'">
+        {{ isSyncStopped ? '⚠️ Management Sync Paused' : 'Live Counter Status' }}
+      </p>
       <h2 class="mt-0.5 whitespace-nowrap text-xl font-black uppercase tracking-[0.12em] text-white drop-shadow-[0_0_12px_rgba(251,191,36,0.35)] lg:text-2xl">
         Takeaway Orders Board
       </h2>
-      <div class="mx-auto mt-1 h-0.5 w-16 rounded-full bg-gradient-to-r from-transparent via-amber-400 to-transparent"></div>
+      <div class="mx-auto mt-1 h-0.5 w-16 rounded-full" [ngClass]="isSyncStopped ? 'bg-rose-500' : 'bg-gradient-to-r from-transparent via-amber-400 to-transparent'"></div>
     </div>
 
     <!-- Right: Audio Control, Fullscreen & Real-time Digital Clock -->
@@ -64,6 +66,14 @@
       </div>
     </div>
   </header>
+
+  <!-- Real-Time Sync Paused Warning Banner (Read-only status for display screen) -->
+  <div *ngIf="isSyncStopped" class="bg-rose-600/90 text-white px-6 py-2 text-center text-xs font-bold tracking-wide flex items-center justify-center gap-2.5 shadow-lg backdrop-blur-sm z-30 flex-shrink-0 animate-fade-in">
+    <svg class="w-4 h-4 text-white animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    <span>REAL-TIME DISPLAY SYNCHRONIZATION PAUSED BY MANAGEMENT &bull; BACKGROUND DATABASE REQUESTS HALTED</span>
+  </div>
 
   <!-- MAIN DUAL-COLUMN SCREEN CONTENT -->
   <main class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 p-6 overflow-hidden">
@@ -209,8 +219,8 @@
       </div>
     </div>
 
-    <div class="text-[11px] text-slate-500">
-      Pol-Kole RMS Real-Time WebSocket Engine v2.0
+    <div class="text-[11px]" [ngClass]="isSyncStopped ? 'text-rose-400 font-semibold' : 'text-slate-500'">
+      {{ isSyncStopped ? '⚠️ Real-Time Sync Paused &bull; DB Polling Halted' : 'Pol-Kole RMS Real-Time WebSocket Engine v2.0' }}
     </div>
   </footer>
 </div>

@@ -21,6 +21,7 @@ export type WebSocketMessageType =
   | 'ROOM_UPDATED'
   | 'PRESENCE_UPDATED'
   | 'NOTIFICATION_RESOLVED'
+  | 'SYNC_CONTROL'
   | 'HEARTBEAT';
 
 export interface WebSocketMessage<T = any> {
@@ -79,11 +80,13 @@ export class WebsocketService implements OnDestroy {
   private reconnectTimeoutId: any = null;
   private heartbeatIntervalId: any = null;
   private fallbackPollingSub: Subscription | null = null;
+  private presenceHeartbeatSub: Subscription | null = null;
   private broadcastChannel: BroadcastChannel | null = null;
 
   // Realtime state observables
   public isConnected$ = new BehaviorSubject<boolean>(false);
   public connectionMode$ = new BehaviorSubject<'WEBSOCKET' | 'POLLING_FALLBACK'>('POLLING_FALLBACK');
+  public isSyncStopped$ = new BehaviorSubject<boolean>(false);
   public messageStream$ = new Subject<WebSocketMessage>();
 
   // Cached state for real-time displays
@@ -107,6 +110,11 @@ export class WebsocketService implements OnDestroy {
     private readonly http: HttpClient,
     private readonly notifService: StaffNotificationService
   ) {
+    const initialSyncStopped = typeof window !== 'undefined' && window.localStorage
+      ? localStorage.getItem('pol_kole_sync_stopped') === 'true'
+      : false;
+    this.isSyncStopped$.next(initialSyncStopped);
+
     this.initResolvedCalls();
     this.initBroadcastChannel();
     this.loadPersistedCalls();
@@ -116,11 +124,21 @@ export class WebsocketService implements OnDestroy {
           this.initResolvedCalls();
           this.loadPersistedCalls();
         }
+        if (event.key === 'pol_kole_sync_stopped') {
+          const isStopped = event.newValue === 'true';
+          if (isStopped && !this.isSyncStopped$.value) {
+            this.stopSync(false);
+          } else if (!isStopped && this.isSyncStopped$.value) {
+            this.resumeSync(false);
+          }
+        }
       });
     }
-    this.initRealtimeConnection();
-    this.startFallbackPolling();
-    this.startPresenceHeartbeat();
+    if (!initialSyncStopped) {
+      this.initRealtimeConnection();
+      this.startFallbackPolling();
+      this.startPresenceHeartbeat();
+    }
   }
 
   ngOnDestroy(): void {
@@ -269,6 +287,10 @@ export class WebsocketService implements OnDestroy {
    * Initializes native WebSocket connection
    */
   public initRealtimeConnection(): void {
+    if (this.isSyncStopped$.value) {
+      this.connectionMode$.next('POLLING_FALLBACK');
+      return;
+    }
     if (typeof window === 'undefined' || !('WebSocket' in window)) {
       this.connectionMode$.next('POLLING_FALLBACK');
       return;
@@ -298,7 +320,9 @@ export class WebsocketService implements OnDestroy {
         this.isConnected$.next(false);
         this.connectionMode$.next('POLLING_FALLBACK');
         this.stopHeartbeat();
-        this.scheduleReconnect();
+        if (!this.isSyncStopped$.value) {
+          this.scheduleReconnect();
+        }
       };
 
       this.socket.onerror = () => {
@@ -307,11 +331,16 @@ export class WebsocketService implements OnDestroy {
       };
     } catch (err) {
       this.connectionMode$.next('POLLING_FALLBACK');
-      this.scheduleReconnect();
+      if (!this.isSyncStopped$.value) {
+        this.scheduleReconnect();
+      }
     }
   }
 
   private scheduleReconnect(): void {
+    if (this.isSyncStopped$.value) {
+      return;
+    }
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
       return;
     }
@@ -346,7 +375,15 @@ export class WebsocketService implements OnDestroy {
    * Keep user presence alive via regular heartbeat REST calls
    */
   private startPresenceHeartbeat(): void {
-    interval(15000).subscribe(() => {
+    if (this.presenceHeartbeatSub) {
+      this.presenceHeartbeatSub.unsubscribe();
+      this.presenceHeartbeatSub = null;
+    }
+    if (this.isSyncStopped$.value) {
+      return;
+    }
+    this.presenceHeartbeatSub = interval(15000).subscribe(() => {
+      if (this.isSyncStopped$.value) return;
       const userId = this.getCurrentUserId();
       if (userId) {
         this.http.post(`${this.presenceApiUrl}/heartbeat/${userId}`, {}).pipe(
@@ -391,13 +428,26 @@ export class WebsocketService implements OnDestroy {
    * Resilient HTTP polling fallback (every 3s)
    */
   private startFallbackPolling(): void {
+    if (this.fallbackPollingSub) {
+      this.fallbackPollingSub.unsubscribe();
+      this.fallbackPollingSub = null;
+    }
+    if (this.isSyncStopped$.value) {
+      return;
+    }
     this.refreshAllData();
     this.fallbackPollingSub = interval(3000).subscribe(() => {
-      this.refreshAllData();
+      if (!this.isSyncStopped$.value) {
+        this.refreshAllData();
+      }
     });
   }
 
   public refreshAllData(): void {
+    // Halts all DB requests when sync is stopped by Admin / Manager
+    if (this.isSyncStopped$.value) {
+      return;
+    }
     // Guard against overlapping concurrent refresh cycles.
     // The 3-second polling interval can fire a new tick before the previous HTTP round-trips
     // finish, leading to race conditions and duplicate state updates.
@@ -546,10 +596,22 @@ export class WebsocketService implements OnDestroy {
     }
 
     switch (msg.type) {
+      case 'SYNC_CONTROL': {
+        const action = msg.payload?.action;
+        if (action === 'STOP') {
+          this.stopSync(false);
+        } else if (action === 'RESUME') {
+          this.resumeSync(false);
+        }
+        break;
+      }
+
       case 'ORDER_STATUS_CHANGED':
       case 'KITCHEN_STATUS_CHANGED':
       case 'ORDER_CREATED':
-        this.refreshAllData();
+        if (!this.isSyncStopped$.value) {
+          this.refreshAllData();
+        }
         break;
 
       // Backend broadcasts this event after bulk-resolving notifications so all clients
@@ -691,14 +753,106 @@ export class WebsocketService implements OnDestroy {
   }
 
   public disconnect(): void {
-    if (this.reconnectTimeoutId) clearTimeout(this.reconnectTimeoutId);
+    if (this.reconnectTimeoutId) {
+      clearTimeout(this.reconnectTimeoutId);
+      this.reconnectTimeoutId = null;
+    }
     this.stopHeartbeat();
-    if (this.fallbackPollingSub) this.fallbackPollingSub.unsubscribe();
+    if (this.fallbackPollingSub) {
+      this.fallbackPollingSub.unsubscribe();
+      this.fallbackPollingSub = null;
+    }
+    if (this.presenceHeartbeatSub) {
+      this.presenceHeartbeatSub.unsubscribe();
+      this.presenceHeartbeatSub = null;
+    }
     if (this.socket) {
       this.socket.close();
       this.socket = null;
     }
     this.isConnected$.next(false);
+  }
+
+  /**
+   * Helper to verify if the currently logged-in user is an Admin or Manager
+   */
+  public isManagerOrAdmin(): boolean {
+    if (typeof window === 'undefined' || !window.localStorage) {
+      return false;
+    }
+    const role = (localStorage.getItem('role') || '').toUpperCase();
+    return role.includes('ADMIN') || role.includes('MANAGER');
+  }
+
+  /**
+   * Stops real-time table & takeaway display sync, closing WebSocket connections,
+   * cancelling reconnect timers, and terminating all background database polling & heartbeats.
+   */
+  public stopSync(broadcast = true): void {
+    this.isSyncStopped$.next(true);
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.setItem('pol_kole_sync_stopped', 'true');
+    }
+    if (this.reconnectTimeoutId) {
+      clearTimeout(this.reconnectTimeoutId);
+      this.reconnectTimeoutId = null;
+    }
+    this.stopHeartbeat();
+    if (this.fallbackPollingSub) {
+      this.fallbackPollingSub.unsubscribe();
+      this.fallbackPollingSub = null;
+    }
+    if (this.presenceHeartbeatSub) {
+      this.presenceHeartbeatSub.unsubscribe();
+      this.presenceHeartbeatSub = null;
+    }
+    if (this.socket) {
+      try {
+        this.socket.close();
+      } catch (e) {}
+      this.socket = null;
+    }
+    this.isConnected$.next(false);
+    this.isRefreshing = false;
+
+    if (broadcast) {
+      this.broadcastSyncState('STOP');
+    }
+  }
+
+  /**
+   * Resumes real-time table & takeaway display sync, re-establishing WebSocket
+   * connections and restarting background database polling streams.
+   */
+  public resumeSync(broadcast = true): void {
+    this.isSyncStopped$.next(false);
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.setItem('pol_kole_sync_stopped', 'false');
+    }
+
+    if (broadcast) {
+      this.broadcastSyncState('RESUME');
+    }
+
+    this.reconnectAttempts = 0;
+    this.initRealtimeConnection();
+    this.startFallbackPolling();
+    this.startPresenceHeartbeat();
+  }
+
+  private broadcastSyncState(action: 'STOP' | 'RESUME'): void {
+    const msg: WebSocketMessage = {
+      type: 'SYNC_CONTROL',
+      payload: { action, timestamp: new Date().toISOString() },
+      timestamp: new Date().toISOString(),
+      sender: 'MANAGEMENT_CLIENT'
+    };
+    if (this.broadcastChannel) {
+      try {
+        this.broadcastChannel.postMessage(msg);
+      } catch (e) {}
+    }
+    this.messageStream$.next(msg);
   }
 
   // ==========================================

@@ -10,11 +10,9 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
     properties:
       hibernate:
         format_sql: true
-        # Use the generic MySQL dialect available in Hibernate 7+; MySQL8Dialect may not exist
         dialect: org.hibernate.dialect.MySQLDialect
   mail:
     host: ${MAIL_HOST}

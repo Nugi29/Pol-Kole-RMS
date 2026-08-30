@@ -55,6 +55,10 @@ export class TablesComponent implements OnInit, OnDestroy {
   // Order Details Modal state
   selectedTableForDetails: RestaurantTable | null = null;
 
+  // Real-time synchronization state
+  isManagerOrAdmin = false;
+  isSyncStopped = false;
+  private syncSub: Subscription | null = null;
   private wsSub: Subscription | null = null;
   private ordersSub: Subscription | null = null;
 
@@ -86,12 +90,16 @@ export class TablesComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    const role = (localStorage.getItem('role') || '').toUpperCase();
-    const isManagerOrAdmin = role.includes('ADMIN') || role.includes('MANAGER');
-    this.isNonAdmin = !isManagerOrAdmin;
+    this.isManagerOrAdmin = this.wsService.isManagerOrAdmin();
+    this.isNonAdmin = !this.isManagerOrAdmin;
     if (this.isNonAdmin) {
       this.statusFilter = 'MY_ASSIGNED';
     }
+
+    this.syncSub = this.wsService.isSyncStopped$.subscribe(stopped => {
+      this.isSyncStopped = stopped;
+      this.cdr.markForCheck();
+    });
 
     const idStr = localStorage.getItem('userId') || localStorage.getItem('id');
     if (idStr && !isNaN(Number(idStr))) {
@@ -133,8 +141,25 @@ export class TablesComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    if (this.syncSub) this.syncSub.unsubscribe();
     if (this.wsSub) this.wsSub.unsubscribe();
     if (this.ordersSub) this.ordersSub.unsubscribe();
+  }
+
+  /**
+   * Toggles real-time synchronization between Active and Stopped.
+   * Restricted to Admin and Manager roles.
+   */
+  toggleSync(): void {
+    if (!this.isManagerOrAdmin) return;
+
+    if (!this.isSyncStopped) {
+      this.wsService.stopSync();
+    } else {
+      this.wsService.resumeSync();
+      this.loadTables();
+    }
+    this.cdr.markForCheck();
   }
 
   listenToRealtimeOrders(): void {
