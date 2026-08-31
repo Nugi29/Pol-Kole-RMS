@@ -143,6 +143,7 @@ export const NAV_MENU = [
       { name: 'Waiter & Staff Sales', route: '/main/reports?tab=staff', roles: ['ADMIN', 'MANAGER', 'CASHIER', 'STAFF'] },
       { name: 'Customer VIP & Loyalty', route: '/main/reports?tab=customer', roles: ['ADMIN', 'MANAGER', 'CASHIER', 'STAFF'] },
       { name: 'Discounts & Audit', route: '/main/reports?tab=audit', roles: ['ADMIN', 'MANAGER', 'CASHIER', 'STAFF'] },
+      { name: 'AI Reporting Assistant', route: '/main/reports?tab=ai-assistant', roles: ['ADMIN', 'MANAGER'] },
     ],
   },
   {

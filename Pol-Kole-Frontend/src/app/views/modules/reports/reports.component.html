@@ -6,21 +6,30 @@
       <div class="flex items-center gap-2.5">
         <span class="w-2.5 h-6 bg-indigo-600 rounded-full"></span>
         <h1 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
-          Executive MIS Reports &amp; Intelligence
+          Executive Reports &amp; Intelligence
         </h1>
         <span class="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold uppercase tracking-wide bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
           Decision Support
         </span>
       </div>
       <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-2">
-        <span>{{ settingsService.restaurantShortName() }} Resort Management System</span>
+        <span>{{ settingsService.restaurantShortName() }} Management System</span>
         <span>•</span>
         <span>Secure Server-Aggregated Analytics for General Managers &amp; Owners</span>
       </p>
     </div>
 
-    <!-- Action Tools: Export PDF & CSV -->
+    <!-- Action Tools: Export PDF & CSV & AI Assistant -->
     <div class="flex items-center gap-2.5 flex-wrap">
+      <!-- AI Assistant Quick Launch Button -->
+      <button
+        type="button"
+        (click)="setTab('ai-assistant')"
+        class="h-9 px-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer">
+        <span>🤖</span>
+        <span>AI Assistant</span>
+      </button>
+
       <!-- Jasper PDF Export Button -->
       <button
         type="button"
@@ -34,7 +43,7 @@
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
         </svg>
-        <span>{{ downloadingPdf ? 'Compiling Jasper PDF...' : 'Download Jasper PDF' }}</span>
+        <span>{{ downloadingPdf ? 'Compiling PDF...' : 'Download PDF' }}</span>
       </button>
 
       <!-- CSV Export Button -->
@@ -185,6 +194,16 @@
       class="px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer flex-shrink-0 select-none">
       <span>🛡️</span>
       <span>Discounts &amp; Loss Prevention</span>
+    </button>
+
+    <button
+      type="button"
+      (click)="setTab('ai-assistant')"
+      [ngClass]="activeTab === 'ai-assistant' ? 'bg-emerald-600 text-white shadow-md' : 'bg-white dark:bg-slate-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-700'"
+      class="px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer flex-shrink-0 select-none">
+      <span>🤖</span>
+      <span>AI Reporting Assistant</span>
+      <span class="text-[10px] bg-emerald-100 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200 px-1.5 py-0.5 rounded-full font-extrabold">NEW</span>
     </button>
   </div>
 
@@ -1057,6 +1076,11 @@
         </div>
       </ng-container>
 
+    </div>
+
+    <!-- 8. AI Reporting Assistant Tab View -->
+    <div *ngIf="activeTab === 'ai-assistant'" class="pt-2 animate-fade-in">
+      <app-ai-reporting-assistant></app-ai-reporting-assistant>
     </div>
 
   </div>

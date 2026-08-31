@@ -2,6 +2,14 @@ server:
   port: ${SERVER_PORT:8080}
 
 spring:
+  ai:
+    openai:
+      api-key: 
+      base-url: 
+      chat:
+        options:
+          model: 
+          temperature: 0.1
   datasource:
     url: ${DB_URL}
     username: ${DB_USERNAME}

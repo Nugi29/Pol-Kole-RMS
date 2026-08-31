@@ -54,6 +54,7 @@ import { NotificationBellComponent } from './shared/notification-bell/notificati
 import { SettingsComponent } from './views/modules/settings/settings.component';
 import { SettingsService } from './services/settings.service';
 import { ReportsComponent } from './views/modules/reports/reports.component';
+import { AiReportingAssistantComponent } from './views/modules/reports/ai-reporting-assistant/ai-reporting-assistant.component';
 
 export function initializeRestaurantSettings(settingsService: SettingsService) {
   return () => settingsService.loadSettings(true);
@@ -85,6 +86,7 @@ export function initializeRestaurantSettings(settingsService: SettingsService) {
     NotificationBellComponent,
     SettingsComponent,
     ReportsComponent,
+    AiReportingAssistantComponent,
   ],
   imports: [
     BrowserModule,

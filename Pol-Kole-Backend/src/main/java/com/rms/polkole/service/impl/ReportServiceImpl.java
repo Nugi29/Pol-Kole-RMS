@@ -1,6 +1,8 @@
 package com.rms.polkole.service.impl;
 
 import com.rms.polkole.dto.ReportDto.*;
+import com.rms.polkole.dto.RestaurantTableDto;
+import com.rms.polkole.dto.reporting.*;
 import com.rms.polkole.dto.RestaurantSettingsDto;
 import com.rms.polkole.entity.*;
 import com.rms.polkole.repository.*;
@@ -44,6 +46,8 @@ public class ReportServiceImpl implements ReportService {
     private final CustomerRepository customerRepository;
     private final VoucherRepository voucherRepository;
     private final RestaurantSettingsService settingsService;
+    private final RestaurantTableRepository restaurantTableRepository;
+    private final ReservationRepository reservationRepository;
 
     private static final ZoneId SYSTEM_ZONE = ZoneId.systemDefault();
 
@@ -820,4 +824,539 @@ public class ReportServiceImpl implements ReportService {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error generating report PDF: " + e.getMessage());
         }
     }
+
+    // ==========================================
+    // GENERIC AI REPORTING CAPABILITIES
+    // ==========================================
+
+    @Override
+    @Transactional(readOnly = true)
+    public SalesReportDto getSalesReport(LocalDate startDate, LocalDate endDate) {
+        if (startDate == null) startDate = LocalDate.now().minusDays(30);
+        if (endDate == null) endDate = LocalDate.now();
+
+        Instant startInstant = toStartOfDayInstant(startDate);
+        Instant endInstant = toEndOfDayInstant(endDate);
+
+        List<InvoiceEntity> invoices = invoiceRepository.findAll().stream()
+                .filter(i -> i.getCreatedAt() != null && !i.getCreatedAt().isBefore(startInstant) && !i.getCreatedAt().isAfter(endInstant))
+                .collect(Collectors.toList());
+
+        BigDecimal grossSales = invoices.stream().map(i -> i.getOrderSubtotal() != null ? i.getOrderSubtotal() : BigDecimal.ZERO).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalTax = invoices.stream().map(i -> i.getTaxAmount() != null ? i.getTaxAmount() : BigDecimal.ZERO).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalDiscounts = invoices.stream().map(i -> i.getDiscountAmount() != null ? i.getDiscountAmount() : BigDecimal.ZERO).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal netRevenue = invoices.stream().map(i -> i.getTotalAmount() != null ? i.getTotalAmount() : BigDecimal.ZERO).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        List<OrderEntity> orders = orderRepository.findAll().stream()
+                .filter(o -> !o.isDeleted() && o.getOrderTime() != null && !o.getOrderTime().isBefore(startInstant) && !o.getOrderTime().isAfter(endInstant))
+                .collect(Collectors.toList());
+
+        long totalOrders = orders.size();
+        long totalInvoices = invoices.size();
+        BigDecimal avgOrderValue = totalInvoices > 0 ? netRevenue.divide(BigDecimal.valueOf(totalInvoices), 2, RoundingMode.HALF_UP) : BigDecimal.ZERO;
+
+        BigDecimal dineInRevenue = BigDecimal.ZERO;
+        BigDecimal takeawayRevenue = BigDecimal.ZERO;
+        BigDecimal roomServiceRevenue = BigDecimal.ZERO;
+        BigDecimal hotelStayRevenue = BigDecimal.ZERO;
+
+        for (InvoiceEntity inv : invoices) {
+            BigDecimal amt = inv.getTotalAmount() != null ? inv.getTotalAmount() : BigDecimal.ZERO;
+            if (inv.getOrder() != null) {
+                if (inv.getOrder().getTable() != null) {
+                    dineInRevenue = dineInRevenue.add(amt);
+                } else if (inv.getOrder().getRoom() != null) {
+                    roomServiceRevenue = roomServiceRevenue.add(amt);
+                } else {
+                    takeawayRevenue = takeawayRevenue.add(amt);
+                }
+            } else if (inv.getHotelReservation() != null) {
+                hotelStayRevenue = hotelStayRevenue.add(amt);
+            }
+        }
+
+        List<ItemSalesDto> topSelling = getItemSalesReport(null, startDate, endDate, SortDirection.DESC, 5);
+        List<ItemSalesDto> leastSelling = getItemSalesReport(null, startDate, endDate, SortDirection.ASC, 5);
+
+        return SalesReportDto.builder()
+                .period(formatPeriod(startDate, endDate))
+                .grossSales(grossSales)
+                .totalTax(totalTax)
+                .totalDiscounts(totalDiscounts)
+                .netRevenue(netRevenue)
+                .totalOrders(totalOrders)
+                .totalInvoices(totalInvoices)
+                .averageOrderValue(avgOrderValue)
+                .dineInRevenue(dineInRevenue)
+                .takeawayRevenue(takeawayRevenue)
+                .roomServiceRevenue(roomServiceRevenue)
+                .hotelStayRevenue(hotelStayRevenue)
+                .topSellingItems(topSelling)
+                .leastSellingItems(leastSelling)
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ItemSalesDto> getItemSalesReport(String category, LocalDate startDate, LocalDate endDate, SortDirection sortDirection, Integer limit) {
+        if (startDate == null) startDate = LocalDate.now().minusDays(30);
+        if (endDate == null) endDate = LocalDate.now();
+        if (sortDirection == null) sortDirection = SortDirection.DESC;
+        int maxResults = (limit != null && limit > 0) ? limit : 10;
+
+        Instant startInstant = toStartOfDayInstant(startDate);
+        Instant endInstant = toEndOfDayInstant(endDate);
+
+        List<MenuItemEntity> allMenuItems = menuItemRepository.findAll().stream()
+                .filter(m -> !m.isDeleted())
+                .collect(Collectors.toList());
+
+        if (category != null && !category.isBlank()) {
+            String catClean = category.trim().toLowerCase();
+            allMenuItems = allMenuItems.stream()
+                    .filter(m -> m.getCategory() != null && m.getCategory().getName().toLowerCase().contains(catClean))
+                    .collect(Collectors.toList());
+        }
+
+        List<OrderEntity> completedOrders = orderRepository.findAll().stream()
+                .filter(o -> !o.isDeleted() && o.getOrderTime() != null 
+                        && !o.getOrderTime().isBefore(startInstant) && !o.getOrderTime().isAfter(endInstant)
+                        && o.getStatus() != null && !"CANCELLED".equalsIgnoreCase(o.getStatus().getName()))
+                .collect(Collectors.toList());
+
+        Map<Integer, Long> quantityMap = new HashMap<>();
+        Map<Integer, BigDecimal> revenueMap = new HashMap<>();
+
+        for (OrderEntity order : completedOrders) {
+            if (order.getItems() != null) {
+                for (OrderItemEntity oi : order.getItems()) {
+                    if (oi.getMenuItem() != null) {
+                        int itemId = oi.getMenuItem().getId();
+                        long qty = oi.getQuantity() != null ? oi.getQuantity() : 1L;
+                        BigDecimal price = oi.getPrice() != null ? oi.getPrice() : (oi.getMenuItem().getPrice() != null ? oi.getMenuItem().getPrice() : BigDecimal.ZERO);
+                        BigDecimal lineTotal = price.multiply(BigDecimal.valueOf(qty));
+
+                        quantityMap.put(itemId, quantityMap.getOrDefault(itemId, 0L) + qty);
+                        revenueMap.put(itemId, revenueMap.getOrDefault(itemId, BigDecimal.ZERO).add(lineTotal));
+                    }
+                }
+            }
+        }
+
+        BigDecimal totalSalesRevenue = revenueMap.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        List<ItemSalesDto> list = allMenuItems.stream().map(m -> {
+            long qty = quantityMap.getOrDefault(m.getId(), 0L);
+            BigDecimal rev = revenueMap.getOrDefault(m.getId(), BigDecimal.ZERO);
+            double contrib = totalSalesRevenue.compareTo(BigDecimal.ZERO) > 0 
+                    ? rev.divide(totalSalesRevenue, 4, RoundingMode.HALF_UP).doubleValue() * 100.0 : 0.0;
+
+            String tag;
+            if (qty == 0) tag = "Zero Sales";
+            else if (qty >= 50) tag = "Top Seller";
+            else if (qty >= 15) tag = "Moderate";
+            else tag = "Slow Moving";
+
+            return ItemSalesDto.builder()
+                    .itemId(m.getId())
+                    .itemName(m.getName())
+                    .categoryName(m.getCategory() != null ? m.getCategory().getName() : "General")
+                    .unitPrice(m.getPrice())
+                    .quantitySold(qty)
+                    .totalRevenue(rev)
+                    .salesContributionPercent(Math.round(contrib * 100.0) / 100.0)
+                    .isAvailable(m.isAvailable())
+                    .performanceTag(tag)
+                    .build();
+        }).collect(Collectors.toList());
+
+        final SortDirection dir = sortDirection;
+        list.sort((a, b) -> {
+            if (dir == SortDirection.ASC) {
+                int cmp = a.getQuantitySold().compareTo(b.getQuantitySold());
+                return cmp != 0 ? cmp : a.getTotalRevenue().compareTo(b.getTotalRevenue());
+            } else {
+                int cmp = b.getQuantitySold().compareTo(a.getQuantitySold());
+                return cmp != 0 ? cmp : b.getTotalRevenue().compareTo(a.getTotalRevenue());
+            }
+        });
+
+        return list.stream().limit(maxResults).collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public OrderStatisticsDto getOrderStatistics(LocalDate startDate, LocalDate endDate) {
+        if (startDate == null) startDate = LocalDate.now().minusDays(30);
+        if (endDate == null) endDate = LocalDate.now();
+
+        Instant startInstant = toStartOfDayInstant(startDate);
+        Instant endInstant = toEndOfDayInstant(endDate);
+
+        List<OrderEntity> orders = orderRepository.findAll().stream()
+                .filter(o -> !o.isDeleted() && o.getOrderTime() != null 
+                        && !o.getOrderTime().isBefore(startInstant) && !o.getOrderTime().isAfter(endInstant))
+                .collect(Collectors.toList());
+
+        long total = orders.size();
+        long completed = orders.stream().filter(o -> o.getStatus() != null && "COMPLETED".equalsIgnoreCase(o.getStatus().getName())).count();
+        long cancelled = orders.stream().filter(o -> o.getStatus() != null && "CANCELLED".equalsIgnoreCase(o.getStatus().getName())).count();
+        long active = total - completed - cancelled;
+
+        long dineIn = orders.stream().filter(o -> o.getTable() != null).count();
+        long roomService = orders.stream().filter(o -> o.getRoom() != null).count();
+        long takeaway = orders.stream().filter(o -> o.getTable() == null && o.getRoom() == null).count();
+
+        BigDecimal totalVal = orders.stream()
+                .map(o -> o.getTotalAmount() != null ? o.getTotalAmount() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal avgTicket = total > 0 ? totalVal.divide(BigDecimal.valueOf(total), 2, RoundingMode.HALF_UP) : BigDecimal.ZERO;
+
+        Map<LocalDate, Long> dayCounts = orders.stream()
+                .collect(Collectors.groupingBy(o -> LocalDate.ofInstant(o.getOrderTime(), SYSTEM_ZONE), Collectors.counting()));
+
+        String busiestDay = "N/A";
+        long busiestCount = 0L;
+        for (Map.Entry<LocalDate, Long> entry : dayCounts.entrySet()) {
+            if (entry.getValue() > busiestCount) {
+                busiestCount = entry.getValue();
+                busiestDay = entry.getKey().toString();
+            }
+        }
+
+        return OrderStatisticsDto.builder()
+                .period(formatPeriod(startDate, endDate))
+                .totalOrders(total)
+                .completedOrders(completed)
+                .activeOrders(active)
+                .cancelledOrders(cancelled)
+                .dineInOrders(dineIn)
+                .takeawayOrders(takeaway)
+                .roomServiceOrders(roomService)
+                .totalOrderValue(totalVal)
+                .averageTicketSize(avgTicket)
+                .busiestDay(busiestDay)
+                .busiestDayOrderCount(busiestCount)
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<RestaurantTableDto> getAvailableTables() {
+        return restaurantTableRepository.findAll().stream()
+                .filter(t -> !t.isDeleted() && "Available".equalsIgnoreCase(t.getStatus()))
+                .map(t -> RestaurantTableDto.builder()
+                        .id(t.getId())
+                        .tableNumber(t.getTableNumber())
+                        .capacity(t.getCapacity())
+                        .status(t.getStatus())
+                        .locationId(t.getLocation() != null ? t.getLocation().getId() : null)
+                        .locationName(t.getLocation() != null ? t.getLocation().getName() : "Main Area")
+                        .locationCode(t.getLocation() != null ? t.getLocation().getCode() : "MAIN")
+                        .isAvailableForReservation(t.isAvailableForReservation())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<TablePerformanceDto> getTablePerformance(LocalDate startDate, LocalDate endDate, SortDirection sortDirection, Integer limit) {
+        if (startDate == null) startDate = LocalDate.now().minusDays(30);
+        if (endDate == null) endDate = LocalDate.now();
+        if (sortDirection == null) sortDirection = SortDirection.DESC;
+        int max = (limit != null && limit > 0) ? limit : 10;
+
+        Instant startInstant = toStartOfDayInstant(startDate);
+        Instant endInstant = toEndOfDayInstant(endDate);
+
+        List<OrderEntity> orders = orderRepository.findAll().stream()
+                .filter(o -> !o.isDeleted() && o.getTable() != null 
+                        && o.getOrderTime() != null && !o.getOrderTime().isBefore(startInstant) && !o.getOrderTime().isAfter(endInstant))
+                .collect(Collectors.toList());
+
+        Map<RestaurantTableEntity, List<OrderEntity>> byTable = orders.stream()
+                .collect(Collectors.groupingBy(OrderEntity::getTable));
+
+        List<TablePerformanceDto> result = byTable.entrySet().stream().map(entry -> {
+            RestaurantTableEntity t = entry.getKey();
+            List<OrderEntity> list = entry.getValue();
+            long count = list.size();
+            BigDecimal rev = list.stream().map(o -> o.getTotalAmount() != null ? o.getTotalAmount() : BigDecimal.ZERO).reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal avg = count > 0 ? rev.divide(BigDecimal.valueOf(count), 2, RoundingMode.HALF_UP) : BigDecimal.ZERO;
+
+            return TablePerformanceDto.builder()
+                    .tableId(t.getId())
+                    .tableNumber(t.getTableNumber())
+                    .location(t.getLocation() != null ? t.getLocation().getName() : "Main Dining")
+                    .capacity(t.getCapacity())
+                    .ordersServed(count)
+                    .totalRevenue(rev)
+                    .avgSpendPerOrder(avg)
+                    .status(t.getStatus())
+                    .build();
+        }).collect(Collectors.toList());
+
+        final SortDirection dir = sortDirection;
+        result.sort((a, b) -> dir == SortDirection.ASC ? a.getTotalRevenue().compareTo(b.getTotalRevenue()) : b.getTotalRevenue().compareTo(a.getTotalRevenue()));
+
+        return result.stream().limit(max).collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<RoomRevenueDto> getRoomRevenue(LocalDate startDate, LocalDate endDate) {
+        final LocalDate start = startDate != null ? startDate : LocalDate.now().minusDays(30);
+        final LocalDate end = endDate != null ? endDate : LocalDate.now();
+
+        List<RoomEntity> allRooms = roomRepository.findAll().stream().filter(r -> !r.isDeleted()).collect(Collectors.toList());
+        List<HotelReservationEntity> reservations = hotelReservationRepository.findAll().stream()
+                .filter(r -> r.getCheckInDate() != null && !r.getCheckInDate().isAfter(end)
+                        && r.getCheckOutDate() != null && !r.getCheckOutDate().isBefore(start))
+                .collect(Collectors.toList());
+
+        Map<Integer, List<HotelReservationEntity>> byRoom = reservations.stream()
+                .filter(r -> r.getRoom() != null)
+                .collect(Collectors.groupingBy(r -> r.getRoom().getId()));
+
+        long daysBetween = ChronoUnit.DAYS.between(start, end) + 1;
+
+        return allRooms.stream().map(room -> {
+            List<HotelReservationEntity> roomRes = byRoom.getOrDefault(room.getId(), Collections.emptyList());
+            long stays = roomRes.size();
+            BigDecimal price = room.getRoomType() != null && room.getRoomType().getDefaultPrice() != null ? room.getRoomType().getDefaultPrice() : BigDecimal.ZERO;
+            BigDecimal rev = price.multiply(BigDecimal.valueOf(stays));
+
+            long occupiedNights = roomRes.stream().mapToLong(r -> {
+                LocalDate cin = r.getCheckInDate().isBefore(start) ? start : r.getCheckInDate();
+                LocalDate cout = r.getCheckOutDate().isAfter(end) ? end : r.getCheckOutDate();
+                long n = ChronoUnit.DAYS.between(cin, cout);
+                return n > 0 ? n : 1L;
+            }).sum();
+
+            double occ = daysBetween > 0 ? Math.min(100.0, Math.round(((double) occupiedNights / daysBetween) * 1000.0) / 10.0) : 0.0;
+
+            return RoomRevenueDto.builder()
+                    .roomId(room.getId())
+                    .roomNumber(room.getRoomNumber())
+                    .roomType(room.getRoomType() != null ? room.getRoomType().getName() : "Standard")
+                    .defaultPrice(price)
+                    .totalStays(stays)
+                    .generatedRevenue(rev)
+                    .occupancyRate(occ)
+                    .build();
+        }).sorted((a, b) -> b.getGeneratedRevenue().compareTo(a.getGeneratedRevenue())).collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ReservationStatisticsDto getReservationStatistics(LocalDate startDate, LocalDate endDate) {
+        final LocalDate start = startDate != null ? startDate : LocalDate.now().minusDays(30);
+        final LocalDate end = endDate != null ? endDate : LocalDate.now();
+
+        List<ReservationEntity> tableRes = reservationRepository.findAll().stream()
+                .filter(r -> r.getReservationDate() != null && !r.getReservationDate().isBefore(start) && !r.getReservationDate().isAfter(end))
+                .collect(Collectors.toList());
+
+        long totalTable = tableRes.size();
+        long confirmedTable = tableRes.stream().filter(r -> r.getReservationStatus() != null && "Confirmed".equalsIgnoreCase(r.getReservationStatus().getStatusName())).count();
+        long cancelledTable = tableRes.stream().filter(r -> r.getReservationStatus() != null && "Cancelled".equalsIgnoreCase(r.getReservationStatus().getStatusName())).count();
+
+        List<HotelReservationEntity> hotelRes = hotelReservationRepository.findAll().stream()
+                .filter(r -> r.getCheckInDate() != null && !r.getCheckInDate().isAfter(end)
+                        && r.getCheckOutDate() != null && !r.getCheckOutDate().isBefore(start))
+                .collect(Collectors.toList());
+
+        long totalHotel = hotelRes.size();
+        long confirmedHotel = hotelRes.stream().filter(r -> r.getStatus() != null && ("CONFIRMED".equalsIgnoreCase(r.getStatus()) || "Confirmed".equalsIgnoreCase(r.getStatus()))).count();
+        long checkedInHotel = hotelRes.stream().filter(r -> r.getStatus() != null && ("CHECKED_IN".equalsIgnoreCase(r.getStatus()) || "Checked In".equalsIgnoreCase(r.getStatus()))).count();
+        long checkedOutHotel = hotelRes.stream().filter(r -> r.getStatus() != null && ("CHECKED_OUT".equalsIgnoreCase(r.getStatus()) || "Checked Out".equalsIgnoreCase(r.getStatus()))).count();
+
+        return ReservationStatisticsDto.builder()
+                .period(formatPeriod(startDate, endDate))
+                .totalTableReservations(totalTable)
+                .confirmedTableReservations(confirmedTable)
+                .cancelledTableReservations(cancelledTable)
+                .totalHotelReservations(totalHotel)
+                .confirmedHotelReservations(confirmedHotel)
+                .checkedInHotelReservations(checkedInHotel)
+                .checkedOutHotelReservations(checkedOutHotel)
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public TakeawayStatisticsDto getTakeawayStatistics(LocalDate startDate, LocalDate endDate) {
+        if (startDate == null) startDate = LocalDate.now().minusDays(30);
+        if (endDate == null) endDate = LocalDate.now();
+
+        Instant startInstant = toStartOfDayInstant(startDate);
+        Instant endInstant = toEndOfDayInstant(endDate);
+
+        List<OrderEntity> takeawayOrders = orderRepository.findAll().stream()
+                .filter(o -> !o.isDeleted() && o.getTable() == null && o.getRoom() == null
+                        && o.getOrderTime() != null && !o.getOrderTime().isBefore(startInstant) && !o.getOrderTime().isAfter(endInstant))
+                .collect(Collectors.toList());
+
+        long totalTakeaway = takeawayOrders.size();
+        BigDecimal rev = takeawayOrders.stream().map(o -> o.getTotalAmount() != null ? o.getTotalAmount() : BigDecimal.ZERO).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal avg = totalTakeaway > 0 ? rev.divide(BigDecimal.valueOf(totalTakeaway), 2, RoundingMode.HALF_UP) : BigDecimal.ZERO;
+
+        Map<MenuItemEntity, Long> itemCounts = new HashMap<>();
+        for (OrderEntity o : takeawayOrders) {
+            if (o.getItems() != null) {
+                for (OrderItemEntity oi : o.getItems()) {
+                    if (oi.getMenuItem() != null) {
+                        itemCounts.put(oi.getMenuItem(), itemCounts.getOrDefault(oi.getMenuItem(), 0L) + (oi.getQuantity() != null ? oi.getQuantity() : 1L));
+                    }
+                }
+            }
+        }
+
+        List<ItemSalesDto> topItems = itemCounts.entrySet().stream()
+                .map(e -> ItemSalesDto.builder()
+                        .itemId(e.getKey().getId())
+                        .itemName(e.getKey().getName())
+                        .categoryName(e.getKey().getCategory() != null ? e.getKey().getCategory().getName() : "Takeaway")
+                        .quantitySold(e.getValue())
+                        .unitPrice(e.getKey().getPrice())
+                        .totalRevenue(e.getKey().getPrice() != null ? e.getKey().getPrice().multiply(BigDecimal.valueOf(e.getValue())) : BigDecimal.ZERO)
+                        .build())
+                .sorted((a, b) -> b.getQuantitySold().compareTo(a.getQuantitySold()))
+                .limit(5)
+                .collect(Collectors.toList());
+
+        return TakeawayStatisticsDto.builder()
+                .period(formatPeriod(startDate, endDate))
+                .totalTakeawayOrders(totalTakeaway)
+                .totalTakeawayRevenue(rev)
+                .averageTakeawayValue(avg)
+                .topTakeawayItems(topItems)
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ItemSalesDto> getPopularItems(String category, LocalDate startDate, LocalDate endDate, Integer limit) {
+        return getItemSalesReport(category, startDate, endDate, SortDirection.DESC, limit != null ? limit : 5);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<DailyRevenueDto> getDailyRevenue(LocalDate startDate, LocalDate endDate) {
+        if (startDate == null) startDate = LocalDate.now().minusDays(30);
+        if (endDate == null) endDate = LocalDate.now();
+
+        Instant startInstant = toStartOfDayInstant(startDate);
+        Instant endInstant = toEndOfDayInstant(endDate);
+
+        List<InvoiceEntity> invoices = invoiceRepository.findAll().stream()
+                .filter(i -> i.getCreatedAt() != null && !i.getCreatedAt().isBefore(startInstant) && !i.getCreatedAt().isAfter(endInstant))
+                .collect(Collectors.toList());
+
+        Map<LocalDate, List<InvoiceEntity>> byDate = invoices.stream()
+                .collect(Collectors.groupingBy(i -> LocalDate.ofInstant(i.getCreatedAt(), SYSTEM_ZONE)));
+
+        List<DailyRevenueDto> list = new ArrayList<>();
+        LocalDate cur = startDate;
+        while (!cur.isAfter(endDate)) {
+            List<InvoiceEntity> dayInvoices = byDate.getOrDefault(cur, Collections.emptyList());
+            BigDecimal gross = dayInvoices.stream().map(i -> i.getOrderSubtotal() != null ? i.getOrderSubtotal() : BigDecimal.ZERO).reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal net = dayInvoices.stream().map(i -> i.getTotalAmount() != null ? i.getTotalAmount() : BigDecimal.ZERO).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            list.add(DailyRevenueDto.builder()
+                    .date(cur.toString())
+                    .grossRevenue(gross)
+                    .netRevenue(net)
+                    .orderCount((long) dayInvoices.size())
+                    .topSellingItem("-")
+                    .build());
+            cur = cur.plusDays(1);
+        }
+
+        return list;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public byte[] generateAiReportPdf(String reportType, LocalDate startDate, LocalDate endDate, AiReportAnalysisDto aiAnalysis) {
+        if (startDate == null) startDate = LocalDate.now().minusDays(30);
+        if (endDate == null) endDate = LocalDate.now();
+
+        try {
+            RestaurantSettingsDto settings = null;
+            try {
+                settings = settingsService.getSettings();
+            } catch (Exception ignored) {}
+
+            String restName = settings != null && settings.getRestaurantFullName() != null ? settings.getRestaurantFullName() : "Pol Kole Restaurant & Resort";
+            String tagline = settings != null && settings.getTagline() != null ? settings.getTagline() : "DINE • STAY • ENJOY • FEELS LIKE HOME";
+            String address = settings != null && settings.getAddress() != null ? settings.getAddress() : "Galle Road, Ahangama, Southern Province, Sri Lanka";
+            String hotlinePhone = "Hotline: " + (settings != null && settings.getHotlinePhoneNumber() != null ? settings.getHotlinePhoneNumber() : "0777 222 222") + " | Phone: " + (settings != null && settings.getPhoneNumber() != null ? settings.getPhoneNumber() : "+94 91 228 3456");
+            String contactWeb = "Email: " + (settings != null && settings.getEmail() != null ? settings.getEmail() : "info@pk.lk") + " | Web: " + (settings != null && settings.getWebsite() != null ? settings.getWebsite() : "www.polkole.lk") + " • BRN: " + (settings != null && settings.getTaxNumber() != null ? settings.getTaxNumber() : "PV-98234-LK");
+
+            Map<String, Object> parameters = new HashMap<>();
+            parameters.put("restaurantName", restName);
+            parameters.put("tagline", tagline);
+            parameters.put("address", address);
+            parameters.put("hotlinePhone", hotlinePhone);
+            parameters.put("contactWeb", contactWeb);
+
+            try (java.io.InputStream logoIs = getClass().getResourceAsStream("/reports/polkolelogo.png")) {
+                if (logoIs != null) {
+                    parameters.put("logoImage", javax.imageio.ImageIO.read(logoIs));
+                }
+            } catch (Exception ignored) {}
+            parameters.put("period", formatPeriod(startDate, endDate));
+            parameters.put("printedAt", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+
+            if (aiAnalysis != null) {
+                parameters.put("aiSummary", aiAnalysis.getSummary());
+                parameters.put("aiInsight", aiAnalysis.getPeriodComparison() != null ? aiAnalysis.getPeriodComparison() : "Analysis based on audited transactional data.");
+                parameters.put("aiRecommendation", aiAnalysis.getRecommendation());
+                parameters.put("topSellingItem", aiAnalysis.getTopSellingItem());
+                parameters.put("leastSellingItem", aiAnalysis.getLeastSellingItem());
+                parameters.put("revenueGrowth", aiAnalysis.getRevenueChangePercent() != null ? aiAnalysis.getRevenueChangePercent() + "%" : "N/A");
+            }
+
+            SalesReportDto sales = getSalesReport(startDate, endDate);
+            parameters.put("reportTitle", "AI-Powered Executive Business & Revenue Intelligence");
+            parameters.put("kpi1Label", "Net Revenue");
+            parameters.put("kpi1Value", "Rs. " + String.format("%,.2f", sales.getNetRevenue()));
+            parameters.put("kpi2Label", "Gross Sales");
+            parameters.put("kpi2Value", "Rs. " + String.format("%,.2f", sales.getGrossSales()));
+
+            List<Map<String, Object>> tableRows = new ArrayList<>();
+            List<ItemSalesDto> items = getItemSalesReport(null, startDate, endDate, SortDirection.DESC, 15);
+            for (ItemSalesDto it : items) {
+                Map<String, Object> r = new HashMap<>();
+                r.put("col1", it.getItemName());
+                r.put("col2", it.getCategoryName());
+                r.put("col3", "Rs. " + String.format("%,.2f", it.getUnitPrice() != null ? it.getUnitPrice() : BigDecimal.ZERO));
+                r.put("col4", it.getQuantitySold() + " sold");
+                r.put("col5", "Rs. " + String.format("%,.2f", it.getTotalRevenue()));
+                r.put("col6", it.getPerformanceTag());
+                tableRows.add(r);
+            }
+
+            InputStream is = getClass().getResourceAsStream("/reports/enterprise_ai_report.jrxml");
+            if (is == null) {
+                is = getClass().getResourceAsStream("/reports/enterprise_report.jrxml");
+            }
+            if (is == null) {
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Report template not found");
+            }
+
+            JasperDesign jasperDesign = JRXmlLoader.load(is);
+            JasperReport jasperReport = JasperCompileManager.compileReport(jasperDesign);
+
+            JRBeanCollectionDataSource dataSource = new JRBeanCollectionDataSource(tableRows);
+            JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, parameters, dataSource);
+
+            return JasperExportManager.exportReportToPdf(jasperPrint);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error generating AI report PDF: " + e.getMessage());
+        }
+    }
+
 }

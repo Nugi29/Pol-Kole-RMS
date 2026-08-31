@@ -16,7 +16,7 @@ import {
 } from '../../../services/report.service';
 import { SettingsService } from '../../../services/settings.service';
 
-export type ReportTab = 'flash' | 'menu' | 'hotel' | 'kitchen' | 'staff' | 'customer' | 'audit';
+export type ReportTab = 'flash' | 'menu' | 'hotel' | 'kitchen' | 'staff' | 'customer' | 'audit' | 'ai-assistant';
 
 @Component({
   selector: 'app-reports',
@@ -64,7 +64,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
 
     this.querySub = this.route.queryParams.subscribe(params => {
       const tabParam = params['tab'] as ReportTab;
-      if (tabParam && ['flash', 'menu', 'hotel', 'kitchen', 'staff', 'customer', 'audit'].includes(tabParam)) {
+      if (tabParam && ['flash', 'menu', 'hotel', 'kitchen', 'staff', 'customer', 'audit', 'ai-assistant'].includes(tabParam)) {
         this.activeTab = tabParam;
       }
       this.loadCurrentTabReport();
@@ -133,6 +133,12 @@ export class ReportsComponent implements OnInit, OnDestroy {
   }
 
   loadCurrentTabReport(): void {
+    if (this.activeTab === 'ai-assistant') {
+      this.loading = false;
+      this.cdr.detectChanges();
+      return;
+    }
+
     this.loading = true;
     this.errorMessage = '';
     this.cdr.detectChanges();

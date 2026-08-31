@@ -1,0 +1,165 @@
+<div class="flex flex-col h-[calc(100vh-140px)] max-h-[820px] bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden transition-all">
+
+  <!-- Executive Header -->
+  <div class="px-6 py-4 bg-white/90 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between flex-shrink-0 backdrop-blur-md">
+    <div class="flex items-center gap-3.5">
+      <div class="relative w-11 h-11 rounded-2xl bg-gradient-to-tr from-emerald-600 via-teal-500 to-cyan-500 flex items-center justify-center text-white shadow-lg shadow-emerald-500/25">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+        <span class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white dark:border-slate-900"></span>
+      </div>
+      <div>
+        <div class="flex items-center gap-2.5">
+          <h2 class="text-base font-bold text-slate-900 dark:text-white tracking-tight">POL-KOLE AI Assistant</h2>
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
+            Real-time Intelligence
+          </span>
+        </div>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Day-to-day operations, automated reporting &amp; live RMS analytics</p>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex items-center gap-2">
+      <button
+        type="button"
+        (click)="clearChat()"
+        class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl transition-all cursor-pointer shadow-xs"
+        title="Reset conversation session">
+        <svg class="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        New Session
+      </button>
+    </div>
+  </div>
+
+  <!-- Messages Stream -->
+  <div #chatScrollContainer class="flex-1 overflow-y-auto p-6 space-y-6 scroll-smooth bg-slate-50/50 dark:bg-slate-950/40">
+    <ng-container *ngFor="let msg of messages">
+
+      <!-- User Message (Right) -->
+      <div *ngIf="msg.sender === 'user'" class="flex justify-end items-start gap-3 max-w-2xl ml-auto">
+        <div class="flex flex-col items-end">
+          <div class="flex items-center gap-2 mb-1.5">
+            <span class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">You ({{ currentUserRole }})</span>
+            <span class="text-[10px] text-slate-400 dark:text-slate-500">{{ msg.timestamp | date:'shortTime' }}</span>
+          </div>
+          <div class="px-5 py-3.5 rounded-2xl rounded-tr-xs bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-sm font-medium shadow-md leading-relaxed">
+            {{ msg.text }}
+          </div>
+        </div>
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-700 text-white text-xs font-bold flex items-center justify-center flex-shrink-0 shadow-md shadow-emerald-600/20 mt-6"
+             [title]="currentUserName + ' (' + currentUserRole + ')'">
+          {{ currentUserAvatarLetter }}
+        </div>
+      </div>
+
+      <!-- AI Assistant Message (Left) -->
+      <div *ngIf="msg.sender === 'ai'" class="flex items-start gap-3.5 max-w-3xl mr-auto">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-600 flex items-center justify-center text-white text-sm font-bold flex-shrink-0 shadow-md shadow-emerald-500/20 mt-1">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+        </div>
+        <div class="flex flex-col flex-1">
+          <div class="flex items-center gap-2 mb-1.5">
+            <span class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">POL-KOLE AI</span>
+            <span class="text-[10px] text-slate-400 dark:text-slate-500">{{ msg.timestamp | date:'shortTime' }}</span>
+          </div>
+          
+          <!-- Message Body -->
+          <div class="p-5 rounded-2xl rounded-tl-xs bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/70 text-slate-800 dark:text-slate-100 text-sm shadow-sm space-y-3 leading-relaxed">
+            <div [innerHTML]="msg.safeHtml" class="prose dark:prose-invert max-w-none text-sm"></div>
+
+            <!-- PDF Export Actions (Inline Green Pill) -->
+            <div *ngIf="hasReportOrData(msg)" class="mt-3 inline-flex items-center gap-2 p-1.5 rounded-xl bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-700/60">
+              <!-- Button 1: ReportsPDF -->
+              <button
+                type="button"
+                (click)="downloadReportPdf(msg)"
+                [disabled]="downloadingPdf"
+                class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs transition-all cursor-pointer disabled:opacity-50"
+                title="Generate official Reports enterprise PDF">
+                <svg *ngIf="!downloadingPdf" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                <span *ngIf="downloadingPdf" class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                <span>{{ downloadingPdf ? 'Compiling...' : 'ReportsPDF' }}</span>
+              </button>
+              <!-- Button 2: Simple Print -->
+              <button
+                type="button"
+                (click)="printAiOutput(msg)"
+                class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/80 hover:bg-white dark:bg-slate-800/80 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold border border-slate-200 dark:border-slate-700 transition-all cursor-pointer"
+                title="Print or Save exact AI Answer and Table as PDF">
+                <svg class="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+                <span>Simple Print</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- Thinking State -->
+    <div *ngIf="loading" class="flex items-start gap-3.5 max-w-lg mr-auto animate-fade-in">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shadow-md shadow-emerald-500/20">
+        <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+      </div>
+      <div class="px-5 py-3.5 rounded-2xl rounded-tl-xs bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/70 text-slate-600 dark:text-slate-300 text-xs shadow-sm flex items-center gap-3">
+        <div class="flex items-center gap-1">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-bounce" style="animation-delay: 0ms"></span>
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-bounce" style="animation-delay: 150ms"></span>
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-bounce" style="animation-delay: 300ms"></span>
+        </div>
+        <span class="font-medium text-slate-700 dark:text-slate-200">Querying RMS databases &amp; calculating insights...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Prompt Pills Bar -->
+  <div class="px-6 py-3 bg-white/80 dark:bg-slate-900/80 border-t border-slate-200 dark:border-slate-800 flex items-center gap-2 overflow-x-auto whitespace-nowrap scrollbar-none">
+    <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex-shrink-0">Suggestions:</span>
+    <button
+      *ngFor="let q of suggestedQuestions"
+      type="button"
+      (click)="sendPrompt(q)"
+      [disabled]="loading"
+      class="px-3.5 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-300 dark:hover:border-emerald-700 border border-slate-200 dark:border-slate-700 rounded-full transition-all cursor-pointer flex-shrink-0 disabled:opacity-50">
+      {{ q }}
+    </button>
+  </div>
+
+  <!-- Input Bar -->
+  <div class="p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex-shrink-0">
+    <form (ngSubmit)="sendPrompt()" class="flex items-center gap-3">
+      <div class="relative flex-1">
+        <input
+          #messageInputRef
+          type="text"
+          [(ngModel)]="inputQuery"
+          name="queryInput"
+          [disabled]="loading"
+          placeholder="Ask anything about sales, revenue, least-selling items, operations, or daily tips..."
+          class="w-full pl-5 pr-10 py-3.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all" />
+      </div>
+      <button
+        type="submit"
+        [disabled]="!inputQuery.trim() || loading"
+        class="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-sm font-bold shadow-lg shadow-emerald-600/25 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+        <span>Ask</span>
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+        </svg>
+      </button>
+    </form>
+  </div>
+
+</div>
