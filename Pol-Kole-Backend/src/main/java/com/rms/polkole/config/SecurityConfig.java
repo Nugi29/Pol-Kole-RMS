@@ -135,6 +135,7 @@ public class SecurityConfig {
 
                         // 16. Dashboard & Analytics (/api/dashboard)
                         .requestMatchers("/api/dashboard/**").authenticated()
+                        .requestMatchers("/api/reports/**").authenticated()
 
                         // 17. Audit Logs (/api/audit-logs)
                         .requestMatchers("/api/audit-logs/**").authenticated()

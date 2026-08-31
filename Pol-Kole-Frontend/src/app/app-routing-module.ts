@@ -22,6 +22,7 @@ import { TakeawayDisplayComponent } from './views/modules/display/takeaway-displ
 import { GuestDisplayComponent } from './views/modules/display/guest-display/guest-display.component';
 import { DisplayHubComponent } from './views/modules/display/display-hub/display-hub.component';
 import { SettingsComponent } from './views/modules/settings/settings.component';
+import { ReportsComponent } from './views/modules/reports/reports.component';
 import { AuthGuard } from './services/auth.guard';
 
 const routes: Routes = [
@@ -166,6 +167,12 @@ const routes: Routes = [
         component: UserComponent,
         canActivate: [AuthGuard],
         data: { roles: ['ADMIN'] }
+      },
+      {
+        path: 'reports',
+        component: ReportsComponent,
+        canActivate: [AuthGuard],
+        data: { roles: ['ADMIN', 'MANAGER', 'CASHIER', 'STAFF'] }
       },
       {
         path: 'settings',

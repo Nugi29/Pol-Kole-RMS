@@ -53,6 +53,7 @@ import { DisplayHubComponent } from './views/modules/display/display-hub/display
 import { NotificationBellComponent } from './shared/notification-bell/notification-bell.component';
 import { SettingsComponent } from './views/modules/settings/settings.component';
 import { SettingsService } from './services/settings.service';
+import { ReportsComponent } from './views/modules/reports/reports.component';
 
 export function initializeRestaurantSettings(settingsService: SettingsService) {
   return () => settingsService.loadSettings(true);
@@ -83,6 +84,7 @@ export function initializeRestaurantSettings(settingsService: SettingsService) {
     DisplayHubComponent,
     NotificationBellComponent,
     SettingsComponent,
+    ReportsComponent,
   ],
   imports: [
     BrowserModule,

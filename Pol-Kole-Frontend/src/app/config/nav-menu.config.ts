@@ -132,6 +132,20 @@ export const NAV_MENU = [
     ],
   },
   {
+    name: 'Reports & MIS',
+    icon: 'bar_chart',
+    roles: ['ADMIN', 'MANAGER', 'CASHIER', 'STAFF'],
+    children: [
+      { name: 'Daily Flash & Revenue', route: '/main/reports?tab=flash', roles: ['ADMIN', 'MANAGER', 'CASHIER', 'STAFF'] },
+      { name: 'Menu Performance', route: '/main/reports?tab=menu', roles: ['ADMIN', 'MANAGER', 'CASHIER', 'STAFF'] },
+      { name: 'Hotel Occupancy & Yield', route: '/main/reports?tab=hotel', roles: ['ADMIN', 'MANAGER', 'CASHIER', 'STAFF'] },
+      { name: 'Kitchen Turnaround', route: '/main/reports?tab=kitchen', roles: ['ADMIN', 'MANAGER', 'CASHIER', 'STAFF'] },
+      { name: 'Waiter & Staff Sales', route: '/main/reports?tab=staff', roles: ['ADMIN', 'MANAGER', 'CASHIER', 'STAFF'] },
+      { name: 'Customer VIP & Loyalty', route: '/main/reports?tab=customer', roles: ['ADMIN', 'MANAGER', 'CASHIER', 'STAFF'] },
+      { name: 'Discounts & Audit', route: '/main/reports?tab=audit', roles: ['ADMIN', 'MANAGER', 'CASHIER', 'STAFF'] },
+    ],
+  },
+  {
     name: 'Audit Logging',
     icon: 'admin_panel_settings',
     route: '/main/audit-logs',

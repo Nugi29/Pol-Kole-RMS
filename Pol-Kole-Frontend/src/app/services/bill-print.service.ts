@@ -199,7 +199,7 @@ export class BillPrintService {
             font-size: 16px;
             font-weight: 800;
             letter-spacing: 0.3px;
-            color: #042f2e;
+            color: #004D40;
             line-height: 1.25;
             margin-bottom: 2px;
             word-wrap: break-word;
@@ -209,7 +209,7 @@ export class BillPrintService {
             font-size: 10.5px;
             font-weight: 700;
             letter-spacing: 0.8px;
-            color: #0f766e;
+            color: #00796B;
             text-transform: uppercase;
             margin-bottom: 3px;
           }
@@ -580,7 +580,7 @@ export class BillPrintService {
           /* Resort Header Branding */
           .header-table {
             width: 100%;
-            border-bottom: 3px solid #0f766e;
+            border-bottom: 3px solid #00695C;
             padding-bottom: 16px;
             margin-bottom: 20px;
             border-collapse: collapse;
@@ -608,7 +608,7 @@ export class BillPrintService {
             font-size: 22px;
             font-weight: 900;
             letter-spacing: 0.3px;
-            color: #042f2e;
+            color: #004D40;
             line-height: 1.2;
             word-break: break-word;
             overflow-wrap: break-word;
@@ -616,7 +616,7 @@ export class BillPrintService {
           .brand-tagline {
             font-size: 11px;
             font-weight: 700;
-            color: #0f766e;
+            color: #00796B;
             letter-spacing: 0.8px;
             text-transform: uppercase;
             margin-top: 3px;
@@ -645,7 +645,7 @@ export class BillPrintService {
             font-size: 16px;
             font-weight: 900;
             font-family: 'Courier New', Courier, monospace;
-            color: #0f766e;
+            color: #00796B;
             margin-top: 2px;
           }
           .doc-subtitle {
@@ -673,7 +673,7 @@ export class BillPrintService {
             font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 1px;
-            color: #0f766e;
+            color: #00796B;
             border-bottom: 1px solid #e2e8f0;
             padding-bottom: 6px;
             margin-bottom: 8px;
@@ -760,7 +760,7 @@ export class BillPrintService {
             margin-bottom: 14px;
           }
           .words-label { font-size: 10px; font-weight: 800; text-transform: uppercase; color: #64748b; letter-spacing: 0.8px; }
-          .words-text { font-size: 12px; font-weight: 800; color: #0f766e; font-style: italic; margin-top: 2px; }
+          .words-text { font-size: 12px; font-weight: 800; color: #00796B; font-style: italic; margin-top: 2px; }
 
           .calc-table {
             width: 100%;
@@ -868,12 +868,12 @@ export class BillPrintService {
                     <img class="invoice-brand-logo" src="${logoUrl}" alt="${this.settingsService.restaurantFullName()}" onerror="this.onerror=null; this.src='assets/polkolelogo.png';">
                   </div>
                   <div class="brand-text">
-                    <div class="brand-logo">${this.settingsService.restaurantFullName()}</div>
-                    <div class="brand-tagline">${this.settingsService.tagline()} ${this.settingsService.slogan() ? '• ' + this.settingsService.slogan() : ''}</div>
-                    <div class="resort-meta">
-                      ${this.settingsService.address()}<br>
-                      Hotline: ${this.settingsService.hotlinePhoneNumber()} | Phone: ${this.settingsService.phoneNumber()}<br>
-                      Email: ${this.settingsService.email()} | Web: ${this.settingsService.website()} • BRN: ${this.settingsService.taxNumber()}
+                    <div class="brand-logo" style="color: #004D40; font-size: 22px; font-weight: 900;">${this.settingsService.restaurantFullName() || 'Pol Kole Restaurant & Resort'}</div>
+                    <div class="brand-tagline" style="color: #00796B; font-size: 10.5px; font-weight: 800; letter-spacing: 0.8px; text-transform: uppercase; margin-top: 3px;">${this.settingsService.tagline() ? (this.settingsService.tagline() + (this.settingsService.slogan() ? ' • ' + this.settingsService.slogan() : '')) : 'DINE • STAY • ENJOY • FEELS LIKE HOME'}</div>
+                    <div class="resort-meta" style="color: #475569; font-size: 11px; margin-top: 5px; line-height: 1.45;">
+                      ${this.settingsService.address() || 'Galle Road, Ahangama, Southern Province, Sri Lanka'}<br>
+                      Hotline: ${this.settingsService.hotlinePhoneNumber() || '0777 222 222'} | Phone: ${this.settingsService.phoneNumber() || '+94 91 228 3456'}<br>
+                      Email: ${this.settingsService.email() || 'info@pk.lk'} | Web: ${this.settingsService.website() || 'www.polkole.lk'} • BRN: ${this.settingsService.taxNumber() || 'PV-98234-LK'}
                     </div>
                   </div>
                 </div>
@@ -910,7 +910,7 @@ export class BillPrintService {
               </div>
               <div class="info-row">
                 <span class="info-label">Bill Category:</span>
-                <span class="info-val" style="color: #0f766e;">${categoryTitle}</span>
+                <span class="info-val" style="color: #00796B;">${categoryTitle}</span>
               </div>
               ${isRoom ? `
                 <div class="info-row">
@@ -1163,7 +1163,7 @@ export class BillPrintService {
             font-size: 16px; 
             font-weight: 800; 
             letter-spacing: 0.3px; 
-            color: #042f2e; 
+            color: #004D40; 
             line-height: 1.25;
             margin-bottom: 2px;
             word-wrap: break-word;
@@ -1173,7 +1173,7 @@ export class BillPrintService {
             font-size: 10.5px; 
             text-transform: uppercase; 
             letter-spacing: 0.8px; 
-            color: #0f766e; 
+            color: #00796B; 
             font-weight: 700; 
             margin-bottom: 3px; 
           }
