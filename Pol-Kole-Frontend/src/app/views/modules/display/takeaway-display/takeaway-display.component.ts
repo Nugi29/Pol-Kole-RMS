@@ -3,6 +3,7 @@ import { Subscription, interval } from 'rxjs';
 import { WebsocketService } from '../../../../services/websocket.service';
 import { Order, OrderService } from '../../../../services/order.service';
 import { KitchenOrder } from '../../kitchen/kitchen.component';
+import { SettingsService } from '../../../../services/settings.service';
 
 export interface TakeawayTicket {
   orderId: number;
@@ -43,7 +44,8 @@ export class TakeawayDisplayComponent implements OnInit, OnDestroy {
   constructor(
     public readonly wsService: WebsocketService,
     private readonly orderService: OrderService,
-    private readonly cdr: ChangeDetectorRef
+    private readonly cdr: ChangeDetectorRef,
+    public readonly settingsService: SettingsService
   ) {}
 
   ngOnInit(): void {

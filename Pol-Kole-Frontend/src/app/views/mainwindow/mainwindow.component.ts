@@ -3,6 +3,8 @@ import { Router } from '@angular/router';
 import { NAV_MENU, NavMenuItem } from '../../config/nav-menu.config';
 import { WebsocketService } from '../../services/websocket.service';
 
+import { SettingsService } from '../../services/settings.service';
+
 @Component({
   selector: 'app-mainwindow',
   standalone: false,
@@ -46,7 +48,8 @@ export class MainwindowComponent implements OnInit {
 
   constructor(
     private readonly router: Router,
-    public readonly wsService: WebsocketService
+    public readonly wsService: WebsocketService,
+    public readonly settingsService: SettingsService
   ) {}
 
   logout(): void {

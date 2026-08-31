@@ -9,6 +9,7 @@ import { RoomService, Room } from '../../../../services/room.service';
 import { Reservation, ReservationService } from '../../../../services/reservation.service';
 import { MenuService, MenuCategory, MenuItem } from '../../../../services/menu.service';
 import { ItemDiscount, ItemDiscountService } from '../../../../services/item-discount.service';
+import { SettingsService } from '../../../../services/settings.service';
 
 export interface DisplayOrderRound {
   order: Order;
@@ -110,7 +111,8 @@ export class GuestDisplayComponent implements OnInit, OnDestroy {
     private readonly reservationService: ReservationService,
     private readonly menuService: MenuService,
     private readonly itemDiscountService: ItemDiscountService,
-    private readonly cdr: ChangeDetectorRef
+    private readonly cdr: ChangeDetectorRef,
+    public readonly settingsService: SettingsService
   ) {}
 
   ngOnInit(): void {
@@ -340,7 +342,7 @@ export class GuestDisplayComponent implements OnInit, OnDestroy {
       } else if (rawStatus.includes('COMPLETED')) {
         backendStatus = 'COMPLETED';
         title = 'Thank You!';
-        subtitle = 'Thank you for choosing Pol-Kole Resort! We hope you had a wonderful experience.';
+        subtitle = `Thank you for choosing ${this.settingsService.restaurantShortName()}! We hope you had a wonderful experience.`;
         badgeClass = 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30';
         icon = '✓';
         progressPercent = 100;
@@ -550,7 +552,7 @@ export class GuestDisplayComponent implements OnInit, OnDestroy {
             `Reserved guest (${this.activeReservation?.customerName || 'VIP Guest'}) has arrived and is seated!`,
             this.locationId || undefined
           );
-          this.showCallFeedback('WAITER', 'Welcome!', 'Welcome to Pol-Kole Resort! Your waiter has been notified of your arrival.');
+          this.showCallFeedback('WAITER', 'Welcome!', `Welcome to ${this.settingsService.restaurantShortName()}! Your waiter has been notified of your arrival.`);
           this.cdr.markForCheck();
         },
         error: () => {

@@ -3,6 +3,7 @@ import { Invoice } from './billing.service';
 import { Order } from './order.service';
 import { HotelReservation } from './hotel-reservation.service';
 import { Reservation } from './reservation.service';
+import { SettingsService } from './settings.service';
 
 export interface PrintInvoiceOptions {
   customerName?: string;
@@ -34,11 +35,37 @@ export interface PrintTokenOptions {
 })
 export class BillPrintService {
 
+  constructor(private readonly settingsService: SettingsService) {}
+
   private getLoggedInStaff(): string {
     if (typeof window !== 'undefined' && window.localStorage) {
       return localStorage.getItem('name') || 'Cashier Desk';
     }
     return 'Cashier Desk';
+  }
+
+  private getLogoUrl(): string {
+    const customLogo = this.settingsService.logoUrl();
+    const fallbackLogo = typeof window !== 'undefined' && window.location?.origin
+      ? `${window.location.origin}/assets/polkolelogo.png`
+      : 'assets/polkolelogo.png';
+
+    if (customLogo && customLogo.trim().length > 0) {
+      const trimmed = customLogo.trim();
+      const driveMatch = trimmed.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || trimmed.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+      if (driveMatch && driveMatch[1]) {
+        return `https://drive.google.com/thumbnail?id=${driveMatch[1]}&sz=w500`;
+      }
+      if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('data:')) {
+        return trimmed;
+      }
+      const cleanPath = trimmed.startsWith('/') ? trimmed.slice(1) : trimmed;
+      if (typeof window !== 'undefined' && window.location?.origin) {
+        return `${window.location.origin}/${cleanPath}`;
+      }
+      return trimmed;
+    }
+    return fallbackLogo;
   }
 
   // --- Number to Words Converter ---
@@ -67,19 +94,6 @@ export class BillPrintService {
     return words + ' Only';
   }
 
-  // Generate a fake SVG barcode for thermal tickets
-  private generateSvgBarcode(code: string): string {
-    const bars: string[] = [];
-    const hash = (code + 'POLKOLE').split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    let x = 10;
-    for (let i = 0; i < 36; i++) {
-      const width = ((hash * (i + 13)) % 3) + 1.2;
-      bars.push(`<rect x="${x}" y="0" width="${width}" height="32" fill="#0f172a" />`);
-      x += width + ((i % 2 === 0) ? 2 : 1.5);
-    }
-    return `<svg width="${x + 10}" height="32" viewBox="0 0 ${x + 10} 32" xmlns="http://www.w3.org/2000/svg" style="display:inline-block; max-width:100%;">${bars.join('')}</svg>`;
-  }
-
   // =========================================================================
   // 1. TOKEN TEMPLATE (POS / KITCHEN / PICKUP TICKET)
   // =========================================================================
@@ -96,7 +110,8 @@ export class BillPrintService {
     const isRoom = !isTable && (!!order.roomNumber || !!order.roomId);
 
     const itemsSubtotal = (order.items || []).reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const serviceCharge = (isTable || isRoom) ? (itemsSubtotal * 0.10) : 0;
+    const scRate = (this.settingsService.serviceChargePercentage() ?? 10) / 100;
+    const serviceCharge = (isTable || isRoom) ? (itemsSubtotal * scRate) : 0;
     const netTotal = order.totalAmount || (itemsSubtotal + serviceCharge);
 
     let orderTypeBadge = '';
@@ -131,14 +146,15 @@ export class BillPrintService {
       </tr>
     `).join('');
 
-    const barcodeHtml = this.generateSvgBarcode(`ORD-${order.id || Date.now()}`);
+    const logoUrl = this.getLogoUrl();
 
     const htmlContent = `
       <!DOCTYPE html>
       <html>
       <head>
         <meta charset="utf-8">
-        <title>Token #${order.id} - Pol-Kole Resort</title>
+        <base href="${window.location.origin}/">
+        <title>Token #${order.id} - ${this.settingsService.restaurantFullName()}</title>
         <style>
           @page {
             size: 80mm auto;
@@ -165,25 +181,42 @@ export class BillPrintService {
             padding-bottom: 12px;
             margin-bottom: 12px;
           }
+          .header-logo-wrap {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 10px auto;
+            text-align: center;
+          }
+          .header-logo {
+            max-height: 56px;
+            max-width: 130px;
+            object-fit: contain;
+            display: block;
+            margin: 0 auto;
+          }
           .resort-name {
-            font-size: 19px;
-            font-weight: 900;
-            letter-spacing: 0.8px;
+            font-size: 16px;
+            font-weight: 800;
+            letter-spacing: 0.3px;
             color: #042f2e;
-            text-transform: uppercase;
+            line-height: 1.25;
+            margin-bottom: 2px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
           }
           .resort-subtitle {
-            font-size: 10px;
+            font-size: 10.5px;
             font-weight: 700;
-            letter-spacing: 1px;
+            letter-spacing: 0.8px;
             color: #0f766e;
             text-transform: uppercase;
-            margin-top: 1px;
+            margin-bottom: 3px;
           }
           .resort-contact {
             font-size: 10px;
             color: #64748b;
-            margin-top: 3px;
+            line-height: 1.35;
           }
           .token-banner {
             margin: 10px 0 6px 0;
@@ -329,10 +362,6 @@ export class BillPrintService {
             font-weight: 700;
             color: #1e293b;
           }
-          .barcode-box {
-            margin: 8px 0 4px 0;
-            text-align: center;
-          }
           .copy-tag {
             font-size: 9px;
             color: #94a3b8;
@@ -348,9 +377,12 @@ export class BillPrintService {
       </head>
       <body>
         <div class="header">
-          <div class="resort-name">POL-KOLE RESORT</div>
-          <div class="resort-subtitle">Hospitality &amp; Dining Hub</div>
-          <div class="resort-contact">Galle Road, Ahangama • +94 91 228 3456</div>
+          <div class="header-logo-wrap">
+            <img class="header-logo" src="${logoUrl}" alt="${this.settingsService.restaurantFullName()}" onerror="this.onerror=null; this.src='assets/polkolelogo.png';">
+          </div>
+          <div class="resort-name">${this.settingsService.restaurantFullName()}</div>
+          <div class="resort-subtitle">${this.settingsService.tagline()}</div>
+          <div class="resort-contact">${this.settingsService.address()} <br> Hotline: ${this.settingsService.phoneNumber()}</div>
 
           <div class="token-banner">
             <div class="token-label">ORDER / KITCHEN TOKEN</div>
@@ -403,7 +435,7 @@ export class BillPrintService {
             <span style="font-weight: 700;">Rs. ${itemsSubtotal.toFixed(2)}</span>
           </div>
           <div class="summary-row">
-            <span style="color: #64748b;">${isTakeaway ? 'Service Charge:' : 'Service Charge (10%):'}</span>
+            <span style="color: #64748b;">${isTakeaway ? 'Service Charge:' : `Service Charge (${this.settingsService.serviceChargePercentage()}%):`}</span>
             <span style="font-weight: 700; color: ${serviceCharge > 0 ? '#0d9488' : '#64748b'};">
               ${serviceCharge > 0 ? '+Rs. ' + serviceCharge.toFixed(2) : 'Rs. 0.00 (Takeaway)'}
             </span>
@@ -420,18 +452,23 @@ export class BillPrintService {
               ? '📢 Please hold this token and collect your food when your number is called.' 
               : '🍽️ Please retain this token until all items are served to your satisfaction.'}
           </div>
-          <div class="barcode-box">
-            ${barcodeHtml}
-            <div style="font-family: monospace; font-size: 9.5px; color: #64748b; margin-top: 2px;">ORD-${order.id || '000'} • POS VERIFIED</div>
-          </div>
-          <div>Thank you for choosing Pol-Kole Resort!</div>
+          <div>${this.settingsService.invoiceFooter()}</div>
           <div class="copy-tag" style="margin-top: 4px;">Kitchen &amp; Guest POS Copy • ${new Date().toLocaleTimeString()}</div>
         </div>
 
         <script>
-          window.onload = function() {
+          function triggerPrint() {
             window.print();
             window.onafterprint = function() { window.close(); };
+          }
+          window.onload = function() {
+            const logo = document.querySelector('.header-logo');
+            if (logo && !logo.complete) {
+              logo.onload = function() { setTimeout(triggerPrint, 50); };
+              logo.onerror = function() { triggerPrint(); };
+            } else {
+              setTimeout(triggerPrint, 100);
+            }
           };
         </script>
       </body>
@@ -506,12 +543,15 @@ export class BillPrintService {
       hour: '2-digit', minute: '2-digit', hour12: true
     });
 
+    const logoUrl = this.getLogoUrl();
+
     const htmlContent = `
       <!DOCTYPE html>
       <html>
       <head>
         <meta charset="utf-8">
-        <title>Invoice ${invoice.invoiceNumber} - Pol-Kole Resort &amp; Restaurant</title>
+        <base href="${window.location.origin}/">
+        <title>Invoice ${invoice.invoiceNumber} - ${this.settingsService.restaurantFullName()}</title>
         <style>
           @page {
             size: A4 portrait;
@@ -543,32 +583,56 @@ export class BillPrintService {
             border-bottom: 3px solid #0f766e;
             padding-bottom: 16px;
             margin-bottom: 20px;
+            border-collapse: collapse;
+          }
+          .brand-wrap {
+            display: flex;
+            align-items: flex-start;
+            gap: 18px;
+          }
+          .brand-logo-wrap {
+            flex-shrink: 0;
+          }
+          .invoice-brand-logo {
+            max-height: 85px;
+            max-width: 130px;
+            object-fit: contain;
+            display: block;
+            border-radius: 6px;
+          }
+          .brand-text {
+            flex: 1;
+            min-width: 0;
           }
           .brand-logo {
-            font-size: 26px;
+            font-size: 22px;
             font-weight: 900;
-            letter-spacing: 1px;
+            letter-spacing: 0.3px;
             color: #042f2e;
-            text-transform: uppercase;
-            line-height: 1.1;
+            line-height: 1.2;
+            word-break: break-word;
+            overflow-wrap: break-word;
           }
           .brand-tagline {
-            font-size: 11.5px;
+            font-size: 11px;
             font-weight: 700;
             color: #0f766e;
-            letter-spacing: 1px;
+            letter-spacing: 0.8px;
             text-transform: uppercase;
-            margin-top: 2px;
+            margin-top: 3px;
           }
           .resort-meta {
-            font-size: 11.5px;
+            font-size: 11px;
             color: #64748b;
             margin-top: 6px;
-            line-height: 1.4;
+            line-height: 1.45;
+            word-break: break-word;
+            overflow-wrap: break-word;
           }
           .doc-title-block {
             text-align: right;
             vertical-align: top;
+            white-space: nowrap;
           }
           .doc-title {
             font-size: 24px;
@@ -798,17 +862,24 @@ export class BillPrintService {
           <!-- Header -->
           <table class="header-table">
             <tr>
-              <td>
-                <div class="brand-logo">POL-KOLE RESORT &amp; RESTAURANT</div>
-                <div class="brand-tagline">Luxury Accommodations • Fine Dining • Wellness &amp; Events</div>
-                <div class="resort-meta">
-                  Galle Road, Ahangama, Southern Province, Sri Lanka<br>
-                  Hotline: +94 91 228 3456 | Mobile: +94 77 123 4567<br>
-                  Email: info@polkole.lk | Web: www.polkole.lk • BRN: PV-98234-LK
+              <td style="vertical-align: top; width: 64%;">
+                <div class="brand-wrap">
+                  <div class="brand-logo-wrap">
+                    <img class="invoice-brand-logo" src="${logoUrl}" alt="${this.settingsService.restaurantFullName()}" onerror="this.onerror=null; this.src='assets/polkolelogo.png';">
+                  </div>
+                  <div class="brand-text">
+                    <div class="brand-logo">${this.settingsService.restaurantFullName()}</div>
+                    <div class="brand-tagline">${this.settingsService.tagline()} ${this.settingsService.slogan() ? '• ' + this.settingsService.slogan() : ''}</div>
+                    <div class="resort-meta">
+                      ${this.settingsService.address()}<br>
+                      Hotline: ${this.settingsService.hotlinePhoneNumber()} | Phone: ${this.settingsService.phoneNumber()}<br>
+                      Email: ${this.settingsService.email()} | Web: ${this.settingsService.website()} • BRN: ${this.settingsService.taxNumber()}
+                    </div>
+                  </div>
                 </div>
               </td>
-              <td class="doc-title-block">
-                <div class="doc-title">TAX INVOICE</div>
+              <td class="doc-title-block" style="vertical-align: top; width: 36%;">
+                <div class="doc-title">INVOICE</div>
                 <div class="doc-subtitle">Official Guest Folio / Receipt</div>
                 <div class="invoice-no-highlight">${invoice.invoiceNumber}</div>
                 <div style="margin-top: 8px;">
@@ -926,9 +997,8 @@ export class BillPrintService {
 
               <div style="font-size: 11px; color: #64748b; line-height: 1.4; padding: 4px 6px;">
                 <strong>Payment Notes &amp; Terms:</strong><br>
-                • All charges include 10% statutory hospitality service charge.<br>
-                • Goods &amp; Services are non-refundable once billed.<br>
-                • Thank you for your patronage with Pol-Kole Resort &amp; Restaurant.
+                ${this.settingsService.termsConditions()}<br>
+                • ${this.settingsService.invoiceFooter()}
               </div>
             </div>
 
@@ -946,14 +1016,14 @@ export class BillPrintService {
                   </div>
                 ` : ''}
                 <div class="calc-row">
-                  <span class="calc-label">${serviceCharge > 0 ? 'Service Charge (10%):' : 'Service Charge:'}</span>
+                  <span class="calc-label">${serviceCharge > 0 ? `Service Charge (${this.settingsService.serviceChargePercentage()}%):` : 'Service Charge:'}</span>
                   <span class="calc-val" style="color: ${serviceCharge > 0 ? '#0f766e' : '#64748b'};">
                     ${serviceCharge > 0 ? '+Rs. ' + serviceCharge.toFixed(2) : 'Rs. 0.00 (Exempt)'}
                   </span>
                 </div>
                 <div class="calc-row">
-                  <span class="calc-label">VAT / Government Tax:</span>
-                  <span class="calc-val">Rs. 0.00 (0%)</span>
+                  <span class="calc-label">VAT / Government Tax (${this.settingsService.taxPercentage()}%):</span>
+                  <span class="calc-val">Rs. ${(invoice.taxAmount || 0).toFixed(2)}</span>
                 </div>
               </div>
 
@@ -976,22 +1046,32 @@ export class BillPrintService {
               <td class="sig-box">
                 <div class="sig-line"></div>
                 <div class="sig-title">Authorized Officer</div>
-                <div class="sig-sub">Pol-Kole Front Desk / Accounts</div>
+                <div class="sig-sub">${this.settingsService.restaurantFullName()} Front Desk / Accounts</div>
               </td>
             </tr>
           </table>
 
           <!-- Footer -->
           <div class="inv-footer">
-            <div>Pol-Kole Resort &amp; Restaurant • Galle Road, Ahangama, Sri Lanka • +94 91 228 3456 • info@polkole.lk</div>
+            <div>${this.settingsService.invoiceFooter()}</div>
+            <div style="margin-top: 2px; font-size: 9.5px; color: #94a3b8; word-break: break-word; overflow-wrap: break-word;">${this.settingsService.restaurantFullName()} • ${this.settingsService.address()} • ${this.settingsService.phoneNumber()} • ${this.settingsService.email()}</div>
             <div class="legal-tag">Computer Generated Official Tax Invoice &amp; Folio Statement • Valid Without Physical Stamp When Marked Paid</div>
           </div>
         </div>
 
         <script>
-          window.onload = function() {
+          function triggerPrint() {
             window.print();
             window.onafterprint = function() { window.close(); };
+          }
+          window.onload = function() {
+            const logo = document.querySelector('.invoice-brand-logo');
+            if (logo && !logo.complete) {
+              logo.onload = function() { setTimeout(triggerPrint, 50); };
+              logo.onerror = function() { triggerPrint(); };
+            } else {
+              setTimeout(triggerPrint, 100);
+            }
           };
         </script>
       </body>
@@ -1038,19 +1118,20 @@ export class BillPrintService {
       </tr>
     `).join('');
 
-    const barcodeHtml = this.generateSvgBarcode(`INV-${invoice.invoiceNumber}`);
+    const logoUrl = this.getLogoUrl();
 
     const htmlContent = `
       <!DOCTYPE html>
       <html>
       <head>
         <meta charset="utf-8">
-        <title>Receipt ${invoice.invoiceNumber} - Pol-Kole</title>
+        <base href="${window.location.origin}/">
+        <title>Receipt ${invoice.invoiceNumber} - ${this.settingsService.restaurantFullName()}</title>
         <style>
           @page { size: 80mm auto; margin: 0; }
           * { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
           body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
             width: 320px;
             margin: 0 auto;
             padding: 16px 12px;
@@ -1058,16 +1139,73 @@ export class BillPrintService {
             color: #1e293b;
             background: #fff;
           }
-          .header { text-align: center; border-bottom: 2px dashed #64748b; padding-bottom: 10px; margin-bottom: 10px; }
-          .logo { font-size: 18px; font-weight: 900; letter-spacing: 0.8px; color: #042f2e; }
-          .sublogo { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.5px; color: #0f766e; font-weight: 700; margin-top: 1px; }
-          .receipt-type { font-size: 12px; font-weight: 800; color: #2563eb; margin-top: 6px; }
+          .header { 
+            text-align: center; 
+            border-bottom: 2px dashed #64748b; 
+            padding-bottom: 12px; 
+            margin-bottom: 12px; 
+          }
+          .header-logo-wrap {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 10px auto;
+            text-align: center;
+          }
+          .header-logo {
+            max-height: 56px;
+            max-width: 130px;
+            object-fit: contain;
+            display: block;
+            margin: 0 auto;
+          }
+          .resort-name { 
+            font-size: 16px; 
+            font-weight: 800; 
+            letter-spacing: 0.3px; 
+            color: #042f2e; 
+            line-height: 1.25;
+            margin-bottom: 2px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+          }
+          .resort-subtitle { 
+            font-size: 10.5px; 
+            text-transform: uppercase; 
+            letter-spacing: 0.8px; 
+            color: #0f766e; 
+            font-weight: 700; 
+            margin-bottom: 3px; 
+          }
+          .resort-contact {
+            font-size: 10px;
+            color: #64748b;
+            line-height: 1.35;
+          }
+          .receipt-banner {
+            margin-top: 8px;
+            padding: 6px 8px;
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+          }
+          .receipt-type { 
+            font-size: 11px; 
+            font-weight: 800; 
+            letter-spacing: 1px;
+            color: #2563eb; 
+            text-transform: uppercase;
+          }
           .invoice-no {
-            font-size: 15px;
+            font-size: 16px;
             font-weight: 900;
-            margin: 4px 0;
+            margin: 3px 0 1px 0;
             font-family: 'Courier New', Courier, monospace;
             color: #0f172a;
+          }
+          .receipt-time {
+            font-size: 10px;
+            color: #64748b;
           }
           .meta-box {
             background: #f8fafc;
@@ -1093,11 +1231,17 @@ export class BillPrintService {
       </head>
       <body>
         <div class="header">
-          <div class="logo">POL-KOLE RESORT</div>
-          <div class="sublogo">Official Payment Receipt</div>
-          <div class="receipt-type">${invoiceTitle}</div>
-          <div class="invoice-no">${invoice.invoiceNumber}</div>
-          <div style="font-size: 10.5px; color: #64748b;">${new Date().toLocaleString()}</div>
+          <div class="header-logo-wrap">
+            <img class="header-logo" src="${logoUrl}" alt="${this.settingsService.restaurantFullName()}" onerror="this.onerror=null; this.src='assets/polkolelogo.png';">
+          </div>
+          <div class="resort-name">${this.settingsService.restaurantFullName()}</div>
+          <div class="resort-subtitle">${this.settingsService.tagline()}</div>
+          <div class="resort-contact">${this.settingsService.address()}<br>Hotline: ${this.settingsService.phoneNumber()}</div>
+          <div class="receipt-banner">
+            <div class="receipt-type">${invoiceTitle}</div>
+            <div class="invoice-no">${invoice.invoiceNumber}</div>
+            <div class="receipt-time">${new Date().toLocaleString()}</div>
+          </div>
         </div>
 
         <div class="meta-box">
@@ -1132,7 +1276,7 @@ export class BillPrintService {
             <span style="font-weight: 700;">-Rs. ${discount.toFixed(2)}</span>
           </div>` : ''}
           <div class="row">
-            <span style="color: #64748b;">${serviceCharge > 0 ? 'Service Charge (10%):' : 'Service Charge:'}</span>
+            <span style="color: #64748b;">${serviceCharge > 0 ? `Service Charge (${this.settingsService.serviceChargePercentage()}%):` : 'Service Charge:'}</span>
             <span style="font-weight: 700; color: ${serviceCharge > 0 ? '#0d9488' : '#64748b'};">
               ${serviceCharge > 0 ? '+Rs. ' + serviceCharge.toFixed(2) : 'Rs. 0.00 (Takeaway)'}
             </span>
@@ -1144,15 +1288,23 @@ export class BillPrintService {
         </div>
 
         <div class="footer">
-          <div style="margin-bottom: 6px;">${barcodeHtml}</div>
-          <div>Thank you for choosing Pol-Kole Resort!</div>
-          <div style="margin-top: 4px; font-size: 9.5px; color: #94a3b8;">No Taxes/VAT • 10% Service Charge applies to Dine-in &amp; Room Bookings</div>
+          <div>${this.settingsService.invoiceFooter()}</div>
+          <div style="margin-top: 4px; font-size: 9.5px; color: #94a3b8;">${this.settingsService.taxPercentage() > 0 ? 'VAT: ' + this.settingsService.taxPercentage() + '% • ' : 'No Taxes/VAT • '}${this.settingsService.serviceChargePercentage()}% Service Charge applies to Dine-in &amp; Room Bookings</div>
         </div>
 
         <script>
-          window.onload = function() {
+          function triggerPrint() {
             window.print();
             window.onafterprint = function() { window.close(); };
+          }
+          window.onload = function() {
+            const logo = document.querySelector('.header-logo');
+            if (logo && !logo.complete) {
+              logo.onload = function() { setTimeout(triggerPrint, 50); };
+              logo.onerror = function() { triggerPrint(); };
+            } else {
+              setTimeout(triggerPrint, 100);
+            }
           };
         </script>
       </body>

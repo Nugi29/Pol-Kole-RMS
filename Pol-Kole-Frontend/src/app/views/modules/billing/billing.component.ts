@@ -12,6 +12,7 @@ import { TableService } from '../../../services/table.service';
 import { DialogService } from '../../../services/dialog.service';
 import { Voucher, VoucherService } from '../../../services/voucher.service';
 import { BillPrintService, PrintInvoiceOptions } from '../../../services/bill-print.service';
+import { SettingsService } from '../../../services/settings.service';
 
 export interface UnifiedStayItem {
   id: number;
@@ -107,10 +108,13 @@ export class BillingComponent implements OnInit {
     private readonly route: ActivatedRoute,
     private readonly cdr: ChangeDetectorRef,
     private readonly dialogService: DialogService,
-    private readonly billPrintService: BillPrintService
+    private readonly billPrintService: BillPrintService,
+    public readonly settingsService: SettingsService
   ) {}
 
   ngOnInit(): void {
+    this.settingsService.loadSettings(true).subscribe();
+
     this.route.queryParams.subscribe(params => {
       const prevTab = this.activeTab;
       if (params['tab']) {

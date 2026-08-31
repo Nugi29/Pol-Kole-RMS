@@ -137,5 +137,11 @@ export const NAV_MENU = [
     route: '/main/audit-logs',
     roles: ['ADMIN'],
   },
+  {
+    name: 'Settings',
+    icon: 'settings',
+    route: '/main/settings',
+    roles: ['ADMIN'],
+  },
 ];
 

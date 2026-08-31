@@ -21,6 +21,7 @@ import { StaffAssignmentComponent } from './views/modules/staff-assignment/staff
 import { TakeawayDisplayComponent } from './views/modules/display/takeaway-display/takeaway-display.component';
 import { GuestDisplayComponent } from './views/modules/display/guest-display/guest-display.component';
 import { DisplayHubComponent } from './views/modules/display/display-hub/display-hub.component';
+import { SettingsComponent } from './views/modules/settings/settings.component';
 import { AuthGuard } from './services/auth.guard';
 
 const routes: Routes = [
@@ -163,6 +164,12 @@ const routes: Routes = [
       {
         path: 'users/roles',
         component: UserComponent,
+        canActivate: [AuthGuard],
+        data: { roles: ['ADMIN'] }
+      },
+      {
+        path: 'settings',
+        component: SettingsComponent,
         canActivate: [AuthGuard],
         data: { roles: ['ADMIN'] }
       },

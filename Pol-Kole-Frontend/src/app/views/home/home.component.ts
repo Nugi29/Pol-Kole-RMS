@@ -6,6 +6,8 @@ import { DialogService } from '../../services/dialog.service';
 import { Subject, interval } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
+import { SettingsService } from '../../services/settings.service';
+
 @Component({
   selector: 'app-home',
   standalone: false,
@@ -119,7 +121,8 @@ export class HomeComponent implements OnInit, OnDestroy {
     private readonly staffAssignmentService: StaffAssignmentService,
     public readonly wsService: WebsocketService,
     private readonly dialogService: DialogService,
-    private readonly cdr: ChangeDetectorRef
+    private readonly cdr: ChangeDetectorRef,
+    public readonly settingsService: SettingsService
   ) {}
 
   ngOnInit(): void {

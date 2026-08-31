@@ -1,4 +1,4 @@
-import { NgModule, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { NgModule, APP_INITIALIZER, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { HttpClientModule } from '@angular/common/http';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -51,6 +51,12 @@ import { TakeawayDisplayComponent } from './views/modules/display/takeaway-displ
 import { GuestDisplayComponent } from './views/modules/display/guest-display/guest-display.component';
 import { DisplayHubComponent } from './views/modules/display/display-hub/display-hub.component';
 import { NotificationBellComponent } from './shared/notification-bell/notification-bell.component';
+import { SettingsComponent } from './views/modules/settings/settings.component';
+import { SettingsService } from './services/settings.service';
+
+export function initializeRestaurantSettings(settingsService: SettingsService) {
+  return () => settingsService.loadSettings(true);
+}
 
 @NgModule({
   declarations: [
@@ -76,6 +82,7 @@ import { NotificationBellComponent } from './shared/notification-bell/notificati
     GuestDisplayComponent,
     DisplayHubComponent,
     NotificationBellComponent,
+    SettingsComponent,
   ],
   imports: [
     BrowserModule,
@@ -115,6 +122,12 @@ import { NotificationBellComponent } from './shared/notification-bell/notificati
     {
       provide: HTTP_INTERCEPTORS,
       useClass: AuthInterceptor,
+      multi: true,
+    },
+    {
+      provide: APP_INITIALIZER,
+      useFactory: initializeRestaurantSettings,
+      deps: [SettingsService],
       multi: true,
     },
   ],

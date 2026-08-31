@@ -14,6 +14,7 @@ import { ItemDiscount, ItemDiscountService } from '../../../services/item-discou
 import { WebsocketService } from '../../../services/websocket.service';
 import { StaffAssignmentService, DailyStaffAssignment } from '../../../services/staff-assignment.service';
 import { BillPrintService } from '../../../services/bill-print.service';
+import { SettingsService } from '../../../services/settings.service';
 
 @Component({
   selector: 'app-orders',
@@ -79,7 +80,8 @@ export class OrdersComponent implements OnInit {
     private readonly cdr: ChangeDetectorRef,
     private readonly dialogService: DialogService,
     private readonly wsService: WebsocketService,
-    private readonly billPrintService: BillPrintService
+    private readonly billPrintService: BillPrintService,
+    public readonly settingsService: SettingsService
   ) {}
 
   ngOnInit(): void {
@@ -498,11 +500,11 @@ export class OrdersComponent implements OnInit {
   }
 
   get cartServiceCharge(): number {
-    // 10% Service Charge for Table dining and Room service; No service charge for Takeaway
     if (this.serviceType === 'TAKEAWAY') {
       return 0;
     }
-    return this.cartTotal * 0.10;
+    const scRate = (this.settingsService.serviceChargePercentage() ?? 10) / 100;
+    return this.cartTotal * scRate;
   }
 
   get cartFinalTotal(): number {
@@ -630,8 +632,8 @@ export class OrdersComponent implements OnInit {
     const isRoom = !isTable && !!order.roomNumber;
 
     const itemsSubtotal = (order.items || []).reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    // 10% service charge for Table dining and Room ordering; No service charge for Takeaway
-    const serviceCharge = (isTable || isRoom) ? (itemsSubtotal * 0.10) : 0;
+    const scRate = (this.settingsService.serviceChargePercentage() ?? 10) / 100;
+    const serviceCharge = (isTable || isRoom) ? (itemsSubtotal * scRate) : 0;
     const netTotal = itemsSubtotal + serviceCharge;
 
     const itemsList = order.items.map(i => `

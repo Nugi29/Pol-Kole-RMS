@@ -113,7 +113,7 @@
           <div class="flex justify-between"><span class="text-slate-500">Subtotal:</span><span class="font-bold text-slate-800">Rs. {{ activeInvoice.orderSubtotal || activeInvoice.roomCharges || 0 }}</span></div>
           <div class="flex justify-between text-rose-500"><span class="text-slate-500">Applied Discount:</span><span class="font-bold">-Rs. {{ activeInvoice.discountAmount }}</span></div>
           <div class="flex justify-between">
-            <span class="text-slate-500">Service Charge (10%):</span>
+            <span class="text-slate-500">Service Charge ({{ settingsService.serviceChargePercentage() }}%):</span>
             <span class="font-bold" [ngClass]="activeInvoice.taxAmount && activeInvoice.taxAmount > 0 ? 'text-slate-800' : 'text-slate-400'">
               {{ (activeInvoice.taxAmount && activeInvoice.taxAmount > 0) ? '+Rs. ' + activeInvoice.taxAmount : 'Rs. 0.00 (Takeaway)' }}
             </span>

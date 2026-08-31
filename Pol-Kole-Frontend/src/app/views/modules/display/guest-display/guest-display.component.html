@@ -19,7 +19,7 @@
         <div class="flex items-center gap-2.5 flex-wrap">
           <span class="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight uppercase truncate"
                 [ngClass]="isDarkMode ? 'text-white' : 'text-slate-900'">
-            {{ locationLabel || 'POL-KOLE' }}
+            {{ locationLabel || settingsService.restaurantShortName().toUpperCase() }}
           </span>
           <span class="px-3 py-1 rounded-full text-xs sm:text-sm font-black tracking-wider uppercase border"
                 [ngClass]="isRoom ? (isDarkMode ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : 'bg-emerald-50 text-emerald-700 border-emerald-200') : (isDarkMode ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' : 'bg-indigo-50 text-indigo-700 border-indigo-200')">
@@ -28,7 +28,7 @@
         </div>
         <p class="text-xs sm:text-sm font-medium hidden xs:block"
            [ngClass]="isDarkMode ? 'text-slate-400' : 'text-slate-500'">
-          Pol-Kole Luxury Resort & Restaurant Smart Console
+          {{ settingsService.restaurantFullName() }} Smart Console
         </p>
       </div>
     </div>
@@ -545,7 +545,7 @@
             📖
           </div>
           <div>
-            <h3 class="text-lg sm:text-xl font-black" [ngClass]="isDarkMode ? 'text-white' : 'text-slate-900'">Pol-Kole Dining Menu</h3>
+            <h3 class="text-lg sm:text-xl font-black" [ngClass]="isDarkMode ? 'text-white' : 'text-slate-900'">{{ settingsService.restaurantShortName() }} Dining Menu</h3>
             <p class="text-xs sm:text-sm font-medium" [ngClass]="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Browse dishes, beverages & desserts</p>
           </div>
         </div>

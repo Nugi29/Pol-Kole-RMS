@@ -3,6 +3,8 @@ package com.rms.polkole.service.impl;
 import com.rms.polkole.entity.InvoiceEntity;
 import com.rms.polkole.entity.InvoiceItemEntity;
 import com.rms.polkole.repository.InvoiceRepository;
+import com.rms.polkole.service.RestaurantSettingsService;
+import com.rms.polkole.dto.RestaurantSettingsDto;
 import com.rms.polkole.service.JasperReportService;
 import lombok.RequiredArgsConstructor;
 import net.sf.jasperreports.engine.*;
@@ -22,6 +24,7 @@ import java.util.*;
 public class JasperReportServiceImpl implements JasperReportService {
 
     private final InvoiceRepository invoiceRepository;
+    private final RestaurantSettingsService settingsService;
 
     @Override
     @Transactional(readOnly = true)
@@ -31,8 +34,10 @@ public class JasperReportServiceImpl implements JasperReportService {
 
         try {
             // Define parameters
+            RestaurantSettingsDto settings = settingsService.getSettings();
             Map<String, Object> parameters = new HashMap<>();
-            parameters.put("restaurantName", "Pol-Kole Royal Restaurant & Lounge");
+            parameters.put("restaurantName", settings.getRestaurantFullName() != null ? settings.getRestaurantFullName() : "Pol-Kole");
+            parameters.put("invoiceFooter", settings.getInvoiceFooter() != null ? settings.getInvoiceFooter() : "Thank you for dining with us!");
             parameters.put("invoiceNumber", invoice.getInvoiceNumber());
 
             String customerName = "Walk-in Guest";
@@ -142,13 +147,13 @@ public class JasperReportServiceImpl implements JasperReportService {
                 "    <field name=\"totalPrice\" class=\"java.math.BigDecimal\"/>\n" +
                 "    <title>\n" +
                 "        <band height=\"120\">\n" +
-                "            <staticText>\n" +
+                "            <textField isStretchWithOverflow=\"true\">\n" +
                 "                <reportElement x=\"0\" y=\"0\" width=\"280\" height=\"35\"/>\n" +
                 "                <textElement>\n" +
-                "                    <font size=\"22\" isBold=\"true\"/>\n" +
+                "                    <font size=\"20\" isBold=\"true\"/>\n" +
                 "                </textElement>\n" +
-                "                <text><![CDATA[Pol-Kole Royal Restaurant]]></text>\n" +
-                "            </staticText>\n" +
+                "                <textFieldExpression><![CDATA[$P{restaurantName}]]></textFieldExpression>\n" +
+                "            </textField>\n" +
                 "            <textField>\n" +
                 "                <reportElement x=\"300\" y=\"0\" width=\"255\" height=\"20\"/>\n" +
                 "                <textElement textAlignment=\"Right\">\n" +

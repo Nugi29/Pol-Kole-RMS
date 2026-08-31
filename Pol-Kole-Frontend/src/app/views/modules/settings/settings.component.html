@@ -1,0 +1,550 @@
+<div class="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6 animate-fade-in text-slate-800 dark:text-slate-100">
+
+  <!-- Header Banner -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-5 sm:p-6 rounded-2xl shadow-xs">
+    <div class="flex items-center gap-4">
+      <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 via-indigo-600 to-violet-700 flex items-center justify-center text-white shadow-md flex-shrink-0">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+            Restaurant Settings &amp; System Configuration
+          </h1>
+          <span class="px-2 py-0.5 text-[10px] font-extrabold uppercase rounded-full bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+            Admin Controlled
+          </span>
+        </div>
+        <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+          Centralized business identity, branding, billing rates, and invoice statements.
+        </p>
+      </div>
+    </div>
+
+    <!-- Quick action buttons -->
+    <div class="flex items-center gap-2.5 self-end md:self-center">
+      <button
+        type="button"
+        (click)="resetToSaved()"
+        [disabled]="loading || saving"
+        class="h-9 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer">
+        Reset
+      </button>
+      <button
+        type="button"
+        (click)="openSaveDialog()"
+        [disabled]="loading || saving"
+        class="h-9 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm transition-all flex items-center gap-2 cursor-pointer">
+        <svg *ngIf="saving" class="animate-spin w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+        </svg>
+        <svg *ngIf="!saving" class="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+        </svg>
+        <span>Save Changes</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Tab Navigation -->
+  <div class="flex border-b border-slate-200 dark:border-slate-800 gap-2 sm:gap-4 overflow-x-auto select-none">
+    <button
+      type="button"
+      (click)="activeTab = 'info'"
+      [ngClass]="activeTab === 'info' 
+        ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400 font-bold' 
+        : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'"
+      class="py-3 px-3 sm:px-4 text-xs sm:text-sm border-b-2 flex items-center gap-2 transition-colors cursor-pointer whitespace-nowrap">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+      </svg>
+      <span>Restaurant Information</span>
+    </button>
+
+    <button
+      type="button"
+      (click)="activeTab = 'billing'"
+      [ngClass]="activeTab === 'billing' 
+        ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400 font-bold' 
+        : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'"
+      class="py-3 px-3 sm:px-4 text-xs sm:text-sm border-b-2 flex items-center gap-2 transition-colors cursor-pointer whitespace-nowrap">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <span>Billing &amp; Tax</span>
+    </button>
+
+    <button
+      type="button"
+      (click)="activeTab = 'invoice'"
+      [ngClass]="activeTab === 'invoice' 
+        ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400 font-bold' 
+        : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'"
+      class="py-3 px-3 sm:px-4 text-xs sm:text-sm border-b-2 flex items-center gap-2 transition-colors cursor-pointer whitespace-nowrap">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      </svg>
+      <span>Invoice &amp; Terms</span>
+    </button>
+
+    <button
+      type="button"
+      (click)="activeTab = 'preview'"
+      [ngClass]="activeTab === 'preview' 
+        ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400 font-bold' 
+        : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'"
+      class="py-3 px-3 sm:px-4 text-xs sm:text-sm border-b-2 flex items-center gap-2 transition-colors cursor-pointer whitespace-nowrap">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+      </svg>
+      <span>Live Receipt Preview</span>
+    </button>
+  </div>
+
+  <!-- Main Content Area -->
+  <form [formGroup]="settingsForm" class="space-y-6">
+
+    <!-- Tab 1: Restaurant Information -->
+    <div *ngIf="activeTab === 'info'" class="space-y-6 animate-fade-in">
+      
+      <!-- Brand & Names Card -->
+      <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
+        <div class="border-b border-slate-100 dark:border-slate-800 pb-3">
+          <h2 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>🏷️</span>
+            <span>Brand Identity &amp; Slogans</span>
+          </h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Appears across all guest consoles, tablet headers, bills, and displays.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Full Name -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+              Restaurant / Brand Full Name <span class="text-rose-500">*</span>
+            </label>
+            <input
+              type="text"
+              formControlName="restaurantFullName"
+              placeholder="e.g. Pol-Kole"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/60 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-semibold" />
+          </div>
+
+          <!-- Short Name -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+              Short Name / Sidebar Brand <span class="text-rose-500">*</span>
+            </label>
+            <input
+              type="text"
+              formControlName="restaurantShortName"
+              placeholder="e.g. Pol-Kole"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/60 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-semibold" />
+          </div>
+
+          <!-- Tagline -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+              Brand Tagline
+            </label>
+            <input
+              type="text"
+              formControlName="tagline"
+              placeholder="e.g. Dine • Stay • Enjoy"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/60 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all" />
+          </div>
+
+          <!-- Slogan -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+              Brand Slogan
+            </label>
+            <input
+              type="text"
+              formControlName="slogan"
+              placeholder="e.g. Feels Like Home"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/60 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all" />
+          </div>
+        </div>
+
+        <!-- Combined Preview Banner -->
+        <div class="mt-2 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-center">
+          <div class="text-base font-black tracking-wider uppercase text-slate-900 dark:text-white">
+            {{ formVals.restaurantFullName || 'POL-KOLE' }}
+          </div>
+          <div class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 mt-0.5">
+            {{ formVals.tagline || 'Dine • Stay • Enjoy' }}
+          </div>
+          <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400 italic mt-0.5">
+            {{ formVals.slogan || 'Feels Like Home' }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Contact & Location Card -->
+      <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
+        <div class="border-b border-slate-100 dark:border-slate-800 pb-3">
+          <h2 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>📍</span>
+            <span>Contact &amp; Location Details</span>
+          </h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Used on official tax invoices, guest booking receipts, and communications.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Primary Phone -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+              Primary Phone / Landline
+            </label>
+            <input
+              type="text"
+              formControlName="phoneNumber"
+              placeholder="e.g. +94 91 228 3456"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/60 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-mono" />
+          </div>
+
+          <!-- Hotline Phone -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+              Hotline / Mobile
+            </label>
+            <input
+              type="text"
+              formControlName="hotlinePhoneNumber"
+              placeholder="e.g. +94 77 123 4567"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/60 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-mono" />
+          </div>
+
+          <!-- Email -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+              Official Email
+            </label>
+            <input
+              type="email"
+              formControlName="email"
+              placeholder="e.g. info@polkole.lk"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/60 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-mono" />
+          </div>
+
+          <!-- Website -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+              Website
+            </label>
+            <input
+              type="text"
+              formControlName="website"
+              placeholder="e.g. www.polkole.lk"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/60 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-mono" />
+          </div>
+
+          <!-- Address (Full span) -->
+          <div class="md:col-span-2">
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+              Physical Postal Address
+            </label>
+            <input
+              type="text"
+              formControlName="address"
+              placeholder="e.g. Galle Road, Ahangama, Southern Province, Sri Lanka"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/60 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all" />
+          </div>
+
+          <!-- Logo URL -->
+          <div class="md:col-span-2">
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+              Logo Image URL (Optional)
+            </label>
+            <input
+              type="text"
+              formControlName="logoUrl"
+              placeholder="https://... or /assets/images/logo.png"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/60 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 2: Billing & Tax -->
+    <div *ngIf="activeTab === 'billing'" class="space-y-6 animate-fade-in">
+      <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
+        <div class="border-b border-slate-100 dark:border-slate-800 pb-3">
+          <h2 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>💳</span>
+            <span>Billing Rates, Currency &amp; Taxes</span>
+          </h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Configure system currency, mandatory service charges, and government VAT percentages.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Currency -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+              Currency Code / Symbol <span class="text-rose-500">*</span>
+            </label>
+            <input
+              type="text"
+              formControlName="currency"
+              placeholder="e.g. LKR or Rs."
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/60 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-bold" />
+            <p class="text-[11px] text-slate-400 mt-1">Default for POS orders, checkouts, and reports (e.g. LKR).</p>
+          </div>
+
+          <!-- Tax / BRN Number -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+              Tax / VAT Number / BRN
+            </label>
+            <input
+              type="text"
+              formControlName="taxNumber"
+              placeholder="e.g. PV-98234-LK"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/60 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-mono" />
+            <p class="text-[11px] text-slate-400 mt-1">Business Registration or Inland Revenue VAT number.</p>
+          </div>
+
+          <!-- Service Charge Percentage -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+              Service Charge Percentage (%)
+            </label>
+            <div class="relative">
+              <input
+                type="number"
+                step="0.1"
+                min="0"
+                max="100"
+                formControlName="serviceChargePercentage"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/60 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-mono" />
+              <span class="absolute right-3.5 top-2.5 text-xs text-slate-400 font-bold">%</span>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-1">Applied to Dine-in tables and room bookings (e.g. 10%).</p>
+          </div>
+
+          <!-- VAT / Tax Percentage -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+              VAT / Government Tax (%)
+            </label>
+            <div class="relative">
+              <input
+                type="number"
+                step="0.1"
+                min="0"
+                max="100"
+                formControlName="taxPercentage"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/60 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-mono" />
+              <span class="absolute right-3.5 top-2.5 text-xs text-slate-400 font-bold">%</span>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-1">Government Tax rate (set to 0 if exempt).</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 3: Invoice & Terms -->
+    <div *ngIf="activeTab === 'invoice'" class="space-y-6 animate-fade-in">
+      <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
+        <div class="border-b border-slate-100 dark:border-slate-800 pb-3">
+          <h2 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>📄</span>
+            <span>Invoice &amp; Receipt Messages</span>
+          </h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Statements and legal disclaimers printed at the bottom of guest bills and folios.
+          </p>
+        </div>
+
+        <div class="space-y-4">
+          <!-- Invoice Footer Message -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+              Invoice / Receipt Footer Farewell Message
+            </label>
+            <textarea
+              rows="2"
+              formControlName="invoiceFooter"
+              placeholder="e.g. Thank you for dining at Pol-Kole. See you again soon!"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/60 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"></textarea>
+          </div>
+
+          <!-- Terms & Conditions -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+              Payment Terms &amp; Policies Note
+            </label>
+            <textarea
+              rows="3"
+              formControlName="termsConditions"
+              placeholder="e.g. All charges include 10% statutory hospitality service charge. Goods &amp; Services are non-refundable once billed."
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/60 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 4: Live Receipt Preview -->
+    <div *ngIf="activeTab === 'preview'" class="space-y-6 animate-fade-in">
+      <div class="max-w-md mx-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 shadow-lg font-sans">
+        
+        <!-- Live simulated receipt -->
+        <div class="text-center pb-4 border-b border-dashed border-slate-300 dark:border-slate-700">
+          <div class="text-lg font-black tracking-tight text-slate-900 dark:text-white uppercase">
+            {{ formVals.restaurantFullName || 'POL-KOLE' }}
+          </div>
+          <div class="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mt-0.5">
+            {{ formVals.tagline || 'Dine • Stay • Enjoy' }}
+          </div>
+          <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400 italic">
+            {{ formVals.slogan || 'Feels Like Home' }}
+          </div>
+          <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-2 leading-tight">
+            {{ formVals.address || 'Galle Road, Ahangama, Southern Province, Sri Lanka' }}
+          </div>
+          <div class="text-[11px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">
+            Tel: {{ formVals.phoneNumber }} | Hot: {{ formVals.hotlinePhoneNumber }}
+          </div>
+          <div class="text-[10px] text-slate-400 mt-0.5">
+            Tax/BRN: {{ formVals.taxNumber }} • {{ formVals.website }}
+          </div>
+        </div>
+
+        <div class="py-3 text-xs space-y-1.5 border-b border-dashed border-slate-300 dark:border-slate-700 font-mono">
+          <div class="flex justify-between">
+            <span class="text-slate-400">Doc:</span>
+            <span class="font-bold">INV-260830001</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-400">Guest:</span>
+            <span>Walk-in Guest</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-400">Location:</span>
+            <span>Table T-01 (Dine-In)</span>
+          </div>
+        </div>
+
+        <div class="py-3 border-b border-dashed border-slate-300 dark:border-slate-700 text-xs space-y-1">
+          <div class="flex justify-between">
+            <span>1x Pol Sambol Roti Platter</span>
+            <span class="font-mono">1,800.00</span>
+          </div>
+          <div class="flex justify-between">
+            <span>2x Fresh Coconut Drink</span>
+            <span class="font-mono">900.00</span>
+          </div>
+        </div>
+
+        <div class="py-3 space-y-1 text-xs border-b border-dashed border-slate-300 dark:border-slate-700">
+          <div class="flex justify-between text-slate-500">
+            <span>Subtotal:</span>
+            <span class="font-mono font-bold">{{ formVals.currency }} 2,700.00</span>
+          </div>
+          <div class="flex justify-between text-teal-600 dark:text-teal-400">
+            <span>Service Charge ({{ formVals.serviceChargePercentage }}%):</span>
+            <span class="font-mono font-bold">+{{ formVals.currency }} {{ (2700 * ((formVals.serviceChargePercentage || 10) / 100)).toFixed(2) }}</span>
+          </div>
+          <div class="flex justify-between text-slate-500" *ngIf="formVals.taxPercentage > 0">
+            <span>VAT / Tax ({{ formVals.taxPercentage }}%):</span>
+            <span class="font-mono font-bold">+{{ formVals.currency }} {{ (2700 * (formVals.taxPercentage / 100)).toFixed(2) }}</span>
+          </div>
+          <div class="flex justify-between text-sm font-black pt-2 border-t border-slate-900 dark:border-white text-slate-900 dark:text-white">
+            <span>TOTAL:</span>
+            <span class="font-mono">{{ formVals.currency }} {{ (2700 + (2700 * ((formVals.serviceChargePercentage || 10) / 100)) + (2700 * ((formVals.taxPercentage || 0) / 100))).toFixed(2) }}</span>
+          </div>
+        </div>
+
+        <div class="pt-4 text-center space-y-1.5">
+          <p class="text-xs font-semibold text-slate-700 dark:text-slate-200">
+            {{ formVals.invoiceFooter }}
+          </p>
+          <p class="text-[10px] text-slate-400 leading-tight">
+            {{ formVals.termsConditions }}
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+  </form>
+
+  <!-- Developer Key Authorization Modal -->
+  <div
+    *ngIf="showDevKeyModal"
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
+    <div
+      class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 max-w-md w-full shadow-2xl space-y-4 animate-scale-in">
+      
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800 flex items-center justify-center flex-shrink-0">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+        </div>
+        <div>
+          <h3 class="text-base font-bold text-slate-900 dark:text-white">
+            Developer Authorization Required
+          </h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400">
+            Enter the developer master key to persist system configuration changes.
+          </p>
+        </div>
+      </div>
+
+      <div class="space-y-1.5">
+        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+          Developer Key
+        </label>
+        <input
+          type="password"
+          [(ngModel)]="devKeyInput"
+          (keydown.enter)="confirmSaveWithDevKey()"
+          placeholder="Enter developer key"
+          autofocus
+          class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-mono tracking-widest" />
+        
+        <div *ngIf="devKeyError" class="text-xs font-semibold text-rose-500 flex items-center gap-1 mt-1">
+          <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>{{ devKeyError }}</span>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100 dark:border-slate-800">
+        <button
+          type="button"
+          (click)="cancelDevKeyModal()"
+          class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">
+          Cancel
+        </button>
+        <button
+          type="button"
+          (click)="confirmSaveWithDevKey()"
+          [disabled]="saving"
+          class="px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition-all flex items-center gap-2 cursor-pointer">
+          <svg *ngIf="saving" class="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+          </svg>
+          <span>Authorize &amp; Save</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+</div>

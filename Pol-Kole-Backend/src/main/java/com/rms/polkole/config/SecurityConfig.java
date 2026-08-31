@@ -142,6 +142,10 @@ public class SecurityConfig {
                         // 18. Code Generator (/api/codes)
                         .requestMatchers("/api/codes/**").authenticated()
 
+                        // 19. Restaurant Settings (/api/settings)
+                        .requestMatchers(HttpMethod.GET, "/api/settings/**").permitAll()
+                        .requestMatchers(HttpMethod.PUT, "/api/settings/**").authenticated()
+
                         // ================= FALLBACK =================
                         .anyRequest().authenticated()
                 )
@@ -158,7 +162,7 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOriginPatterns(parseAllowedOrigins());
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Requested-With", "Accept", "Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"));
+        configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of("Access-Control-Allow-Origin", "Access-Control-Allow-Credentials"));
         configuration.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
