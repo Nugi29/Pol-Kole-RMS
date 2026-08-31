@@ -79,6 +79,12 @@ export class BillingService {
     );
   }
 
+  getInvoiceByOrder(orderId: number): Observable<Invoice> {
+    return this.http.get<ApiResponse<Invoice>>(`${this.baseUrl}/invoices/order/${orderId}`).pipe(
+      map(res => res.data)
+    );
+  }
+
   getAllInvoices(): Observable<Invoice[]> {
     return this.http.get<ApiResponse<Invoice[]>>(`${this.baseUrl}/invoices`).pipe(
       map(res => res.data)

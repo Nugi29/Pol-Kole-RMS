@@ -13,8 +13,10 @@ import { DialogService } from '../../../services/dialog.service';
 import { ItemDiscount, ItemDiscountService } from '../../../services/item-discount.service';
 import { WebsocketService } from '../../../services/websocket.service';
 import { StaffAssignmentService, DailyStaffAssignment } from '../../../services/staff-assignment.service';
-import { BillPrintService } from '../../../services/bill-print.service';
+import { BillPrintService, PrintInvoiceOptions } from '../../../services/bill-print.service';
 import { SettingsService } from '../../../services/settings.service';
+import { BillingService, Invoice, PaymentPayload } from '../../../services/billing.service';
+import { Voucher, VoucherService } from '../../../services/voucher.service';
 
 @Component({
   selector: 'app-orders',
@@ -67,6 +69,20 @@ export class OrdersComponent implements OnInit {
   checkedInTableReservations: Reservation[] = [];
   cart: { item: MenuItem; quantity: number; notes: string }[] = [];
 
+  // Takeaway POS Express Checkout & Instant Receipt Compilation state
+  takeawayPaymentMethod: 'CASH' | 'CARD' | 'ONLINE' | 'UNPAID' = 'CASH';
+  takeawayPaymentRef: string = '';
+  takeawayDiscountCode: string = '';
+  takeawayRedeemPoints: number = 0;
+  autoPrintThermalReceipt: boolean = true;
+  autoPrintKitchenToken: boolean = true;
+  validatingVoucher: boolean = false;
+  voucherValidationResult: any = null;
+  showVoucherPickerModal: boolean = false;
+  activeVouchers: Voucher[] = [];
+  lastCompiledInvoice: Invoice | null = null;
+  lastCreatedTakeawayOrder: Order | null = null;
+
   constructor(
     private readonly orderService: OrderService,
     private readonly tableService: TableService,
@@ -81,6 +97,8 @@ export class OrdersComponent implements OnInit {
     private readonly dialogService: DialogService,
     private readonly wsService: WebsocketService,
     private readonly billPrintService: BillPrintService,
+    private readonly billingService: BillingService,
+    private readonly voucherService: VoucherService,
     public readonly settingsService: SettingsService
   ) {}
 
@@ -511,6 +529,97 @@ export class OrdersComponent implements OnInit {
     return this.cartTotal + this.cartServiceCharge;
   }
 
+  // --- Takeaway Voucher & Loyalty Breakdown Helpers ---
+  get estimatedTakeawayDiscount(): number {
+    if (!this.voucherValidationResult || !this.voucherValidationResult.valid) {
+      return 0;
+    }
+    if (this.voucherValidationResult.previewDiscountAmount !== undefined && this.voucherValidationResult.previewDiscountAmount !== null) {
+      return this.voucherValidationResult.previewDiscountAmount;
+    }
+    const base = this.cartFinalTotal;
+    if (this.voucherValidationResult.discountType === 'PERCENTAGE') {
+      const discount = (base * (this.voucherValidationResult.discountValue || 0)) / 100;
+      return this.voucherValidationResult.maxDiscountAmount
+        ? Math.min(discount, this.voucherValidationResult.maxDiscountAmount)
+        : discount;
+    }
+    return Math.min(base, this.voucherValidationResult.discountValue || 0);
+  }
+
+  get takeawayLoyaltyDiscount(): number {
+    if (!this.takeawayRedeemPoints || this.takeawayRedeemPoints <= 0) return 0;
+    return this.takeawayRedeemPoints * 0.10;
+  }
+
+  get takeawayFinalTotal(): number {
+    const net = this.cartFinalTotal - this.estimatedTakeawayDiscount - this.takeawayLoyaltyDiscount;
+    return Math.max(0, net);
+  }
+
+  getSelectedCustomer(): CustomerDto | undefined {
+    if (!this.selectedCustomerId) return undefined;
+    return this.customers.find(c => c.id === Number(this.selectedCustomerId));
+  }
+
+  validateTakeawayVoucher(code: string): void {
+    if (!code || !code.trim()) {
+      this.voucherValidationResult = null;
+      return;
+    }
+    this.validatingVoucher = true;
+    this.voucherService.validateVoucher(code.trim(), this.cartFinalTotal, 'TAKEAWAY').subscribe({
+      next: (res) => {
+        this.voucherValidationResult = res;
+        this.validatingVoucher = false;
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.voucherValidationResult = {
+          code,
+          discountType: 'PERCENTAGE',
+          discountValue: 0,
+          activeFrom: '',
+          activeTo: '',
+          valid: false,
+          validationMessage: err.error?.message || 'Invalid or unrecognized voucher code'
+        };
+        this.validatingVoucher = false;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  openVoucherPicker(): void {
+    this.voucherService.getActiveValidVouchers().subscribe({
+      next: (list) => {
+        this.activeVouchers = list || [];
+        this.showVoucherPickerModal = true;
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.warn('Failed to load active vouchers', err);
+        this.activeVouchers = [];
+        this.showVoucherPickerModal = true;
+      }
+    });
+  }
+
+  closeVoucherPicker(): void {
+    this.showVoucherPickerModal = false;
+  }
+
+  selectVoucherFromPicker(voucher: Voucher): void {
+    this.takeawayDiscountCode = voucher.code;
+    this.closeVoucherPicker();
+    this.validateTakeawayVoucher(voucher.code);
+  }
+
+  clearTakeawayVoucher(): void {
+    this.takeawayDiscountCode = '';
+    this.voucherValidationResult = null;
+  }
+
   requestClearCart(): void {
     if (this.cart.length === 0) return;
     this.dialogService.confirmClear('Do you want to clear all items in the order cart?').subscribe((confirmed) => {
@@ -519,6 +628,22 @@ export class OrdersComponent implements OnInit {
         this.dialogService.showSuccess('Cart Cleared', 'Order cart has been cleared.');
       }
     });
+  }
+
+  resetPosForm(nextServiceType: 'TABLE' | 'ROOM' | 'TAKEAWAY' = 'TAKEAWAY'): void {
+    this.cart = [];
+    this.selectedTableId = null;
+    this.selectedRoomId = null;
+    this.selectedReservationId = null;
+    this.selectedCustomerId = null;
+    this.takeawayDiscountCode = '';
+    this.takeawayRedeemPoints = 0;
+    this.takeawayPaymentRef = '';
+    this.voucherValidationResult = null;
+    this.serviceType = nextServiceType;
+    this.loadOrders();
+    this.loadCheckedInReservations();
+    this.loadCheckedInTableReservations();
   }
 
   submitOrder(): void {
@@ -530,11 +655,18 @@ export class OrdersComponent implements OnInit {
       return;
     }
 
-    const finalTotal = this.cartFinalTotal;
     const isTakeaway = this.serviceType === 'TAKEAWAY';
-    const confirmPrompt = isTakeaway
-      ? `Place this takeaway order for Rs. ${finalTotal.toFixed(2)} to the kitchen queue?`
-      : `Place this ${this.serviceType === 'TABLE' ? 'Table' : 'Room'} order for Rs. ${finalTotal.toFixed(2)} (including 10% service charge) to the kitchen queue?`;
+    const finalTotal = isTakeaway ? this.takeawayFinalTotal : this.cartFinalTotal;
+
+    let confirmPrompt: string;
+    if (isTakeaway) {
+      const modeDesc = this.takeawayPaymentMethod === 'UNPAID'
+        ? 'Payment Pending'
+        : `${this.takeawayPaymentMethod} • Settle & Print Receipt`;
+      confirmPrompt = `Place this takeaway order for Rs. ${finalTotal.toFixed(2)} (${modeDesc})?`;
+    } else {
+      confirmPrompt = `Place this ${this.serviceType === 'TABLE' ? 'Table' : 'Room'} order for Rs. ${finalTotal.toFixed(2)} (including 10% service charge) to the kitchen queue?`;
+    }
 
     this.dialogService.confirmAction('Confirm Place Order', confirmPrompt).subscribe((confirmed) => {
       if (confirmed) {
@@ -561,31 +693,23 @@ export class OrdersComponent implements OnInit {
           next: (createdOrder) => {
             this.wsService.sendMessage('ORDER_CREATED', createdOrder);
 
-            // Auto-print receipt / token for takeaway and dining orders
-            if (this.serviceType === 'TAKEAWAY') {
-              this.printReceipt(createdOrder);
-            }
+            if (isTakeaway) {
+              // Direct Takeaway Receipt compilation and print right on POS window
+              this.compileAndPrintTakeawayOrder(createdOrder);
+            } else {
+              // Auto-update table status to OCCUPIED for dine-in orders
+              if (orderTableId) {
+                this.tableService.updateTableStatus(orderTableId, 'OCCUPIED').subscribe({
+                  next: () => this.loadTables(),
+                  error: (err) => console.warn('Could not auto-update table status to OCCUPIED', err)
+                });
+              }
 
-            // Auto-update table status to OCCUPIED for dine-in orders
-            if (orderTableId) {
-              this.tableService.updateTableStatus(orderTableId, 'OCCUPIED').subscribe({
-                next: () => this.loadTables(),
-                error: (err) => console.warn('Could not auto-update table status to OCCUPIED', err)
-              });
+              this.resetPosForm('TABLE');
+              this.loading = false;
+              this.activeTab = 'list';
+              this.dialogService.showSuccess('Order Placed', 'Order placed successfully to Chef Kitchen Hub!');
             }
-
-            this.cart = [];
-            this.selectedTableId = null;
-            this.selectedRoomId = null;
-            this.selectedReservationId = null;
-            this.selectedCustomerId = null;
-            this.serviceType = 'TABLE';
-            this.loadOrders();
-            this.loadCheckedInReservations();
-            this.loadCheckedInTableReservations();
-            this.loading = false;
-            this.activeTab = 'list';
-            this.dialogService.showSuccess('Order Placed', 'Order placed successfully to Chef Kitchen Hub!');
           },
           error: (err) => {
             this.errorMessage = err.error?.message || 'Failed to place order.';
@@ -597,12 +721,155 @@ export class OrdersComponent implements OnInit {
     });
   }
 
+  private compileAndPrintTakeawayOrder(createdOrder: Order): void {
+    const code = this.takeawayDiscountCode?.trim() || undefined;
+    const points = this.takeawayRedeemPoints || 0;
+    const paymentMethod = this.takeawayPaymentMethod;
+    const paymentRef = this.takeawayPaymentRef?.trim();
+    const shouldPrintReceipt = this.autoPrintThermalReceipt;
+    const shouldPrintToken = this.autoPrintKitchenToken;
+    const customerObj = this.customers.find(c => c.id === Number(this.selectedCustomerId));
+    const customerName = createdOrder.customerName || customerObj?.name || 'Walk-in Guest';
+
+    this.billingService.generateInvoice(createdOrder.id!, code, points).subscribe({
+      next: (invoice) => {
+        this.lastCompiledInvoice = invoice;
+        this.lastCreatedTakeawayOrder = createdOrder;
+
+        // If settled immediately (Cash, Card, Online)
+        if (paymentMethod !== 'UNPAID') {
+          const paymentPayload: PaymentPayload = {
+            invoiceId: invoice.id!,
+            amount: invoice.totalAmount,
+            paymentMethodName: paymentMethod,
+            transactionReference: paymentRef || undefined,
+            notes: `Takeaway POS Quick Checkout (${paymentMethod})`
+          };
+
+          this.billingService.processPayment(paymentPayload).subscribe({
+            next: () => {
+              invoice.paymentStatus = 'PAID';
+              invoice.paymentMethodName = paymentMethod;
+              if (paymentRef) invoice.transactionReference = paymentRef;
+              this.finishTakeawayOrderFlow(createdOrder, invoice, customerName, shouldPrintReceipt, shouldPrintToken);
+            },
+            error: (payErr) => {
+              console.warn('Payment settlement warning:', payErr);
+              // Still proceed to print invoice
+              this.finishTakeawayOrderFlow(createdOrder, invoice, customerName, shouldPrintReceipt, shouldPrintToken);
+            }
+          });
+        } else {
+          this.finishTakeawayOrderFlow(createdOrder, invoice, customerName, shouldPrintReceipt, shouldPrintToken);
+        }
+      },
+      error: (invErr) => {
+        this.loading = false;
+        console.error('Invoice compilation failed for takeaway order:', invErr);
+        if (shouldPrintToken) {
+          this.billPrintService.printToken(createdOrder);
+        }
+        this.resetPosForm('TAKEAWAY');
+        this.dialogService.showInfo(
+          'Order Placed (Notice)',
+          `Takeaway order #${createdOrder.id} was placed to kitchen, but auto receipt compilation had an issue: ${invErr.error?.message || 'Please compile from Billing module.'}`
+        );
+      }
+    });
+  }
+
+  private finishTakeawayOrderFlow(
+    order: Order,
+    invoice: Invoice,
+    customerName: string,
+    printReceipt: boolean,
+    printToken: boolean
+  ): void {
+    this.loading = false;
+    this.resetPosForm('TAKEAWAY');
+
+    const options: PrintInvoiceOptions = {
+      customerName,
+      paymentMethod: invoice.paymentMethodName || this.takeawayPaymentMethod,
+      transactionReference: invoice.transactionReference
+    };
+
+    if (printReceipt) {
+      this.billPrintService.printThermalReceipt(invoice, options);
+    }
+    if (printToken) {
+      if (printReceipt) {
+        setTimeout(() => this.billPrintService.printToken(order), 400);
+      } else {
+        this.billPrintService.printToken(order);
+      }
+    }
+
+    this.dialogService.showSuccess(
+      'Takeaway Order & Receipt Ready',
+      `Takeaway order #${order.id} placed & Receipt ${invoice.invoiceNumber} (Rs. ${invoice.totalAmount.toFixed(2)}) compiled successfully!`
+    );
+  }
+
+  isTakeawayOrder(order: Order): boolean {
+    return !order.tableNumber && !order.roomNumber;
+  }
+
   printReceipt(order: Order): void {
-    this.billPrintService.printToken(order);
+    if (this.isTakeawayOrder(order)) {
+      this.printTakeawayReceipt(order);
+    } else {
+      this.billPrintService.printToken(order);
+    }
   }
 
   printToken(order: Order): void {
     this.billPrintService.printToken(order);
+  }
+
+  printTakeawayReceipt(order: Order): void {
+    if (!order || !order.id) return;
+
+    this.loading = true;
+    this.billingService.getInvoiceByOrder(order.id).subscribe({
+      next: (invoice) => {
+        this.loading = false;
+        const options: PrintInvoiceOptions = {
+          customerName: order.customerName,
+          paymentMethod: invoice.paymentMethodName || 'CASH',
+          transactionReference: invoice.transactionReference
+        };
+        this.billPrintService.printThermalReceipt(invoice, options);
+      },
+      error: () => {
+        // No invoice found yet; offer to compile one directly
+        this.loading = false;
+        this.dialogService.confirmAction(
+          'Compile Takeaway Receipt',
+          `Takeaway Receipt is not compiled yet for Order #${order.id}. Compile and print now?`
+        ).subscribe((confirmed) => {
+          if (confirmed) {
+            this.loading = true;
+            this.billingService.generateInvoice(order.id!).subscribe({
+              next: (compiledInvoice) => {
+                this.loading = false;
+                const options: PrintInvoiceOptions = {
+                  customerName: order.customerName,
+                  paymentMethod: compiledInvoice.paymentMethodName || 'CASH',
+                  transactionReference: compiledInvoice.transactionReference
+                };
+                this.billPrintService.printThermalReceipt(compiledInvoice, options);
+                this.dialogService.showSuccess('Receipt Ready', `Takeaway receipt ${compiledInvoice.invoiceNumber} compiled and printed.`);
+              },
+              error: (err) => {
+                this.loading = false;
+                this.dialogService.showError('Compile Failed', err.error?.message || 'Failed to compile takeaway receipt.');
+              }
+            });
+          }
+        });
+      }
+    });
   }
 
   cancelOrder(order: Order): void {

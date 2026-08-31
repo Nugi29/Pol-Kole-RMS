@@ -328,6 +328,110 @@
         </ng-template>
       </div>
 
+      <!-- TAKEAWAY EXPRESS CHECKOUT & RECEIPT COMPILER OPTIONS -->
+      <div *ngIf="serviceType === 'TAKEAWAY'" class="border-t border-slate-100 pt-3 space-y-2.5 bg-indigo-50/40 -mx-4 px-4 py-3 border-b border-indigo-100/60 animate-fade-in">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-extrabold text-indigo-900 uppercase tracking-wider flex items-center gap-1.5">
+            <span>⚡</span>
+            <span>Takeaway Checkout &amp; Receipt</span>
+          </span>
+          <span class="text-[10px] font-bold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">
+            Queue Fast-Track
+          </span>
+        </div>
+
+        <!-- Payment Settlement Mode -->
+        <div class="space-y-1">
+          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Payment Settlement</label>
+          <div class="grid grid-cols-4 gap-1">
+            <button type="button" (click)="takeawayPaymentMethod = 'CASH'"
+                    [ngClass]="takeawayPaymentMethod === 'CASH' ? 'bg-emerald-600 text-white font-bold shadow-xs' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'"
+                    class="py-1.5 px-1 rounded-lg text-[10.5px] transition-all cursor-pointer text-center">
+              💵 Cash
+            </button>
+            <button type="button" (click)="takeawayPaymentMethod = 'CARD'"
+                    [ngClass]="takeawayPaymentMethod === 'CARD' ? 'bg-indigo-600 text-white font-bold shadow-xs' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'"
+                    class="py-1.5 px-1 rounded-lg text-[10.5px] transition-all cursor-pointer text-center">
+              💳 Card
+            </button>
+            <button type="button" (click)="takeawayPaymentMethod = 'ONLINE'"
+                    [ngClass]="takeawayPaymentMethod === 'ONLINE' ? 'bg-blue-600 text-white font-bold shadow-xs' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'"
+                    class="py-1.5 px-1 rounded-lg text-[10.5px] transition-all cursor-pointer text-center">
+              🌐 Online
+            </button>
+            <button type="button" (click)="takeawayPaymentMethod = 'UNPAID'"
+                    [ngClass]="takeawayPaymentMethod === 'UNPAID' ? 'bg-amber-600 text-white font-bold shadow-xs' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'"
+                    class="py-1.5 px-1 rounded-lg text-[10.5px] transition-all cursor-pointer text-center">
+              ⏳ Later
+            </button>
+          </div>
+        </div>
+
+        <!-- Optional Ref ID if Card or Online -->
+        <div *ngIf="takeawayPaymentMethod === 'CARD' || takeawayPaymentMethod === 'ONLINE'" class="space-y-1">
+          <input type="text" [(ngModel)]="takeawayPaymentRef" placeholder="Card / Transaction Ref ID (optional)..."
+                 class="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-[11px] text-slate-800 placeholder-slate-400 focus:outline-none focus:border-indigo-500"/>
+        </div>
+
+        <!-- Promotional Voucher / Coupon Input -->
+        <div class="space-y-1">
+          <div class="flex items-center justify-between text-[10px]">
+            <span class="font-bold text-slate-500 uppercase tracking-wider">Voucher / Promo Code</span>
+            <button type="button" (click)="openVoucherPicker()" class="text-indigo-600 hover:text-indigo-800 font-bold cursor-pointer">
+              Browse Vouchers
+            </button>
+          </div>
+          <div class="relative flex items-center">
+            <input type="text" [(ngModel)]="takeawayDiscountCode" (ngModelChange)="validateTakeawayVoucher($event)"
+                   placeholder="e.g. WELCOME10"
+                   class="w-full bg-white border border-slate-200 rounded-lg pl-2.5 pr-14 py-1 text-[11.5px] font-mono uppercase focus:outline-none focus:border-indigo-500"/>
+            <button *ngIf="takeawayDiscountCode" (click)="clearTakeawayVoucher()" class="absolute right-1 text-slate-400 hover:text-slate-600 text-[10px] px-1.5 py-0.5 rounded cursor-pointer">
+              ✕
+            </button>
+          </div>
+          <!-- Validation feedback badge -->
+          <div *ngIf="voucherValidationResult && takeawayDiscountCode"
+               [ngClass]="voucherValidationResult.valid ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 'text-rose-700 bg-rose-50 border-rose-200'"
+               class="text-[10px] p-1.5 rounded-lg border flex items-center justify-between font-medium">
+            <span>{{ voucherValidationResult.valid ? ('✓ ' + (voucherValidationResult.description || 'Valid Code')) : ('✕ ' + (voucherValidationResult.validationMessage || 'Invalid Code')) }}</span>
+            <span *ngIf="voucherValidationResult.valid && estimatedTakeawayDiscount > 0" class="font-black">
+              -Rs. {{ estimatedTakeawayDiscount.toFixed(2) }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Loyalty Points Redemption if Customer has points -->
+        <div *ngIf="getSelectedCustomer() as selCust" class="space-y-1">
+          <div *ngIf="(selCust.loyaltyPoints || 0) > 0" class="bg-amber-50/60 border border-amber-200/80 rounded-lg p-2 text-[11px]">
+            <div class="flex justify-between items-center text-amber-900 font-bold mb-1">
+              <span>Customer Loyalty Points:</span>
+              <span class="font-black">{{ selCust.loyaltyPoints }} pts (Rs. {{ ((selCust.loyaltyPoints || 0) * 0.1).toFixed(2) }})</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <input type="number" [(ngModel)]="takeawayRedeemPoints" [max]="selCust.loyaltyPoints || 0" min="0"
+                     placeholder="Points to redeem"
+                     class="w-full bg-white border border-amber-200 rounded-md px-2 py-0.5 text-[11px] text-slate-800 focus:outline-none focus:border-amber-500"/>
+              <button type="button" (click)="takeawayRedeemPoints = selCust.loyaltyPoints || 0"
+                      class="text-[10px] font-bold bg-amber-200 hover:bg-amber-300 text-amber-900 px-2 py-1 rounded cursor-pointer whitespace-nowrap">
+                Max
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Instant Print Options Checkboxes -->
+        <div class="flex items-center justify-between pt-1 border-t border-indigo-100/60 text-[11px]">
+          <label class="flex items-center gap-1.5 text-slate-700 cursor-pointer font-bold select-none">
+            <input type="checkbox" [(ngModel)]="autoPrintThermalReceipt" class="rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer"/>
+            <span>🧾 Print Receipt</span>
+          </label>
+          <label class="flex items-center gap-1.5 text-slate-700 cursor-pointer font-bold select-none">
+            <input type="checkbox" [(ngModel)]="autoPrintKitchenToken" class="rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer"/>
+            <span>🎫 Kitchen Token</span>
+          </label>
+        </div>
+      </div>
+
       <!-- Settle summaries with discount breakdown -->
       <div class="border-t border-slate-100 pt-2.5 space-y-1 text-[12px]">
         <div *ngIf="cartSavings > 0" class="flex justify-between text-slate-400 text-[11px]">
@@ -342,22 +446,38 @@
           <span>Items Subtotal:</span>
           <span class="font-bold text-slate-700">Rs. {{ cartTotal }}</span>
         </div>
+        <div *ngIf="serviceType === 'TAKEAWAY' && estimatedTakeawayDiscount > 0" class="flex justify-between text-emerald-600 font-bold text-[11.5px]">
+          <span>🎟️ Voucher Discount:</span>
+          <span>-Rs. {{ estimatedTakeawayDiscount.toFixed(2) }}</span>
+        </div>
+        <div *ngIf="serviceType === 'TAKEAWAY' && takeawayLoyaltyDiscount > 0" class="flex justify-between text-amber-600 font-bold text-[11.5px]">
+          <span>⭐ Loyalty Points Discount:</span>
+          <span>-Rs. {{ takeawayLoyaltyDiscount.toFixed(2) }}</span>
+        </div>
         <div class="flex justify-between text-[11.5px]" [ngClass]="cartServiceCharge > 0 ? 'text-teal-600' : 'text-slate-400'">
           <span>{{ serviceType === 'TAKEAWAY' ? 'Service Charge:' : 'Service Charge (10%):' }}</span>
           <span class="font-bold">{{ cartServiceCharge > 0 ? '+Rs. ' + cartServiceCharge.toFixed(2) : 'Rs. 0.00 (Takeaway)' }}</span>
         </div>
         <div class="flex justify-between items-center text-slate-900 pt-1 font-extrabold border-t border-slate-100">
-          <span class="text-slate-700 font-bold text-[12px]">Order Total:</span>
-          <span class="text-indigo-600 font-black text-[15px]">Rs. {{ cartFinalTotal.toFixed(2) }}</span>
+          <span class="text-slate-700 font-bold text-[12px]">{{ serviceType === 'TAKEAWAY' ? 'Net Payable Total:' : 'Order Total:' }}</span>
+          <span class="text-indigo-600 font-black text-[15px]">Rs. {{ (serviceType === 'TAKEAWAY' ? takeawayFinalTotal : cartFinalTotal).toFixed(2) }}</span>
         </div>
       </div>
 
       <!-- Place Order CTA Button -->
       <div class="pt-0.5">
         <button (click)="submitOrder()" [disabled]="cart.length === 0 || loading" 
-                class="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-200 disabled:cursor-not-allowed text-white text-[12.5px] font-bold py-2.5 rounded-xl cursor-pointer shadow-md hover:shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-1.5">
-          <span>Place Active Order</span>
-          <span *ngIf="cart.length > 0">• Rs. {{ cartFinalTotal.toFixed(2) }}</span>
+                class="w-full disabled:bg-slate-200 disabled:cursor-not-allowed text-white text-[12.5px] font-bold py-2.5 rounded-xl cursor-pointer shadow-md hover:shadow-lg active:scale-[0.98] transition-all flex flex-col items-center justify-center gap-0.5"
+                [ngClass]="serviceType === 'TAKEAWAY' ? 'bg-gradient-to-r from-teal-600 to-indigo-600 hover:from-teal-700 hover:to-indigo-700' : 'bg-indigo-600 hover:bg-indigo-700'">
+          <div class="flex items-center gap-1.5">
+            <span *ngIf="loading">Processing Order...</span>
+            <span *ngIf="!loading && serviceType === 'TAKEAWAY'">⚡ Place &amp; Compile Receipt</span>
+            <span *ngIf="!loading && serviceType !== 'TAKEAWAY'">Place Active Order</span>
+            <span *ngIf="cart.length > 0">• Rs. {{ (serviceType === 'TAKEAWAY' ? takeawayFinalTotal : cartFinalTotal).toFixed(2) }}</span>
+          </div>
+          <span *ngIf="serviceType === 'TAKEAWAY' && !loading" class="text-[10px] font-normal text-white/80">
+            Auto-compiles invoice &amp; triggers thermal receipt
+          </span>
         </button>
       </div>
     </div>
@@ -558,6 +678,10 @@
             <button (click)="printToken(ord)" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 font-bold px-2.5 py-1 rounded-lg text-[11px] transition-all cursor-pointer">
               Token
             </button>
+            <button *ngIf="isTakeawayOrder(ord)" (click)="printTakeawayReceipt(ord)" title="Compile & Print Takeaway Receipt" class="bg-teal-50 hover:bg-teal-100 text-teal-750 font-bold px-2.5 py-1 rounded-lg text-[11px] transition-all cursor-pointer inline-flex items-center gap-1">
+              <span>🧾</span>
+              <span>Receipt</span>
+            </button>
             <button *ngIf="ord.statusName === 'PENDING'" (click)="cancelOrder(ord)" class="bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold px-2.5 py-1 rounded-lg text-[11px] transition-all cursor-pointer">
               Cancel
             </button>
@@ -582,5 +706,60 @@
         </button>
       </div>
     </ng-template>
+  </div>
+
+  <!-- BROWSE & PICK ACTIVE VOUCHER MODAL (FOR POS CASHIER) -->
+  <div *ngIf="showVoucherPickerModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in">
+    <div class="bg-white rounded-3xl p-6 max-w-lg w-full border border-slate-100 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 class="text-base font-black text-slate-900 flex items-center gap-2">
+          <span class="w-2 h-5 bg-indigo-600 rounded-full"></span>
+          Active Takeaway Promotional Vouchers
+        </h3>
+        <button (click)="closeVoucherPicker()" class="text-slate-400 hover:text-slate-600 cursor-pointer">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <p class="text-[12px] text-slate-500">Click any active coupon to automatically apply discount to this takeaway order.</p>
+
+      <div class="space-y-2.5">
+        <div *ngFor="let v of activeVouchers" 
+             (click)="selectVoucherFromPicker(v)"
+             class="p-3 rounded-2xl border border-slate-200 hover:border-indigo-500 hover:bg-indigo-50/40 transition-all cursor-pointer flex items-center justify-between group">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2">
+              <span class="font-mono font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-lg border border-indigo-100 text-[12px]">
+                {{ v.code }}
+              </span>
+              <span *ngIf="v.discountType === 'PERCENTAGE'" class="font-bold text-purple-700 bg-purple-100 px-2 py-0.5 rounded-full text-[10.5px]">
+                {{ v.discountValue }}% OFF
+              </span>
+              <span *ngIf="v.discountType === 'FIXED'" class="font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full text-[10.5px]">
+                Rs. {{ v.discountValue }} OFF
+              </span>
+            </div>
+            <p class="text-[12px] font-bold text-slate-800">{{ v.description || 'Takeaway Discount Voucher' }}</p>
+            <p class="text-[11px] text-slate-400">
+              Valid until {{ v.activeTo }} <span *ngIf="v.minBillAmount">&bull; Min Spend Rs. {{ v.minBillAmount }}</span>
+            </p>
+          </div>
+
+          <button type="button" class="bg-slate-100 group-hover:bg-indigo-600 group-hover:text-white text-slate-700 font-bold px-3 py-1.5 rounded-xl text-[11.5px] transition-all">
+            Apply
+          </button>
+        </div>
+
+        <div *ngIf="activeVouchers.length === 0" class="py-8 text-center text-slate-400 text-[12.5px]">
+          No active promotional vouchers currently available.
+        </div>
+      </div>
+
+      <div class="flex justify-end pt-2 border-t border-slate-100">
+        <button (click)="closeVoucherPicker()" class="px-4 py-2 rounded-xl text-[12px] font-bold text-slate-600 hover:bg-slate-100 cursor-pointer">
+          Close
+        </button>
+      </div>
+    </div>
   </div>
 </div>
