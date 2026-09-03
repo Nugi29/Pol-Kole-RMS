@@ -47,14 +47,13 @@ public class SecurityConfig {
                         .authenticationEntryPoint((request, response, authException) -> {
                             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-                            response.getWriter().write("{\"status\": 401, \"error\": \"Unauthorized\", \"message\": \""
-                                    + (authException.getMessage() != null ? authException.getMessage() : "Full authentication is required to access this resource")
-                                    + "\"}");
+                            String message = authException.getMessage() != null ? authException.getMessage().replace("\"", "\\\"") : "Full authentication is required to access this resource";
+                            response.getWriter().write("{\"success\":false,\"message\":\"" + message + "\",\"data\":null,\"timestamp\":\"" + java.time.Instant.now() + "\"}");
                         })
                         .accessDeniedHandler((request, response, accessDeniedException) -> {
                             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-                            response.getWriter().write("{\"status\": 403, \"error\": \"Forbidden\", \"message\": \"Access denied\"}");
+                            response.getWriter().write("{\"success\":false,\"message\":\"Access denied: Insufficient permissions\",\"data\":null,\"timestamp\":\"" + java.time.Instant.now() + "\"}");
                         })
                 )
                 .authorizeHttpRequests(auth -> auth

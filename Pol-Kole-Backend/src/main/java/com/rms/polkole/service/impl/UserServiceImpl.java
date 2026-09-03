@@ -15,11 +15,13 @@ import com.rms.polkole.service.UserService;
 import com.rms.polkole.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.util.List;
@@ -40,14 +42,14 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public String register(User request) {
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new RuntimeException("Email already in use");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already in use");
         }
 
         UserroleEntity role = roleRepository.findByNameIgnoreCase(request.getRole())
-                .orElseThrow(() -> new RuntimeException("Role not found: " + request.getRole()));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Role not found: " + request.getRole()));
 
         UserstatusEntity status = statusRepository.findByNameIgnoreCase(request.getStatus())
-                .orElseThrow(() -> new RuntimeException("Status not found: " + request.getStatus()));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status not found: " + request.getStatus()));
 
         UserEntity user = UserEntity.builder()
                 .name(request.getName())
@@ -67,11 +69,11 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public LoginResponse login(Login request) {
         UserEntity user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("Invalid email or password"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password"));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             if (!request.getPassword().equals(user.getPassword())) {
-                throw new RuntimeException("Invalid email or password");
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
             }
         }
 
@@ -97,11 +99,11 @@ public class UserServiceImpl implements UserService {
     public User getCurrentAuthenticatedUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated()) {
-            throw new RuntimeException("No authenticated user");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No authenticated user");
         }
 
         UserEntity user = userRepository.findByEmail(auth.getName())
-                .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Authenticated user not found"));
 
         return modelMapper.map(user, User.class);
     }
@@ -109,7 +111,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public User getUserById(Integer id) {
         UserEntity user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found with ID: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found with ID: " + id));
         return modelMapper.map(user, User.class);
     }
 
@@ -135,7 +137,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public User updateUser(Integer id, User request) {
         UserEntity user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found: " + id));
 
         user.setName(request.getName());
         user.setPhone(request.getPhone());
@@ -143,13 +145,13 @@ public class UserServiceImpl implements UserService {
 
         if (request.getRole() != null) {
             UserroleEntity role = roleRepository.findByNameIgnoreCase(request.getRole())
-                    .orElseThrow(() -> new RuntimeException("Role not found: " + request.getRole()));
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Role not found: " + request.getRole()));
             user.setRole(role);
         }
 
         if (request.getStatus() != null) {
             UserstatusEntity status = statusRepository.findByNameIgnoreCase(request.getStatus())
-                    .orElseThrow(() -> new RuntimeException("Status not found: " + request.getStatus()));
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status not found: " + request.getStatus()));
             user.setStatus(status);
         }
 
