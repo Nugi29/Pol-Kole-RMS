@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, OnInit, HostListener } from '@angular/core';
+import { Router, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs/operators';
 import { NAV_MENU, NavMenuItem } from '../../config/nav-menu.config';
 import { WebsocketService } from '../../services/websocket.service';
 
@@ -16,6 +17,7 @@ export class MainwindowComponent implements OnInit {
   name: string = '';
   userId: number | null = null;
   isSidebarCollapsed = false;
+  isMobileMenuOpen = false;
   isDarkMode = false;
   navMenu: NavMenuItem[] = [];
   expandedGroups: Record<string, boolean> = {};
@@ -50,7 +52,20 @@ export class MainwindowComponent implements OnInit {
     private readonly router: Router,
     public readonly wsService: WebsocketService,
     public readonly settingsService: SettingsService
-  ) {}
+  ) {
+    this.router.events.pipe(
+      filter((event): event is NavigationEnd => event instanceof NavigationEnd)
+    ).subscribe(() => {
+      this.closeMobileMenu();
+    });
+  }
+
+  @HostListener('window:resize')
+  onResize(): void {
+    if (window.innerWidth >= 1024 && this.isMobileMenuOpen) {
+      this.closeMobileMenu();
+    }
+  }
 
   logout(): void {
     if (this.userId) {
@@ -92,6 +107,18 @@ export class MainwindowComponent implements OnInit {
     this.isSidebarCollapsed = !this.isSidebarCollapsed;
   }
 
+  toggleMobileMenu(): void {
+    this.isMobileMenuOpen = !this.isMobileMenuOpen;
+  }
+
+  closeMobileMenu(): void {
+    this.isMobileMenuOpen = false;
+  }
+
+  openMobileMenu(): void {
+    this.isMobileMenuOpen = true;
+  }
+
   toggleTheme(): void {
     this.isDarkMode = !this.isDarkMode;
     if (this.isDarkMode) {
@@ -114,6 +141,7 @@ export class MainwindowComponent implements OnInit {
       const path = this.getRoutePath(targetRoute);
       const queryParams = this.getRouteQueryParams(targetRoute);
       this.router.navigate([path], { queryParams });
+      this.closeMobileMenu();
     }
   }
 

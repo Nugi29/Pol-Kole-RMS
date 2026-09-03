@@ -12,15 +12,15 @@
     </div>
     
     <!-- Quick Nav Toggle & Notification Bell -->
-    <div class="flex items-center gap-3">
-      <div class="flex items-center bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl border border-slate-200 dark:border-slate-700">
+    <div class="flex items-center gap-3 flex-wrap">
+      <div class="flex items-center bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl border border-slate-200 dark:border-slate-700 max-w-full overflow-x-auto">
         <a routerLink="/main/rooms" [queryParams]="{ tab: 'directory' }"
-           class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none"
+           class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none whitespace-nowrap"
            [ngClass]="activeTab === 'directory' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-600' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-700/50'">
           Rooms List
         </a>
         <a routerLink="/main/rooms" [queryParams]="{ tab: 'types' }"
-           class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none"
+           class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none whitespace-nowrap"
            [ngClass]="activeTab === 'types' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-600' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-700/50'">
           Room Categories
         </a>
@@ -30,7 +30,7 @@
   </div>
 
   <!-- Status Counter Widgets -->
-  <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 sm:gap-4">
     <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex items-center gap-3">
       <div class="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-600 font-bold border border-slate-100">
         {{ rooms.length }}

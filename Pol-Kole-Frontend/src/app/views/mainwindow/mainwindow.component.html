@@ -1,26 +1,114 @@
-<aside
-  id="sidebar"
-  class="fixed left-0 top-0 z-50 flex h-screen flex-col border-r border-slate-100 bg-white select-none transition-[width] duration-200"
-  [ngClass]="isSidebarCollapsed ? 'w-[88px]' : 'w-[260px]'">
+<!-- Mobile & Tablet Top App Bar (Header) -->
+<header class="fixed top-0 left-0 right-0 h-16 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 flex lg:hidden items-center justify-between px-3.5 sm:px-5 transition-colors duration-200 select-none shadow-2xs">
+  <!-- Left: Hamburger toggle button + Restaurant Logo & Title -->
+  <div class="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
+    <button
+      type="button"
+      (click)="toggleMobileMenu()"
+      class="w-10 h-10 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/70 dark:border-slate-700/80 active:scale-95 transition-all cursor-pointer flex-shrink-0"
+      [attr.aria-label]="isMobileMenuOpen ? 'Close Navigation Menu' : 'Open Navigation Menu'"
+      [attr.aria-expanded]="isMobileMenuOpen">
+      <!-- Animated Hamburger / Close Icon -->
+      <svg *ngIf="!isMobileMenuOpen" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+      </svg>
+      <svg *ngIf="isMobileMenuOpen" class="w-5 h-5 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
 
-  <!-- Logo -->
-  <div class="border-b border-slate-50" [ngClass]="isSidebarCollapsed ? 'px-3 pt-4 pb-3' : 'px-5 pt-5 pb-4'">
-    <div class="flex items-center" [ngClass]="isSidebarCollapsed ? 'justify-center gap-0' : 'gap-3'">
-      <div class="w-10 h-10  overflow-hidden flex items-center justify-center flex-shrink-0 bg-white p-0.5">
+    <div class="flex items-center gap-2 sm:gap-2.5 min-w-0">
+      <div class="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center flex-shrink-0 bg-white dark:bg-slate-800 p-0.5 border border-slate-200/60 dark:border-slate-700">
         <img
           [src]="settingsService.logoUrl() || 'assets/polkolelogo.png'"
           (error)="$any($event.target).src='assets/polkolelogo.png'"
           alt="Pol-Kole Logo"
           class="w-full h-full object-contain" />
       </div>
-      <div *ngIf="!isSidebarCollapsed">
-        <p class="text-[15px] font-bold text-slate-900 tracking-tight leading-tight uppercase ">{{ settingsService.restaurantShortName() }}</p>
-        <span class="text-[10px] font-semibold bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded-full tracking-wide">{{ settingsService.slogan()}}</span>
+      <div class="min-w-0">
+        <p class="text-[13.5px] font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight uppercase truncate">
+          {{ settingsService.restaurantShortName() }}
+        </p>
+        <span class="text-[9.5px] font-bold bg-indigo-50 dark:bg-indigo-950/70 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.2 rounded-full tracking-wide truncate block">
+          {{ settingsService.slogan() || 'RMS' }}
+        </span>
       </div>
+    </div>
+  </div>
+
+  <!-- Right: Theme switch + User Avatar -->
+  <div class="flex items-center gap-2 sm:gap-2.5 flex-shrink-0">
+    <!-- Theme Toggle -->
+    <button
+      type="button"
+      (click)="toggleTheme()"
+      [title]="isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
+      class="w-9 h-9 rounded-xl flex items-center justify-center text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/70 dark:border-slate-700/80 active:scale-95 transition-all cursor-pointer">
+      <svg *ngIf="isDarkMode" class="w-4 h-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z"/>
+      </svg>
+      <svg *ngIf="!isDarkMode" class="w-4 h-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+      </svg>
+    </button>
+
+    <!-- User Avatar -->
+    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white text-[11px] font-bold shadow-xs">
+      {{ name ? name.substring(0, 2).toUpperCase() : 'U' }}
+    </div>
+  </div>
+</header>
+
+<!-- Mobile Backdrop Overlay -->
+<div
+  *ngIf="isMobileMenuOpen"
+  (click)="closeMobileMenu()"
+  class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-45 lg:hidden transition-opacity duration-300 animate-fade-in"
+  aria-hidden="true">
+</div>
+
+<!-- Responsive Sidebar (Drawer on mobile/tablet, Collapsible Sidebar on Desktop) -->
+<aside
+  id="sidebar"
+  class="fixed left-0 top-0 z-50 flex h-screen flex-col border-r border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 select-none transition-all duration-300 ease-in-out shadow-2xl lg:shadow-none"
+  [ngClass]="{
+    '-translate-x-full lg:translate-x-0': !isMobileMenuOpen,
+    'translate-x-0': isMobileMenuOpen,
+    'w-[280px] sm:w-[290px] lg:w-[260px]': !isSidebarCollapsed,
+    'w-[280px] sm:w-[290px] lg:w-[88px]': isSidebarCollapsed
+  }">
+
+  <!-- Logo & Sidebar Header -->
+  <div class="border-b border-slate-50 dark:border-slate-800" [ngClass]="isSidebarCollapsed ? 'px-3 pt-4 pb-3' : 'px-5 pt-5 pb-4'">
+    <div class="flex items-center" [ngClass]="isSidebarCollapsed ? 'justify-center gap-0' : 'gap-3'">
+      <div class="w-10 h-10 overflow-hidden flex items-center justify-center flex-shrink-0 bg-white dark:bg-slate-800 p-0.5 rounded-xl border border-slate-200/50 dark:border-slate-700">
+        <img
+          [src]="settingsService.logoUrl() || 'assets/polkolelogo.png'"
+          (error)="$any($event.target).src='assets/polkolelogo.png'"
+          alt="Pol-Kole Logo"
+          class="w-full h-full object-contain" />
+      </div>
+      <div *ngIf="!isSidebarCollapsed" class="min-w-0 flex-1">
+        <p class="text-[15px] font-bold text-slate-900 dark:text-white tracking-tight leading-tight uppercase truncate">{{ settingsService.restaurantShortName() }}</p>
+        <span class="text-[10px] font-semibold bg-indigo-50 dark:bg-indigo-950/70 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.5 rounded-full tracking-wide truncate inline-block">{{ settingsService.slogan()}}</span>
+      </div>
+
+      <!-- Mobile Close (X) Button (Visible only on mobile/tablet drawer) -->
+      <button
+        type="button"
+        (click)="closeMobileMenu()"
+        class="lg:hidden ml-auto p-1.5 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+        aria-label="Close menu drawer">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+
+      <!-- Desktop Collapse Button -->
       <button
         type="button"
         (click)="toggleSidebar()"
-        class="rounded-lg border border-slate-200 p-1 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700"
+        class="hidden lg:flex rounded-lg border border-slate-200 dark:border-slate-700 p-1 text-slate-500 dark:text-slate-400 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer"
         [ngClass]="isSidebarCollapsed ? 'absolute top-5 right-0' : 'ml-auto'"
         [attr.aria-label]="isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'">
         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -36,14 +124,14 @@
 
     <!-- MAIN section -->
     <div>
-      <p *ngIf="!isSidebarCollapsed" class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.8px] px-2 mb-1.5">Main</p>
+      <p *ngIf="!isSidebarCollapsed" class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.8px] px-2 mb-1.5">Main</p>
       <nav class="space-y-0.5" aria-label="Main navigation">
         <ng-container *ngFor="let item of navMenu">
           <ng-container *ngIf="item.children?.length; else singleLink">
             <button
               type="button"
               (click)="onGroupClick(item)"
-              class="w-full flex items-center gap-2.5 py-[7px] rounded-lg text-[13.5px] font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-800 transition-all cursor-pointer"
+              class="w-full flex items-center gap-2.5 py-[7px] rounded-lg text-[13.5px] font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white transition-all cursor-pointer"
               [ngClass]="isSidebarCollapsed ? 'justify-center px-0' : 'px-2.5'"
               [class.justify-center]="isSidebarCollapsed">
               <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
@@ -60,8 +148,9 @@
                   *ngFor="let child of item.children"
                   [routerLink]="getRoutePath(child.route)"
                   [queryParams]="getRouteQueryParams(child.route)"
-                  routerLinkActive="text-indigo-600 bg-indigo-50"
-                  class="nav-link sub-link flex items-center gap-2 px-2 py-1.5 rounded-lg text-[13px] font-medium transition-all cursor-pointer text-slate-400 hover:text-slate-700 hover:bg-slate-50">
+                  (click)="closeMobileMenu()"
+                  routerLinkActive="text-indigo-600 bg-indigo-50 dark:bg-indigo-950/50 dark:text-indigo-400"
+                  class="nav-link sub-link flex items-center gap-2 px-2 py-1.5 rounded-lg text-[13px] font-medium transition-all cursor-pointer text-slate-400 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800">
                   <span class="w-1.5 h-1.5 rounded-full bg-current opacity-60 flex-shrink-0"></span>
                   {{child.name}}
                 </a>
@@ -73,9 +162,10 @@
             <a
               [routerLink]="getRoutePath(item.route || '')"
               [queryParams]="getRouteQueryParams(item.route || '')"
-              routerLinkActive="bg-indigo-50 text-indigo-600"
+              (click)="closeMobileMenu()"
+              routerLinkActive="bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400"
               [routerLinkActiveOptions]="{ exact: true }"
-              class="nav-link flex items-center gap-2.5 py-[7px] rounded-lg text-[13.5px] font-medium cursor-pointer transition-all text-slate-500 hover:bg-slate-50 hover:text-slate-800"
+              class="nav-link flex items-center gap-2.5 py-[7px] rounded-lg text-[13.5px] font-medium cursor-pointer transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white"
               [ngClass]="isSidebarCollapsed ? 'justify-center px-0' : 'px-2.5'"
               [class.justify-center]="isSidebarCollapsed">
               <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
@@ -91,11 +181,11 @@
   </div>
 
   <!-- Theme Toggle Switch -->
-  <div class="px-3 py-2 border-t border-slate-100/50">
+  <div class="px-3 py-2 border-t border-slate-100/50 dark:border-slate-800">
     <button
       type="button"
       (click)="toggleTheme()"
-      class="w-full flex items-center gap-2.5 py-[7px] rounded-lg text-[13px] font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-800 transition-all cursor-pointer"
+      class="w-full flex items-center gap-2.5 py-[7px] rounded-lg text-[13px] font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white transition-all cursor-pointer"
       [ngClass]="isSidebarCollapsed ? 'justify-center px-0' : 'px-2.5'">
       <svg *ngIf="isDarkMode" class="w-4 h-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
         <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z"/>
@@ -109,11 +199,11 @@
 
   <!-- User card footer -->
   <div
-    class="border-t border-slate-100/80 transition-all duration-300"
+    class="border-t border-slate-100/80 dark:border-slate-800 transition-all duration-300"
     [ngClass]="isSidebarCollapsed ? 'p-2' : 'px-3 py-2.5'"
   >
     <div
-      class="w-full flex items-center rounded-xl p-1.5 transition-all duration-200 ease-out bg-slate-50/80 border border-slate-100"
+      class="w-full flex items-center rounded-xl p-1.5 transition-all duration-200 ease-out bg-slate-50/80 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700"
       [ngClass]="isSidebarCollapsed ? 'justify-center gap-0' : 'gap-2.5'"
     >
       <!-- Avatar with initials -->
@@ -123,8 +213,8 @@
 
       <!-- User info -->
       <div *ngIf="!isSidebarCollapsed" class="text-left flex-1 min-w-0">
-        <p class="text-[12px] font-bold text-slate-800 leading-tight truncate">{{ name || 'Staff Member' }}</p>
-        <p class="text-[10px] font-semibold text-indigo-600 leading-tight truncate uppercase tracking-wider mt-0.5">{{ role || 'Staff' }}</p>
+        <p class="text-[12px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate">{{ name || 'Staff Member' }}</p>
+        <p class="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 leading-tight truncate uppercase tracking-wider mt-0.5">{{ role || 'Staff' }}</p>
       </div>
 
       <!-- Logout icon button -->
@@ -132,7 +222,7 @@
         type="button"
         (click)="logout()"
         title="Sign Out"
-        class="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all cursor-pointer flex-shrink-0"
+        class="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all cursor-pointer flex-shrink-0"
         [class.hidden]="isSidebarCollapsed"
       >
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -143,11 +233,10 @@
   </div>
 </aside>
 
-<!-- Main content (ml-[260px] offset) -->
+<!-- Main content container -->
 <main
-  class="min-h-screen bg-slate-50 dark:bg-slate-950 p-7 transition-[margin] duration-200"
-  [ngClass]="isSidebarCollapsed ? 'ml-0 md:ml-[88px]' : 'ml-0 md:ml-[260px]'">
+  class="min-h-screen bg-slate-50 dark:bg-slate-950 p-3.5 sm:p-5 md:p-6 lg:p-7 pt-20 sm:pt-22 lg:pt-7 transition-[margin] duration-200 w-full max-w-full overflow-x-hidden"
+  [ngClass]="isSidebarCollapsed ? 'ml-0 lg:ml-[88px]' : 'ml-0 lg:ml-[260px]'">
 
   <router-outlet></router-outlet>
 </main>
-
