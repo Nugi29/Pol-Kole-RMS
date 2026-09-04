@@ -82,8 +82,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   revenueDayValues: number[] = [];
   maxDayRevenue = 500;
 
-  // Auto-refresh timer
-  autoRefresh = true;
+  // Auto-refresh timer (initially OFF)
+  autoRefresh = false;
   lastUpdated: Date = new Date();
   currentTime = '';
   currentDate = '';
@@ -110,8 +110,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   canViewDining = true;
   canViewInventory = true;
 
-  // Real-time synchronization state
-  isSyncStopped = false;
+  // Real-time synchronization state (initially OFF)
+  isSyncStopped = true;
 
   // Reservations tab filter
   reservationFilter: 'ALL' | 'TABLE' | 'ROOM' = 'ALL';
@@ -274,6 +274,10 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   toggleAutoRefresh(): void {
     this.autoRefresh = !this.autoRefresh;
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.setItem('pol_kole_dashboard_sync', String(this.autoRefresh));
+    }
+    this.cdr.markForCheck();
   }
 
   setTab(tab: 'overview' | 'dining' | 'hotel' | 'kitchen' | 'inventory'): void {

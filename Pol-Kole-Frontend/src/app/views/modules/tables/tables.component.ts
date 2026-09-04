@@ -58,7 +58,7 @@ export class TablesComponent implements OnInit, OnDestroy {
 
   // Real-time synchronization state
   isManagerOrAdmin = false;
-  isSyncStopped = false;
+  isSyncStopped = true;
   private syncSub: Subscription | null = null;
   private wsSub: Subscription | null = null;
   private ordersSub: Subscription | null = null;

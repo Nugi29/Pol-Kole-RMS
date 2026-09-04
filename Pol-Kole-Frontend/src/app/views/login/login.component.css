@@ -77,35 +77,21 @@
 }
 
 .brand-logo {
+  height: 64px;
+  width: auto;
+  max-width: 200px;
+  object-fit: contain;
   margin-bottom: 0.5rem;
-  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.15));
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.3));
 }
 
 .welcome-title {
-  font-size: 2.25rem;
+  font-size: 1.45rem;
   font-weight: 600;
   color: #ffffff;
   margin: 0;
-  line-height: 1.2;
-}
-
-.welcome-subtitle {
-  font-size: 0.95rem;
-  color: rgba(255, 255, 255, 0.7);
-  margin: 0;
-}
-
-.signup-link {
-  color: #ffffff;
-  font-weight: 500;
-  text-decoration: underline;
-  cursor: pointer;
-  transition: color 0.2s ease;
-  margin-left: 4px;
-}
-
-.signup-link:hover {
-  color: #a5b4fc;
+  line-height: 1.35;
+  letter-spacing: -0.2px;
 }
 
 .login-form {
@@ -218,24 +204,6 @@
 
 .button-spinner ::ng-deep circle {
   stroke: rgba(255, 255, 255, 0.8) !important;
-}
-
-.footer-links {
-  display: flex;
-  justify-content: center;
-  margin-top: 0.5rem;
-}
-
-.forgot-password-link {
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.6);
-  text-decoration: none;
-  cursor: pointer;
-  transition: color 0.2s ease;
-}
-
-.forgot-password-link:hover {
-  color: #ffffff;
 }
 
 .animate-fade-in {

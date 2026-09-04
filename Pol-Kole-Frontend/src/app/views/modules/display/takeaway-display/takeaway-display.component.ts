@@ -32,7 +32,7 @@ export class TakeawayDisplayComponent implements OnInit, OnDestroy {
   recentCompleted: TakeawayTicket[] = [];
 
   // Real-time sync listening
-  isSyncStopped = false;
+  isSyncStopped = true;
   private syncSub: Subscription | null = null;
 
   private previousReadyIds = new Set<number>();

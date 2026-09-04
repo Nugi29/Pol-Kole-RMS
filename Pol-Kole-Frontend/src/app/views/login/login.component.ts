@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService, LoginPayload, LoginResponse } from '../../services/auth.service';
+import { SettingsService } from '../../services/settings.service';
 import { environment } from '../../../environments/environment';
 
 @Component({
@@ -22,6 +23,7 @@ export class LoginComponent implements OnInit {
   constructor(
     private readonly auth: AuthService,
     private readonly router: Router,
+    public readonly settingsService: SettingsService,
   ) {}
 
   ngOnInit() {

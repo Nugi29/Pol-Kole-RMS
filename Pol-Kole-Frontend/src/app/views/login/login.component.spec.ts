@@ -11,6 +11,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { of } from 'rxjs';
 
 import { AuthService } from '../../services/auth.service';
+import { SettingsService } from '../../services/settings.service';
 import { LoginComponent } from './login.component';
 
 describe('LoginComponent', () => {
@@ -36,6 +37,13 @@ describe('LoginComponent', () => {
           provide: AuthService,
           useValue: {
             login: () => of({ success: true, token: 'token', role: 'user' }),
+          },
+        },
+        {
+          provide: SettingsService,
+          useValue: {
+            restaurantFullName: () => 'Pol-Kole',
+            logoUrl: () => 'assets/polkolelogo.png',
           },
         },
       ],

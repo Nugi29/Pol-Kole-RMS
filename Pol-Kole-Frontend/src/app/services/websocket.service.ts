@@ -86,7 +86,7 @@ export class WebsocketService implements OnDestroy {
   // Realtime state observables
   public isConnected$ = new BehaviorSubject<boolean>(false);
   public connectionMode$ = new BehaviorSubject<'WEBSOCKET' | 'POLLING_FALLBACK'>('POLLING_FALLBACK');
-  public isSyncStopped$ = new BehaviorSubject<boolean>(false);
+  public isSyncStopped$ = new BehaviorSubject<boolean>(true);
   public messageStream$ = new Subject<WebSocketMessage>();
 
   // Cached state for real-time displays
@@ -111,8 +111,8 @@ export class WebsocketService implements OnDestroy {
     private readonly notifService: StaffNotificationService
   ) {
     const initialSyncStopped = typeof window !== 'undefined' && window.localStorage
-      ? localStorage.getItem('pol_kole_sync_stopped') === 'true'
-      : false;
+      ? localStorage.getItem('pol_kole_sync_stopped') !== 'false'
+      : true;
     this.isSyncStopped$.next(initialSyncStopped);
 
     this.initResolvedCalls();
