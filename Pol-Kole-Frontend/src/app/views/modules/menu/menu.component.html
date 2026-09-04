@@ -20,20 +20,20 @@
     </div>
     
     <!-- Quick Nav Toggle & Notification Bell -->
-    <div class="flex items-center gap-3">
-      <div class="flex items-center bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl border border-slate-200 dark:border-slate-700">
+    <div class="flex items-center gap-3 flex-wrap">
+      <div class="flex items-center bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl border border-slate-200 dark:border-slate-700 max-w-full overflow-x-auto">
         <a routerLink="/main/menu" [queryParams]="{ tab: 'items' }"
-           class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none"
+           class="px-3.5 sm:px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none whitespace-nowrap"
            [ngClass]="activeTab === 'items' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-600' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-700/50'">
           Menu Items
         </a>
         <a routerLink="/main/menu" [queryParams]="{ tab: 'categories' }"
-           class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none"
+           class="px-3.5 sm:px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none whitespace-nowrap"
            [ngClass]="activeTab === 'categories' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-600' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-700/50'">
           Categories
         </a>
         <a routerLink="/main/menu" [queryParams]="{ tab: 'discounts' }"
-           class="px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none flex items-center gap-1.5"
+           class="px-3.5 sm:px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer select-none flex items-center gap-1.5 whitespace-nowrap"
            [ngClass]="activeTab === 'discounts' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-600' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-700/50'">
           <mat-icon class="text-[16px] w-4 h-4 text-rose-500">local_offer</mat-icon>
           Item Discounts
@@ -52,11 +52,11 @@
   </div>
 
   <!-- TAB 1: MENU ITEMS -->
-  <div *ngIf="activeTab === 'items'" class="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-6 items-start">
+  <div *ngIf="activeTab === 'items'" class="grid grid-cols-1 xl:grid-cols-[360px_1fr] 2xl:grid-cols-[380px_1fr] gap-6 items-start">
     <!-- Item Registry Card Form -->
-    <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm space-y-4">
-      <div class="flex items-center justify-between border-b border-slate-50 pb-3">
-        <h2 class="text-[14px] font-bold text-slate-900 flex items-center gap-2">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-100 dark:border-slate-800 shadow-sm space-y-4 min-w-0">
+      <div class="flex items-center justify-between border-b border-slate-50 dark:border-slate-800 pb-3">
+        <h2 class="text-[14px] font-bold text-slate-900 dark:text-white flex items-center gap-2">
           <span class="w-1.5 h-3.5 bg-indigo-600 rounded-full"></span>
           {{ editingItemId ? 'Update Menu Item' : 'Add New Menu Item' }}
         </h2>
@@ -64,44 +64,44 @@
 
       <form [formGroup]="itemForm" (ngSubmit)="saveMenuItem()" class="space-y-4">
         <div>
-          <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Item Name</label>
-          <input type="text" formControlName="name" placeholder="e.g. Classic Beef Burger" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all"/>
+          <label class="block text-[11px] font-bold text-slate-450 dark:text-slate-400 uppercase tracking-wider mb-1.5">Item Name</label>
+          <input type="text" formControlName="name" placeholder="e.g. Classic Beef Burger" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-800 transition-all"/>
         </div>
 
         <div>
-          <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Description</label>
-          <textarea formControlName="description" rows="2" placeholder="Write description..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all"></textarea>
+          <label class="block text-[11px] font-bold text-slate-450 dark:text-slate-400 uppercase tracking-wider mb-1.5">Description</label>
+          <textarea formControlName="description" rows="2" placeholder="Write description..." class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-800 transition-all"></textarea>
         </div>
 
-        <div class="grid grid-cols-2 gap-3.5">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
           <div>
-            <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Price (Rs.)</label>
-            <input type="number" formControlName="price" placeholder="1000.00" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all"/>
+            <label class="block text-[11px] font-bold text-slate-450 dark:text-slate-400 uppercase tracking-wider mb-1.5">Price (Rs.)</label>
+            <input type="number" formControlName="price" placeholder="1000.00" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-800 transition-all"/>
           </div>
           <div>
-            <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Prep (Mins)</label>
-            <input type="number" formControlName="preparationTime" placeholder="15" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all"/>
+            <label class="block text-[11px] font-bold text-slate-450 dark:text-slate-400 uppercase tracking-wider mb-1.5">Prep (Mins)</label>
+            <input type="number" formControlName="preparationTime" placeholder="15" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-800 transition-all"/>
           </div>
         </div>
 
         <div>
-          <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Category</label>
-          <select formControlName="categoryId" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all">
+          <label class="block text-[11px] font-bold text-slate-450 dark:text-slate-400 uppercase tracking-wider mb-1.5">Category</label>
+          <select formControlName="categoryId" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-800 transition-all">
             <option value="">Select Category</option>
             <option *ngFor="let cat of categories" [value]="cat.id">{{ cat.name }}</option>
           </select>
         </div>
 
         <div class="flex items-center gap-2 pt-1">
-          <input type="checkbox" id="itemAvailable" formControlName="isAvailable" class="rounded text-indigo-600 focus:ring-indigo-500 h-4 w-4"/>
-          <label for="itemAvailable" class="text-[12px] font-bold text-slate-700 cursor-pointer">Available for Ordering</label>
+          <input type="checkbox" id="itemAvailable" formControlName="isAvailable" class="rounded text-indigo-600 focus:ring-indigo-500 h-4 w-4 cursor-pointer"/>
+          <label for="itemAvailable" class="text-[12px] font-bold text-slate-700 dark:text-slate-300 cursor-pointer">Available for Ordering</label>
         </div>
 
         <div class="flex items-center gap-2 pt-2">
           <button type="submit" [disabled]="loading" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl text-[13px] transition-all cursor-pointer shadow-md active:scale-[0.98]">
             {{ editingItemId ? 'Update Item' : 'Save Item' }}
           </button>
-          <button *ngIf="editingItemId" type="button" (click)="clearItemForm()" class="px-3.5 py-2.5 rounded-xl text-[13px] font-bold text-slate-500 hover:bg-slate-100 transition-all cursor-pointer">
+          <button *ngIf="editingItemId" type="button" (click)="clearItemForm()" class="px-3.5 py-2.5 rounded-xl text-[13px] font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer">
             Cancel
           </button>
         </div>
@@ -109,9 +109,9 @@
     </div>
 
     <!-- Menu Items Table -->
-    <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm space-y-4">
-      <div class="flex items-center justify-between border-b border-slate-50 pb-3">
-        <h2 class="text-[14px] font-bold text-slate-900 flex items-center gap-2">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-100 dark:border-slate-800 shadow-sm space-y-4 min-w-0">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-50 dark:border-slate-800 pb-3">
+        <h2 class="text-[14px] font-bold text-slate-900 dark:text-white flex items-center gap-2">
           <span class="w-1.5 h-3.5 bg-indigo-600 rounded-full"></span>
           Catalog Items Directory
         </h2>
@@ -119,8 +119,8 @@
       </div>
 
       <!-- Search & Filters Bar (Matching User table filter design) -->
-      <div class="flex items-center gap-2.5 flex-wrap">
-        <div class="flex-1 min-w-[200px] flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 flex-wrap">
+        <div class="flex-1 min-w-[180px] flex items-center gap-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2">
           <svg class="w-4 h-4 text-slate-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <circle cx="11" cy="11" r="8"/>
             <path stroke-linecap="round" d="M21 21l-4.35-4.35"/>
@@ -130,26 +130,26 @@
             [(ngModel)]="itemSearchQuery"
             (input)="applyItemFilters()"
             placeholder="Search items by name, description, price..."
-            class="border-none outline-none text-[13px] text-slate-700 placeholder-slate-400 bg-transparent w-full"
+            class="border-none outline-none text-[13px] text-slate-700 dark:text-slate-200 placeholder-slate-400 bg-transparent w-full"
           />
         </div>
 
-        <div class="w-48">
+        <div class="w-full sm:w-44">
           <select
             [(ngModel)]="selectedCategoryId"
             (change)="applyItemFilters()"
-            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-[13px] text-slate-700 outline-none focus:border-indigo-400 cursor-pointer"
+            class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-[13px] text-slate-700 dark:text-slate-200 outline-none focus:border-indigo-400 cursor-pointer"
           >
             <option [ngValue]="null">All Categories</option>
             <option *ngFor="let cat of categories" [ngValue]="cat.id">{{ cat.name }}</option>
           </select>
         </div>
 
-        <div class="w-36">
+        <div class="w-full sm:w-36">
           <select
             [(ngModel)]="selectedAvailability"
             (change)="applyItemFilters()"
-            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-[13px] text-slate-700 outline-none focus:border-indigo-400 cursor-pointer"
+            class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-[13px] text-slate-700 dark:text-slate-200 outline-none focus:border-indigo-400 cursor-pointer"
           >
             <option [ngValue]="null">All Status</option>
             <option [ngValue]="true">Available</option>
@@ -161,7 +161,7 @@
           type="button"
           (click)="resetItemFilters()"
           title="Reset Filters"
-          class="bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-800 border border-slate-200 p-2 rounded-xl text-[13px] font-bold flex items-center justify-center cursor-pointer transition-all active:scale-95"
+          class="bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white border border-slate-200 dark:border-slate-700 p-2 rounded-xl text-[13px] font-bold flex items-center justify-center cursor-pointer transition-all active:scale-95 self-end sm:self-center"
         >
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
@@ -169,49 +169,49 @@
         </button>
       </div>
 
-      <div class="overflow-x-auto">
-        <table mat-table [dataSource]="dataSource" class="w-full text-left text-[13px] text-slate-700 border-collapse">
+      <div class="overflow-x-auto rounded-xl border border-slate-100 dark:border-slate-800">
+        <table mat-table [dataSource]="dataSource" class="w-full text-left text-[13px] text-slate-700 dark:text-slate-300 border-collapse min-w-[650px]">
           <ng-container matColumnDef="name">
-            <th mat-header-cell *matHeaderCellDef class="pb-3 font-bold uppercase tracking-wider text-[11px]">Item Name</th>
-            <td mat-cell *matCellDef="let item" class="py-3.5 font-bold text-slate-900">
+            <th mat-header-cell *matHeaderCellDef class="pb-3 font-bold uppercase tracking-wider text-[11px] whitespace-nowrap">Item Name</th>
+            <td mat-cell *matCellDef="let item" class="py-3.5 font-bold text-slate-900 dark:text-white whitespace-nowrap">
               {{ item.name }}
             </td>
           </ng-container>
 
           <ng-container matColumnDef="description">
             <th mat-header-cell *matHeaderCellDef class="pb-3 font-bold uppercase tracking-wider text-[11px]">Description</th>
-            <td mat-cell *matCellDef="let item" class="py-3.5 text-slate-500 max-w-xs truncate">
+            <td mat-cell *matCellDef="let item" class="py-3.5 text-slate-500 dark:text-slate-400 max-w-[180px] xl:max-w-xs truncate" title="{{ item.description }}">
               {{ item.description }}
             </td>
           </ng-container>
 
           <ng-container matColumnDef="price">
-            <th mat-header-cell *matHeaderCellDef class="pb-3 font-bold uppercase tracking-wider text-[11px]">Price</th>
-            <td mat-cell *matCellDef="let item" class="py-3.5 font-bold text-indigo-600">
+            <th mat-header-cell *matHeaderCellDef class="pb-3 font-bold uppercase tracking-wider text-[11px] whitespace-nowrap">Price</th>
+            <td mat-cell *matCellDef="let item" class="py-3.5 font-bold text-indigo-600 dark:text-indigo-400 whitespace-nowrap">
               Rs. {{ item.price }}
             </td>
           </ng-container>
 
           <ng-container matColumnDef="categoryName">
-            <th mat-header-cell *matHeaderCellDef class="pb-3 font-bold uppercase tracking-wider text-[11px]">Category</th>
-            <td mat-cell *matCellDef="let item" class="py-3.5">
-              <span class="bg-slate-100 text-slate-700 font-bold px-2 py-0.5 rounded text-[11px]">
+            <th mat-header-cell *matHeaderCellDef class="pb-3 font-bold uppercase tracking-wider text-[11px] whitespace-nowrap">Category</th>
+            <td mat-cell *matCellDef="let item" class="py-3.5 whitespace-nowrap">
+              <span class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold px-2 py-0.5 rounded text-[11px]">
                 {{ item.categoryName || 'General' }}
               </span>
             </td>
           </ng-container>
 
           <ng-container matColumnDef="preparationTime">
-            <th mat-header-cell *matHeaderCellDef class="pb-3 font-bold uppercase tracking-wider text-[11px]">Prep Time</th>
-            <td mat-cell *matCellDef="let item" class="py-3.5 text-slate-500">
+            <th mat-header-cell *matHeaderCellDef class="pb-3 font-bold uppercase tracking-wider text-[11px] whitespace-nowrap">Prep Time</th>
+            <td mat-cell *matCellDef="let item" class="py-3.5 text-slate-500 dark:text-slate-400 whitespace-nowrap">
               {{ item.preparationTime }} mins
             </td>
           </ng-container>
 
           <ng-container matColumnDef="availability">
-            <th mat-header-cell *matHeaderCellDef class="pb-3 font-bold uppercase tracking-wider text-[11px]">Status</th>
-            <td mat-cell *matCellDef="let item" class="py-3.5">
-              <span [ngClass]="item.isAvailable ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200'"
+            <th mat-header-cell *matHeaderCellDef class="pb-3 font-bold uppercase tracking-wider text-[11px] whitespace-nowrap">Status</th>
+            <td mat-cell *matCellDef="let item" class="py-3.5 whitespace-nowrap">
+              <span [ngClass]="item.isAvailable ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800' : 'bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800'"
                     class="px-2 py-0.5 rounded-full text-[11px] font-bold border">
                 {{ item.isAvailable ? 'Available' : 'Unavailable' }}
               </span>
@@ -219,19 +219,19 @@
           </ng-container>
 
           <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef class="pb-3 font-bold uppercase tracking-wider text-[11px] text-right">Actions</th>
-            <td mat-cell *matCellDef="let item" class="py-3.5 text-right space-x-1.5">
-              <button (click)="editMenuItem(item)" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-2.5 py-1 rounded-lg text-[11px] transition-all cursor-pointer">
+            <th mat-header-cell *matHeaderCellDef class="pb-3 font-bold uppercase tracking-wider text-[11px] text-right whitespace-nowrap">Actions</th>
+            <td mat-cell *matCellDef="let item" class="py-3.5 text-right space-x-1.5 whitespace-nowrap">
+              <button (click)="editMenuItem(item)" class="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold px-2.5 py-1 rounded-lg text-[11px] transition-all cursor-pointer">
                 Edit
               </button>
-              <button (click)="deleteMenuItem(item)" class="bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold px-2.5 py-1 rounded-lg text-[11px] transition-all cursor-pointer">
+              <button (click)="deleteMenuItem(item)" class="bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 font-bold px-2.5 py-1 rounded-lg text-[11px] transition-all cursor-pointer">
                 Delete
               </button>
             </td>
           </ng-container>
 
           <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-          <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="hover:bg-slate-50/50 transition-colors border-b border-slate-50"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors border-b border-slate-50 dark:border-slate-800"></tr>
         </table>
         <mat-paginator #itemPaginator [pageSizeOptions]="[5, 10, 25]" showFirstLastButtons class="mt-2"></mat-paginator>
       </div>
@@ -239,10 +239,10 @@
   </div>
 
   <!-- TAB 2: CATEGORIES -->
-  <div *ngIf="activeTab === 'categories'" class="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-6 items-start">
-    <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm space-y-4">
-      <div class="flex items-center justify-between border-b border-slate-50 pb-3">
-        <h2 class="text-[14px] font-bold text-slate-900 flex items-center gap-2">
+  <div *ngIf="activeTab === 'categories'" class="grid grid-cols-1 xl:grid-cols-[360px_1fr] 2xl:grid-cols-[380px_1fr] gap-6 items-start">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-100 dark:border-slate-800 shadow-sm space-y-4 min-w-0">
+      <div class="flex items-center justify-between border-b border-slate-50 dark:border-slate-800 pb-3">
+        <h2 class="text-[14px] font-bold text-slate-900 dark:text-white flex items-center gap-2">
           <span class="w-1.5 h-3.5 bg-indigo-600 rounded-full"></span>
           {{ editingCatId ? 'Update Category' : 'Add New Category' }}
         </h2>
@@ -250,46 +250,46 @@
 
       <form [formGroup]="catForm" (ngSubmit)="saveCategory()" class="space-y-4">
         <div>
-          <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Category Name</label>
-          <input type="text" formControlName="name" placeholder="e.g. Seafood Specialties" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all"/>
+          <label class="block text-[11px] font-bold text-slate-450 dark:text-slate-400 uppercase tracking-wider mb-1.5">Category Name</label>
+          <input type="text" formControlName="name" placeholder="e.g. Seafood Specialties" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-800 transition-all"/>
         </div>
 
         <div>
-          <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Description</label>
-          <textarea formControlName="description" rows="3" placeholder="Category details..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white transition-all"></textarea>
+          <label class="block text-[11px] font-bold text-slate-450 dark:text-slate-400 uppercase tracking-wider mb-1.5">Description</label>
+          <textarea formControlName="description" rows="3" placeholder="Category details..." class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-800 transition-all"></textarea>
         </div>
 
         <div class="flex items-center gap-2 pt-2">
           <button type="submit" [disabled]="loading" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl text-[13px] transition-all cursor-pointer shadow-md active:scale-[0.98]">
             {{ editingCatId ? 'Update Category' : 'Save Category' }}
           </button>
-          <button *ngIf="editingCatId" type="button" (click)="clearCatForm()" class="px-3.5 py-2.5 rounded-xl text-[13px] font-bold text-slate-500 hover:bg-slate-100 transition-all cursor-pointer">
+          <button *ngIf="editingCatId" type="button" (click)="clearCatForm()" class="px-3.5 py-2.5 rounded-xl text-[13px] font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer">
             Cancel
           </button>
         </div>
       </form>
     </div>
 
-    <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm space-y-4">
-      <div class="flex items-center justify-between border-b border-slate-50 pb-3">
-        <h2 class="text-[14px] font-bold text-slate-900 flex items-center gap-2">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-100 dark:border-slate-800 shadow-sm space-y-4 min-w-0">
+      <div class="flex items-center justify-between border-b border-slate-50 dark:border-slate-800 pb-3">
+        <h2 class="text-[14px] font-bold text-slate-900 dark:text-white flex items-center gap-2">
           <span class="w-1.5 h-3.5 bg-indigo-600 rounded-full"></span>
           Category Directory
         </h2>
       </div>
 
-      <div *ngIf="categories.length > 0; else emptyCats" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        <div *ngFor="let cat of categories" class="bg-slate-50 hover:bg-white rounded-2xl p-4 border border-slate-150/60 hover:border-slate-300 hover:shadow-lg transition-all duration-200 flex flex-col justify-between gap-3 group relative">
+      <div *ngIf="categories.length > 0; else emptyCats" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 2xl:grid-cols-3 gap-4">
+        <div *ngFor="let cat of categories" class="bg-slate-50 dark:bg-slate-800/80 hover:bg-white dark:hover:bg-slate-800 rounded-2xl p-4 border border-slate-150/60 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-lg transition-all duration-200 flex flex-col justify-between gap-3 group relative">
           <div>
-            <h3 class="text-base font-extrabold text-slate-900">{{ cat.name }}</h3>
-            <p class="text-xs text-slate-500 mt-2 italic leading-relaxed">{{ cat.description }}</p>
+            <h3 class="text-base font-extrabold text-slate-900 dark:text-white">{{ cat.name }}</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-2 italic leading-relaxed">{{ cat.description }}</p>
           </div>
 
-          <div class="flex items-center justify-end gap-1.5 border-t border-slate-100 pt-3 mt-1">
-            <button (click)="editCategory(cat)" class="text-[11px] font-bold text-indigo-600 bg-indigo-50/50 hover:bg-indigo-600 hover:text-white px-2.5 py-1 rounded-lg transition-all cursor-pointer">
+          <div class="flex items-center justify-end gap-1.5 border-t border-slate-100 dark:border-slate-700 pt-3 mt-1">
+            <button (click)="editCategory(cat)" class="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-950/50 hover:bg-indigo-600 hover:text-white px-2.5 py-1 rounded-lg transition-all cursor-pointer">
               Edit
             </button>
-            <button (click)="deleteCategory(cat)" class="text-[11px] font-bold text-rose-600 bg-rose-50/50 hover:bg-rose-600 hover:text-white px-2 py-1.5 rounded-lg transition-all cursor-pointer">
+            <button (click)="deleteCategory(cat)" class="text-[11px] font-bold text-rose-600 dark:text-rose-400 bg-rose-50/50 dark:bg-rose-950/50 hover:bg-rose-600 hover:text-white px-2 py-1.5 rounded-lg transition-all cursor-pointer">
               Delete
             </button>
           </div>
@@ -304,12 +304,12 @@
     </div>
   </div>
 
-  <!-- TAB 3: SPECIAL TIME-PERIOD ITEM DISCOUNTS (e.g. Fried Rice Rs. 1,000 -> Rs. 800) -->
-  <div *ngIf="activeTab === 'discounts'" class="grid grid-cols-1 lg:grid-cols-[400px_1fr] gap-6 items-start animate-fade-in">
+  <!-- TAB 3: SPECIAL TIME-PERIOD ITEM DISCOUNTS -->
+  <div *ngIf="activeTab === 'discounts'" class="grid grid-cols-1 xl:grid-cols-[380px_1fr] gap-6 items-start animate-fade-in">
     <!-- Form: Configure Time-Period Special Discount -->
-    <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm space-y-4">
-      <div class="flex items-center justify-between border-b border-slate-50 pb-3">
-        <h2 class="text-[14px] font-bold text-slate-900 flex items-center gap-2">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-100 dark:border-slate-800 shadow-sm space-y-4 min-w-0">
+      <div class="flex items-center justify-between border-b border-slate-50 dark:border-slate-800 pb-3">
+        <h2 class="text-[14px] font-bold text-slate-900 dark:text-white flex items-center gap-2">
           <span class="w-1.5 h-3.5 bg-rose-600 rounded-full"></span>
           {{ editingDiscountId ? 'Update Special Item Discount' : 'Create Special Item Discount' }}
         </h2>
@@ -317,14 +317,14 @@
 
       <form [formGroup]="discountForm" (ngSubmit)="saveItemDiscount()" class="space-y-4">
         <div>
-          <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Promotion Title *</label>
+          <label class="block text-[11px] font-bold text-slate-450 dark:text-slate-400 uppercase tracking-wider mb-1.5">Promotion Title *</label>
           <input type="text" formControlName="title" placeholder="e.g. Lunch Special Promo, Happy Hour Deal..." 
-                 class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 transition-all"/>
+                 class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500 transition-all"/>
         </div>
 
         <div>
-          <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Select Menu Item *</label>
-          <select formControlName="menuItemId" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] font-bold text-slate-800 focus:outline-none focus:border-indigo-500">
+          <label class="block text-[11px] font-bold text-slate-450 dark:text-slate-400 uppercase tracking-wider mb-1.5">Select Menu Item *</label>
+          <select formControlName="menuItemId" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-[13px] font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500">
             <option value="">Select menu item to discount...</option>
             <option *ngFor="let item of menuItems" [value]="item.id">
               {{ item.name }} (Regular Price: Rs. {{ item.price }})
@@ -332,57 +332,57 @@
           </select>
         </div>
 
-        <div class="grid grid-cols-2 gap-3.5">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
           <div>
-            <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Discount Type *</label>
-            <select formControlName="discountType" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] font-bold text-slate-800 focus:outline-none focus:border-indigo-500">
+            <label class="block text-[11px] font-bold text-slate-450 dark:text-slate-400 uppercase tracking-wider mb-1.5">Discount Type *</label>
+            <select formControlName="discountType" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-[13px] font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500">
               <option value="SPECIAL_PRICE">Fixed Special Price</option>
               <option value="PERCENTAGE">Percentage (%) Off</option>
               <option value="FIXED_OFF">Flat (Rs.) Off</option>
             </select>
           </div>
           <div>
-            <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">
+            <label class="block text-[11px] font-bold text-slate-450 dark:text-slate-400 uppercase tracking-wider mb-1.5">
               {{ discountForm.get('discountType')?.value === 'PERCENTAGE' ? 'Discount % *' : (discountForm.get('discountType')?.value === 'SPECIAL_PRICE' ? 'New Price (Rs.) *' : 'Amount Off (Rs.) *') }}
             </label>
-            <input type="number" formControlName="discountValue" placeholder="800.00" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] font-bold text-slate-800 focus:outline-none focus:border-indigo-500"/>
+            <input type="number" formControlName="discountValue" placeholder="800.00" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-[13px] font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500"/>
           </div>
         </div>
 
         <!-- Live Price Preview Card -->
-        <div *ngIf="discountForm.get('menuItemId')?.value" class="bg-rose-50/70 border border-rose-200/80 rounded-2xl p-4 space-y-1 text-[13px] animate-fade-in">
-          <p class="text-[11px] font-bold uppercase tracking-wider text-rose-700">Special Pricing Preview</p>
+        <div *ngIf="discountForm.get('menuItemId')?.value" class="bg-rose-50/70 dark:bg-rose-950/40 border border-rose-200/80 dark:border-rose-800 rounded-2xl p-4 space-y-1 text-[13px] animate-fade-in">
+          <p class="text-[11px] font-bold uppercase tracking-wider text-rose-700 dark:text-rose-300">Special Pricing Preview</p>
           <div class="flex items-baseline justify-between pt-1">
-            <span class="text-slate-500 text-[12px]">Original Regular Price:</span>
-            <span class="font-bold line-through text-slate-400">Rs. {{ getLiveDiscountPreview().original }}</span>
+            <span class="text-slate-500 dark:text-slate-400 text-[12px]">Original Regular Price:</span>
+            <span class="font-bold line-through text-slate-400 dark:text-slate-500">Rs. {{ getLiveDiscountPreview().original }}</span>
           </div>
           <div class="flex items-baseline justify-between">
-            <span class="text-rose-700 font-bold">Discounted Promo Price:</span>
-            <span class="text-lg font-black text-rose-600">Rs. {{ getLiveDiscountPreview().discounted }}</span>
+            <span class="text-rose-700 dark:text-rose-300 font-bold">Discounted Promo Price:</span>
+            <span class="text-lg font-black text-rose-600 dark:text-rose-400">Rs. {{ getLiveDiscountPreview().discounted }}</span>
           </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-3.5">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
           <div>
-            <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Start Date *</label>
-            <input type="date" formControlName="startDate" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500"/>
+            <label class="block text-[11px] font-bold text-slate-450 dark:text-slate-400 uppercase tracking-wider mb-1.5">Start Date *</label>
+            <input type="date" formControlName="startDate" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500"/>
           </div>
           <div>
-            <label class="block text-[11px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">End Date *</label>
-            <input type="date" formControlName="endDate" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500"/>
+            <label class="block text-[11px] font-bold text-slate-450 dark:text-slate-400 uppercase tracking-wider mb-1.5">End Date *</label>
+            <input type="date" formControlName="endDate" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none focus:border-indigo-500"/>
           </div>
         </div>
 
         <div class="flex items-center gap-2 pt-1">
-          <input type="checkbox" id="discActiveCheck" formControlName="isActive" class="rounded text-rose-600 focus:ring-rose-500 h-4 w-4"/>
-          <label for="discActiveCheck" class="text-[12px] font-bold text-slate-700 cursor-pointer">Promotion is Active</label>
+          <input type="checkbox" id="discActiveCheck" formControlName="isActive" class="rounded text-rose-600 focus:ring-rose-500 h-4 w-4 cursor-pointer"/>
+          <label for="discActiveCheck" class="text-[12px] font-bold text-slate-700 dark:text-slate-300 cursor-pointer">Promotion is Active</label>
         </div>
 
         <div class="flex items-center gap-2 pt-2">
           <button type="submit" [disabled]="loading" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white font-bold py-2.5 rounded-xl text-[13px] transition-all cursor-pointer shadow-md active:scale-[0.98]">
             {{ editingDiscountId ? 'Update Special Discount' : 'Activate Special Discount' }}
           </button>
-          <button *ngIf="editingDiscountId" type="button" (click)="clearDiscountForm()" class="px-3.5 py-2.5 rounded-xl text-[13px] font-bold text-slate-500 hover:bg-slate-100 transition-all cursor-pointer">
+          <button *ngIf="editingDiscountId" type="button" (click)="clearDiscountForm()" class="px-3.5 py-2.5 rounded-xl text-[13px] font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer">
             Cancel
           </button>
         </div>
@@ -390,86 +390,86 @@
     </div>
 
     <!-- Active Item Discounts Table -->
-    <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm space-y-4">
-      <div class="flex items-center justify-between border-b border-slate-50 pb-3">
-        <h2 class="text-[14px] font-bold text-slate-900 flex items-center gap-2">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-100 dark:border-slate-800 shadow-sm space-y-4 min-w-0">
+      <div class="flex items-center justify-between border-b border-slate-50 dark:border-slate-800 pb-3">
+        <h2 class="text-[14px] font-bold text-slate-900 dark:text-white flex items-center gap-2">
           <span class="w-1.5 h-3.5 bg-rose-600 rounded-full"></span>
           Active &amp; Scheduled Menu Item Discounts
         </h2>
         <span class="text-[12px] text-slate-400">{{ itemDiscounts.length }} item promotions</span>
       </div>
 
-      <div class="overflow-x-auto">
-        <table mat-table [dataSource]="discountDataSource" class="w-full text-left text-[13px] text-slate-700 border-collapse">
+      <div class="overflow-x-auto rounded-xl border border-slate-100 dark:border-slate-800">
+        <table mat-table [dataSource]="discountDataSource" class="w-full text-left text-[13px] text-slate-700 dark:text-slate-300 border-collapse min-w-[650px]">
           <ng-container matColumnDef="title">
-            <th mat-header-cell *matHeaderCellDef class="pb-3 font-bold uppercase tracking-wider text-[11px]">Campaign Title</th>
-            <td mat-cell *matCellDef="let d" class="py-3.5 font-bold text-slate-900">
+            <th mat-header-cell *matHeaderCellDef class="pb-3 font-bold uppercase tracking-wider text-[11px] whitespace-nowrap">Campaign Title</th>
+            <td mat-cell *matCellDef="let d" class="py-3.5 font-bold text-slate-900 dark:text-white whitespace-nowrap">
               {{ d.title }}
             </td>
           </ng-container>
 
           <ng-container matColumnDef="menuItem">
-            <th mat-header-cell *matHeaderCellDef class="pb-3 font-bold uppercase tracking-wider text-[11px]">Target Menu Item</th>
-            <td mat-cell *matCellDef="let d" class="py-3.5">
-              <span class="font-bold text-slate-800">{{ d.menuItemName }}</span>
+            <th mat-header-cell *matHeaderCellDef class="pb-3 font-bold uppercase tracking-wider text-[11px] whitespace-nowrap">Target Menu Item</th>
+            <td mat-cell *matCellDef="let d" class="py-3.5 whitespace-nowrap">
+              <span class="font-bold text-slate-800 dark:text-slate-200">{{ d.menuItemName }}</span>
               <span class="text-[11px] text-slate-400 block line-through">Regular Rs. {{ d.menuItemOriginalPrice }}</span>
             </td>
           </ng-container>
 
           <ng-container matColumnDef="discount">
-            <th mat-header-cell *matHeaderCellDef class="pb-3 font-bold uppercase tracking-wider text-[11px]">Promotional Price</th>
-            <td mat-cell *matCellDef="let d" class="py-3.5 font-black text-rose-600">
+            <th mat-header-cell *matHeaderCellDef class="pb-3 font-bold uppercase tracking-wider text-[11px] whitespace-nowrap">Promotional Price</th>
+            <td mat-cell *matCellDef="let d" class="py-3.5 font-black text-rose-600 dark:text-rose-400 whitespace-nowrap">
               Rs. {{ d.calculatedDiscountedPrice }}
-              <span *ngIf="d.discountType === 'PERCENTAGE'" class="text-[10px] text-purple-600 block font-normal">({{ d.discountValue }}% off)</span>
-              <span *ngIf="d.discountType === 'FIXED_OFF'" class="text-[10px] text-amber-600 block font-normal">(-Rs. {{ d.discountValue }})</span>
+              <span *ngIf="d.discountType === 'PERCENTAGE'" class="text-[10px] text-purple-600 dark:text-purple-400 block font-normal">({{ d.discountValue }}% off)</span>
+              <span *ngIf="d.discountType === 'FIXED_OFF'" class="text-[10px] text-amber-600 dark:text-amber-400 block font-normal">(-Rs. {{ d.discountValue }})</span>
             </td>
           </ng-container>
 
           <ng-container matColumnDef="dates">
-            <th mat-header-cell *matHeaderCellDef class="pb-3 font-bold uppercase tracking-wider text-[11px]">Active Window</th>
-            <td mat-cell *matCellDef="let d" class="py-3.5 font-mono text-[11px] text-slate-600">
+            <th mat-header-cell *matHeaderCellDef class="pb-3 font-bold uppercase tracking-wider text-[11px] whitespace-nowrap">Active Window</th>
+            <td mat-cell *matCellDef="let d" class="py-3.5 font-mono text-[11px] text-slate-600 dark:text-slate-400 whitespace-nowrap">
               {{ d.startDate }} &rarr; {{ d.endDate }}
             </td>
           </ng-container>
 
           <ng-container matColumnDef="status">
-            <th mat-header-cell *matHeaderCellDef class="pb-3 font-bold uppercase tracking-wider text-[11px]">Status</th>
-            <td mat-cell *matCellDef="let d" class="py-3.5">
-              <span *ngIf="d.status === 'ACTIVE'" class="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full text-[11px] font-bold">
+            <th mat-header-cell *matHeaderCellDef class="pb-3 font-bold uppercase tracking-wider text-[11px] whitespace-nowrap">Status</th>
+            <td mat-cell *matCellDef="let d" class="py-3.5 whitespace-nowrap">
+              <span *ngIf="d.status === 'ACTIVE'" class="bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded-full text-[11px] font-bold">
                 ACTIVE
               </span>
-              <span *ngIf="d.status === 'EXPIRED'" class="bg-rose-50 text-rose-700 border border-rose-200 px-2 py-0.5 rounded-full text-[11px] font-bold">
+              <span *ngIf="d.status === 'EXPIRED'" class="bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 px-2 py-0.5 rounded-full text-[11px] font-bold">
                 EXPIRED
               </span>
-              <span *ngIf="d.status === 'PAUSED'" class="bg-slate-100 text-slate-600 border border-slate-200 px-2 py-0.5 rounded-full text-[11px] font-bold">
+              <span *ngIf="d.status === 'PAUSED'" class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 px-2 py-0.5 rounded-full text-[11px] font-bold">
                 PAUSED
               </span>
-              <span *ngIf="d.status === 'SCHEDULED'" class="bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full text-[11px] font-bold">
+              <span *ngIf="d.status === 'SCHEDULED'" class="bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 px-2 py-0.5 rounded-full text-[11px] font-bold">
                 SCHEDULED
               </span>
             </td>
           </ng-container>
 
           <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef class="pb-3 font-bold uppercase tracking-wider text-[11px] text-right">Actions</th>
-            <td mat-cell *matCellDef="let d" class="py-3.5 text-right space-x-1.5">
+            <th mat-header-cell *matHeaderCellDef class="pb-3 font-bold uppercase tracking-wider text-[11px] text-right whitespace-nowrap">Actions</th>
+            <td mat-cell *matCellDef="let d" class="py-3.5 text-right space-x-1.5 whitespace-nowrap">
               <button (click)="toggleItemDiscountStatus(d)" 
                       [title]="d.isActive ? 'Pause Promotion' : 'Activate Promotion'"
-                      [ngClass]="d.isActive ? 'text-emerald-600 hover:bg-emerald-50' : 'text-slate-400 hover:bg-slate-100'"
+                      [ngClass]="d.isActive ? 'text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/50' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'"
                       class="p-1 rounded-lg transition-all cursor-pointer">
                 <mat-icon class="text-[18px] w-4.5 h-4.5">{{ d.isActive ? 'toggle_on' : 'toggle_off' }}</mat-icon>
               </button>
-              <button (click)="editItemDiscount(d)" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-2.5 py-1 rounded-lg text-[11px] transition-all cursor-pointer">
+              <button (click)="editItemDiscount(d)" class="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold px-2.5 py-1 rounded-lg text-[11px] transition-all cursor-pointer">
                 Edit
               </button>
-              <button (click)="deleteItemDiscount(d)" class="bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold px-2.5 py-1 rounded-lg text-[11px] transition-all cursor-pointer">
+              <button (click)="deleteItemDiscount(d)" class="bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 font-bold px-2.5 py-1 rounded-lg text-[11px] transition-all cursor-pointer">
                 Delete
               </button>
             </td>
           </ng-container>
 
           <tr mat-header-row *matHeaderRowDef="discountDisplayedColumns"></tr>
-          <tr mat-row *matRowDef="let row; columns: discountDisplayedColumns;" class="hover:bg-slate-50/50 transition-colors border-b border-slate-50"></tr>
+          <tr mat-row *matRowDef="let row; columns: discountDisplayedColumns;" class="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors border-b border-slate-50 dark:border-slate-800"></tr>
         </table>
         <mat-paginator #discountPaginator [pageSizeOptions]="[5, 10, 25]" showFirstLastButtons class="mt-2"></mat-paginator>
       </div>

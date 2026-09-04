@@ -47,6 +47,11 @@ export class CustomerComponent implements OnInit {
     this.loadCustomers();
   }
 
+  clearSearch(): void {
+    this.searchQuery = '';
+    this.loadCustomers();
+  }
+
   loadCustomers(): void {
     this.loading = true;
     this.errorMessage = '';

@@ -86,6 +86,14 @@ export class ReportsComponent implements OnInit, OnDestroy {
     });
   }
 
+  scrollTabs(direction: 'left' | 'right'): void {
+    const container = document.getElementById('report-tabs-bar');
+    if (container) {
+      const scrollAmount = direction === 'left' ? -280 : 280;
+      container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  }
+
   applyPreset(preset: string, reload: boolean = true): void {
     this.activePreset = preset;
     const now = new Date();

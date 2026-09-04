@@ -131,79 +131,106 @@
     </div>
   </div>
 
-  <!-- 7 Perspective Report Tabs Bar -->
-  <div class="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2 overflow-x-auto scrollbar-none">
+  <!-- 8 Perspective Report Tabs Bar (Fully Scrollable with Left/Right Navigation) -->
+  <div class="relative group/tabs">
+    <!-- Left Scroll Button -->
     <button
       type="button"
-      (click)="setTab('flash')"
-      [ngClass]="activeTab === 'flash' ? 'bg-indigo-600 text-white shadow-md' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'"
-      class="px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer flex-shrink-0 select-none">
-      <span>📊</span>
-      <span>Daily Flash &amp; Settlements</span>
+      (click)="scrollTabs('left')"
+      aria-label="Scroll tabs left"
+      class="hidden md:flex absolute -left-3 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white/95 dark:bg-slate-800/95 border border-slate-200 dark:border-slate-700 shadow-md items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all cursor-pointer hover:scale-105 active:scale-95">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+      </svg>
     </button>
 
-    <button
-      type="button"
-      (click)="setTab('menu')"
-      [ngClass]="activeTab === 'menu' ? 'bg-indigo-600 text-white shadow-md' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'"
-      class="px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer flex-shrink-0 select-none">
-      <span>🍽️</span>
-      <span>Full Menu Sales &amp; Engineering</span>
-    </button>
+    <!-- Scrollable Tab Container -->
+    <div
+      id="report-tabs-bar"
+      class="tab-scroll-container flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2 px-1">
+      <button
+        type="button"
+        (click)="setTab('flash')"
+        [ngClass]="activeTab === 'flash' ? 'bg-indigo-600 text-white shadow-md' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'"
+        class="px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer flex-shrink-0 select-none">
+        <span>📊</span>
+        <span>Daily Flash &amp; Settlements</span>
+      </button>
 
-    <button
-      type="button"
-      (click)="setTab('hotel')"
-      [ngClass]="activeTab === 'hotel' ? 'bg-indigo-600 text-white shadow-md' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'"
-      class="px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer flex-shrink-0 select-none">
-      <span>🏨</span>
-      <span>Hotel Stays &amp; Yield (ADR/RevPAR)</span>
-    </button>
+      <button
+        type="button"
+        (click)="setTab('menu')"
+        [ngClass]="activeTab === 'menu' ? 'bg-indigo-600 text-white shadow-md' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'"
+        class="px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer flex-shrink-0 select-none">
+        <span>🍽️</span>
+        <span>Full Menu Sales &amp; Engineering</span>
+      </button>
 
-    <button
-      type="button"
-      (click)="setTab('kitchen')"
-      [ngClass]="activeTab === 'kitchen' ? 'bg-indigo-600 text-white shadow-md' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'"
-      class="px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer flex-shrink-0 select-none">
-      <span>👨‍🍳</span>
-      <span>Kitchen Speed &amp; Efficiency</span>
-    </button>
+      <button
+        type="button"
+        (click)="setTab('hotel')"
+        [ngClass]="activeTab === 'hotel' ? 'bg-indigo-600 text-white shadow-md' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'"
+        class="px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer flex-shrink-0 select-none">
+        <span>🏨</span>
+        <span>Hotel Stays &amp; Yield (ADR/RevPAR)</span>
+      </button>
 
-    <button
-      type="button"
-      (click)="setTab('staff')"
-      [ngClass]="activeTab === 'staff' ? 'bg-indigo-600 text-white shadow-md' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'"
-      class="px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer flex-shrink-0 select-none">
-      <span>🤵</span>
-      <span>Staff Productivity &amp; Waiters</span>
-    </button>
+      <button
+        type="button"
+        (click)="setTab('kitchen')"
+        [ngClass]="activeTab === 'kitchen' ? 'bg-indigo-600 text-white shadow-md' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'"
+        class="px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer flex-shrink-0 select-none">
+        <span>👨‍🍳</span>
+        <span>Kitchen Speed &amp; Efficiency</span>
+      </button>
 
-    <button
-      type="button"
-      (click)="setTab('customer')"
-      [ngClass]="activeTab === 'customer' ? 'bg-indigo-600 text-white shadow-md' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'"
-      class="px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer flex-shrink-0 select-none">
-      <span>👥</span>
-      <span>Customer VIP &amp; Loyalty</span>
-    </button>
+      <button
+        type="button"
+        (click)="setTab('staff')"
+        [ngClass]="activeTab === 'staff' ? 'bg-indigo-600 text-white shadow-md' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'"
+        class="px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer flex-shrink-0 select-none">
+        <span>🤵</span>
+        <span>Staff Productivity &amp; Waiters</span>
+      </button>
 
-    <button
-      type="button"
-      (click)="setTab('audit')"
-      [ngClass]="activeTab === 'audit' ? 'bg-indigo-600 text-white shadow-md' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'"
-      class="px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer flex-shrink-0 select-none">
-      <span>🛡️</span>
-      <span>Discounts &amp; Loss Prevention</span>
-    </button>
+      <button
+        type="button"
+        (click)="setTab('customer')"
+        [ngClass]="activeTab === 'customer' ? 'bg-indigo-600 text-white shadow-md' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'"
+        class="px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer flex-shrink-0 select-none">
+        <span>👥</span>
+        <span>Customer VIP &amp; Loyalty</span>
+      </button>
 
+      <button
+        type="button"
+        (click)="setTab('audit')"
+        [ngClass]="activeTab === 'audit' ? 'bg-indigo-600 text-white shadow-md' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'"
+        class="px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer flex-shrink-0 select-none">
+        <span>🛡️</span>
+        <span>Discounts &amp; Loss Prevention</span>
+      </button>
+
+      <button
+        type="button"
+        (click)="setTab('ai-assistant')"
+        [ngClass]="activeTab === 'ai-assistant' ? 'bg-emerald-600 text-white shadow-md' : 'bg-white dark:bg-slate-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-700'"
+        class="px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer flex-shrink-0 select-none">
+        <span>🤖</span>
+        <span>AI Reporting Assistant</span>
+        <span class="text-[10px] bg-emerald-100 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200 px-1.5 py-0.5 rounded-full font-extrabold">NEW</span>
+      </button>
+    </div>
+
+    <!-- Right Scroll Button -->
     <button
       type="button"
-      (click)="setTab('ai-assistant')"
-      [ngClass]="activeTab === 'ai-assistant' ? 'bg-emerald-600 text-white shadow-md' : 'bg-white dark:bg-slate-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-700'"
-      class="px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer flex-shrink-0 select-none">
-      <span>🤖</span>
-      <span>AI Reporting Assistant</span>
-      <span class="text-[10px] bg-emerald-100 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200 px-1.5 py-0.5 rounded-full font-extrabold">NEW</span>
+      (click)="scrollTabs('right')"
+      aria-label="Scroll tabs right"
+      class="hidden md:flex absolute -right-3 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white/95 dark:bg-slate-800/95 border border-slate-200 dark:border-slate-700 shadow-md items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all cursor-pointer hover:scale-105 active:scale-95">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+      </svg>
     </button>
   </div>
 
