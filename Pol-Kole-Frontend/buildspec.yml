@@ -9,11 +9,6 @@ phases:
       - cd Pol-Kole-Frontend
       - npm ci
 
-  pre_build:
-    commands:
-      - echo "Preparing environment configuration..."
-      - node scripts/set-env.js
-
   build:
     commands:
       - echo "Building Angular application in production mode..."
