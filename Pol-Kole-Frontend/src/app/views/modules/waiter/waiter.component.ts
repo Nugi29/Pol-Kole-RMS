@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { ApiResponse, RoomService, Room } from '../../../services/room.service';
@@ -39,9 +39,9 @@ export class WaiterComponent implements OnInit {
   isManagerOrAdmin: boolean = false;
 
   private readonly baseUrl = `${environment.apiUrl}/kitchen`;
+  private readonly http = inject(HttpClient);
 
   constructor(
-    private readonly http: HttpClient,
     private readonly route: ActivatedRoute,
     private readonly roomService: RoomService,
     private readonly tableService: TableService,
@@ -50,7 +50,7 @@ export class WaiterComponent implements OnInit {
     private readonly cdr: ChangeDetectorRef,
     private readonly dialogService: DialogService,
     public readonly wsService: WebsocketService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.initCurrentUser();
@@ -87,7 +87,7 @@ export class WaiterComponent implements OnInit {
     this.currentUserName = localStorage.getItem('name') || 'Waiter Staff';
     this.currentUserRole = (localStorage.getItem('role') || '').toUpperCase();
     this.isManagerOrAdmin = this.currentUserRole.includes('ADMIN') || this.currentUserRole.includes('MANAGER');
-    
+
     // Default to showing assigned work only for non-admin/non-manager staff
     this.filterMyTablesOnly = !this.isManagerOrAdmin;
 
@@ -122,7 +122,7 @@ export class WaiterComponent implements OnInit {
         this.myAssignments = assignments || [];
         this.cdr.markForCheck();
       },
-      error: () => {}
+      error: () => { }
     });
   }
 
@@ -133,7 +133,7 @@ export class WaiterComponent implements OnInit {
         this.myNotifications = (notifs || []).filter(n => n.status !== 'RESOLVED' && n.status !== 'DISMISSED');
         this.cdr.markForCheck();
       },
-      error: () => {}
+      error: () => { }
     });
   }
 
@@ -148,7 +148,7 @@ export class WaiterComponent implements OnInit {
   loadCleaningTasks(): void {
     this.loading = true;
     this.errorMessage = '';
-    
+
     forkJoin({
       rooms: this.roomService.filterRooms('CLEANING', undefined, 0, 1000).pipe(
         catchError(() => of({ content: [] } as any))
@@ -233,11 +233,11 @@ export class WaiterComponent implements OnInit {
   loadOrders(): void {
     this.loading = true;
     this.errorMessage = '';
-    
+
     const status = this.activeTab === 'ready' ? 'READY' : 'DELIVERED';
-    
+
     this.http.get<ApiResponse<KitchenOrder[]>>(`${this.baseUrl}/orders/status?status=${status}`).pipe(
-      map(res => res.data)
+      map((res: any) => res?.data)
     ).subscribe({
       next: (orders) => {
         let orderList = orders || [];
@@ -275,12 +275,12 @@ export class WaiterComponent implements OnInit {
       const koTableNorm = this.normalizeNum(ko.tableNumber);
       const koRoomNorm = this.normalizeNum(ko.roomNumber);
 
-      const tableMatch = this.myAssignments.some(a => 
+      const tableMatch = this.myAssignments.some(a =>
         a.assignmentType === 'TABLE' && this.normalizeNum(a.tableNumber) === koTableNorm
       );
       if (tableMatch) return true;
 
-      const roomMatch = this.myAssignments.some(a => 
+      const roomMatch = this.myAssignments.some(a =>
         a.assignmentType === 'ROOM' && this.normalizeNum(a.roomNumber) === koRoomNorm
       );
       return roomMatch;
@@ -302,7 +302,7 @@ export class WaiterComponent implements OnInit {
       // 2. Table location match
       if ((call.locationType || '').toUpperCase() === 'TABLE') {
         const callNorm = this.normalizeNum(call.locationNumber);
-        const match = this.myAssignments.some(a => 
+        const match = this.myAssignments.some(a =>
           a.assignmentType === 'TABLE' && (
             (a.tableId && call.locationId && Number(a.tableId) === Number(call.locationId)) ||
             (this.normalizeNum(a.tableNumber) === callNorm) ||
@@ -315,7 +315,7 @@ export class WaiterComponent implements OnInit {
       // 3. Room location match
       if ((call.locationType || '').toUpperCase() === 'ROOM') {
         const callNorm = this.normalizeNum(call.locationNumber);
-        const match = this.myAssignments.some(a => 
+        const match = this.myAssignments.some(a =>
           a.assignmentType === 'ROOM' && (
             (a.roomId && call.locationId && Number(a.roomId) === Number(call.locationId)) ||
             (this.normalizeNum(a.roomNumber) === callNorm) ||
@@ -371,7 +371,7 @@ export class WaiterComponent implements OnInit {
         this.errorMessage = '';
 
         this.http.put<ApiResponse<KitchenOrder>>(`${this.baseUrl}/orders/${id}/status?status=DELIVERED`, {}).pipe(
-          map(res => res.data)
+          map((res: any) => res?.data)
         ).subscribe({
           next: () => {
             this.wsService.sendMessage('ORDER_STATUS_CHANGED', { orderId: id, status: 'DELIVERED' });

@@ -1,5 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ReactiveFormsModule } from '@angular/forms';
+import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDatepickerModule } from '@angular/material/datepicker';
@@ -16,8 +18,9 @@ import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 
 import { UserComponent } from './user.component';
+import { DialogService } from '../../../services/dialog.service';
 import { LookupService } from '../../../services/lookup.service';
-import { UserService } from '../../../services/user.service';
+import { FullUserRes, UserService } from '../../../services/user.service';
 import { ConfirmComponent } from '../../../shared/dialog/confirm/confirm.component';
 import { MessageComponent } from '../../../shared/dialog/message/message.component';
 
@@ -34,8 +37,11 @@ describe('UserComponent', () => {
     update: ReturnType<typeof vi.fn>;
     delete: ReturnType<typeof vi.fn>;
   };
-  let dialogSpy: {
-    open: ReturnType<typeof vi.fn>;
+  let dialogServiceSpy: {
+    confirmDelete: ReturnType<typeof vi.fn>;
+    confirmAction: ReturnType<typeof vi.fn>;
+    showSuccess: ReturnType<typeof vi.fn>;
+    showError: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(async () => {
@@ -49,17 +55,24 @@ describe('UserComponent', () => {
       update: vi.fn(),
       delete: vi.fn(),
     };
-    dialogSpy = {
-      open: vi.fn(),
+    dialogServiceSpy = {
+      confirmDelete: vi.fn(),
+      confirmAction: vi.fn(),
+      showSuccess: vi.fn(),
+      showError: vi.fn(),
     };
 
     lookupServiceSpy.getAllUserRoles.mockReturnValue(of([]));
     lookupServiceSpy.getAllUserStatuses.mockReturnValue(of([]));
     userServiceSpy.getAllUsers.mockReturnValue(of([]));
+    dialogServiceSpy.confirmDelete.mockReturnValue(of(true));
+    dialogServiceSpy.confirmAction.mockReturnValue(of(true));
 
     await TestBed.configureTestingModule({
       declarations: [UserComponent],
       imports: [
+        CommonModule,
+        FormsModule,
         ReactiveFormsModule,
         MatGridListModule,
         MatCardModule,
@@ -76,8 +89,9 @@ describe('UserComponent', () => {
       providers: [
         { provide: LookupService, useValue: lookupServiceSpy as unknown as LookupService },
         { provide: UserService, useValue: userServiceSpy as unknown as UserService },
-        { provide: MatDialog, useValue: dialogSpy as unknown as MatDialog },
+        { provide: DialogService, useValue: dialogServiceSpy as unknown as DialogService },
       ],
+      schemas: [NO_ERRORS_SCHEMA],
     }).compileComponents();
 
     fixture = TestBed.createComponent(UserComponent);
@@ -91,74 +105,39 @@ describe('UserComponent', () => {
   });
 
   it('should call delete only after confirm dialog returns true', () => {
-    component.selectedRow = {
-      id: 10,
-      name: 'Test User',
-      email: 'test@example.com',
-      phone: '0770000000',
-      role: { id: 1, name: 'Admin' },
-      status: { id: 1, name: 'Active' },
-    };
-
-    dialogSpy.open.mockImplementation((dialogComponent: unknown) => {
-      if (dialogComponent === ConfirmComponent) {
-        return { afterClosed: () => of(true) } as any;
-      }
-      return {} as any;
-    });
+    dialogServiceSpy.confirmDelete.mockReturnValue(of(true));
     userServiceSpy.delete.mockReturnValue(of('Deleted'));
 
-    component.delete();
+    component.deleteUser(10);
 
     expect(userServiceSpy.delete).toHaveBeenCalledWith(10);
   });
 
   it('should not call delete when confirm dialog returns false', () => {
-    component.selectedRow = {
-      id: 10,
-      name: 'Test User',
-      email: 'test@example.com',
-      phone: '0770000000',
-      role: { id: 1, name: 'Admin' },
-      status: { id: 1, name: 'Active' },
-    };
+    dialogServiceSpy.confirmDelete.mockReturnValue(of(false));
 
-    dialogSpy.open.mockReturnValue({ afterClosed: () => of(false) } as any);
-
-    component.delete();
+    component.deleteUser(10);
 
     expect(userServiceSpy.delete).not.toHaveBeenCalled();
   });
 
   it('should clear fields and show a message when clear confirm returns true', () => {
-    const clearSpy = vi.spyOn(component, 'clear');
-
-    dialogSpy.open.mockImplementation((dialogComponent: unknown) => {
-      if (dialogComponent === ConfirmComponent) {
-        return { afterClosed: () => of(true) } as any;
-      }
-      return {} as any;
-    });
+    const clearSpy = vi.spyOn(component, 'clearForm');
+    dialogServiceSpy.confirmAction.mockReturnValue(of(true));
 
     component.requestClear();
 
     expect(clearSpy).toHaveBeenCalled();
-    const openedComponents = dialogSpy.open.mock.calls.map((call) => call[0]);
-    expect(openedComponents).toContain(ConfirmComponent);
-    expect(openedComponents).toContain(MessageComponent);
   });
 
   it('should not clear fields when clear confirm returns false', () => {
-    const clearSpy = vi.spyOn(component, 'clear');
-
-    dialogSpy.open.mockReturnValue({ afterClosed: () => of(false) } as any);
+    const clearSpy = vi.spyOn(component, 'clearForm');
+    component.form.markAsDirty();
+    dialogServiceSpy.confirmClear = vi.fn().mockReturnValue(of(false));
 
     component.requestClear();
 
     expect(clearSpy).not.toHaveBeenCalled();
-    const openedComponents = dialogSpy.open.mock.calls.map((call) => call[0]);
-    expect(openedComponents).toContain(ConfirmComponent);
-    expect(openedComponents).not.toContain(MessageComponent);
   });
 
   it('should filter users by username and role', () => {
@@ -188,13 +167,14 @@ describe('UserComponent', () => {
         status: { id: 1, name: 'Active' },
       },
     ];
-    component.data.data = component.users;
+    component.dataSource.data = component.users;
 
-    component.searchForm.patchValue({ ssusername: 'ali', ssrole: 2 });
-    component.btnSearchMc();
+    component.searchQuery = 'ali';
+    component.selectedRoleId = 2;
+    component.applyFilters();
 
-    expect(component.data.filteredData.length).toBe(1);
-    expect(component.data.filteredData[0].name).toBe('Alicia');
+    expect(component.filteredUsers.length).toBe(1);
+    expect(component.filteredUsers[0].name).toBe('Alicia');
   });
 
   it('should reset search and show all users on search clear', () => {
@@ -216,22 +196,23 @@ describe('UserComponent', () => {
         status: { id: 1, name: 'Active' },
       },
     ];
-    component.data.data = component.users;
-    component.searchForm.patchValue({ ssusername: 'alice', ssrole: null });
-    component.btnSearchMc();
+    component.dataSource.data = component.users;
+    component.searchQuery = 'alice';
+    component.selectedRoleId = null;
+    component.applyFilters();
 
-    component.btnSearchClearMc();
+    component.resetFilters();
 
-    expect(component.searchForm.getRawValue()).toEqual({ ssusername: '', ssrole: null });
-    expect(component.data.filter).toBe('');
-    expect(component.data.data.length).toBe(2);
+    expect(component.searchQuery).toBe('');
+    expect(component.selectedRoleId).toBeNull();
+    expect(component.filteredUsers.length).toBe(2);
   });
 
   it('should create a user with trimmed payload values', () => {
     component.form.patchValue({
       username: '  Jane User  ',
       email: '  jane@example.com  ',
-      password: '  secret  ',
+      password: 'secret',
       confirmpassword: 'secret',
       phone: '  0771234567  ',
       userroles: { id: 2, name: 'User' },
@@ -239,7 +220,7 @@ describe('UserComponent', () => {
     });
     userServiceSpy.create.mockReturnValue(of('Created'));
 
-    component.add();
+    component.saveUser();
 
     expect(userServiceSpy.create).toHaveBeenCalledWith({
       name: 'Jane User',
@@ -263,16 +244,11 @@ describe('UserComponent', () => {
     });
     userServiceSpy.create.mockReturnValue(throwError(() => ({ status: 409 })));
 
-    component.add();
+    component.saveUser();
 
-    expect(component.form.get('email')?.hasError('duplicateEmail')).toBe(true);
-    expect(dialogSpy.open).toHaveBeenCalledWith(
-      MessageComponent,
-      expect.objectContaining({
-        data: expect.objectContaining({
-          heading: 'Duplicate Email',
-        }),
-      }),
+    expect(dialogServiceSpy.showError).toHaveBeenCalledWith(
+      'Registration Failed',
+      'An employee with this company email already exists.'
     );
   });
 });

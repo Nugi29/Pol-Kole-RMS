@@ -1,6 +1,7 @@
 import { NgModule, APP_INITIALIZER, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-import { HttpClientModule } from '@angular/common/http';
+import { CommonModule } from '@angular/common';
+import { provideHttpClient, withInterceptorsFromDi, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatButtonModule } from '@angular/material/button';
@@ -32,7 +33,6 @@ import { UserComponent } from './views/modules/user/user.component';
 import { ConfirmComponent } from './shared/dialog/confirm/confirm.component';
 import { MessageComponent } from './shared/dialog/message/message.component';
 
-import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { AuthInterceptor } from './services/auth.interceptor';
 import { RoomComponent } from './views/modules/room/room.component';
 import { ReservationComponent } from './views/modules/reservation/reservation.component';
@@ -90,10 +90,10 @@ export function initializeRestaurantSettings(settingsService: SettingsService) {
   ],
   imports: [
     BrowserModule,
+    CommonModule,
     AppRoutingModule,
     FormsModule,
     ReactiveFormsModule,
-    HttpClientModule,
     BrowserAnimationsModule,
     MatGridListModule,
     MatCardModule,
@@ -118,6 +118,7 @@ export function initializeRestaurantSettings(settingsService: SettingsService) {
   ],
   providers: [
     provideBrowserGlobalErrorListeners(),
+    provideHttpClient(withInterceptorsFromDi()),
     providePrimeNG({
       theme: {
         preset: Aura,
@@ -137,4 +138,4 @@ export function initializeRestaurantSettings(settingsService: SettingsService) {
   ],
   bootstrap: [AppComponent],
 })
-export class AppModule {}
+export class AppModule { }
